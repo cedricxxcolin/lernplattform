@@ -60,40 +60,11 @@
   <h2>Materialien (Übungsblätter)</h2>
   <table>
     <thead>
-      <tr><th>Thema</th><th>HTML-Übung</th><th>Druckvorlage</th></tr>
+      <tr><th>Thema</th><th>Datei</th><th>Fertig markiert von</th></tr>
     </thead>
-    <tbody>
-      <tr>
-        <td>Lineare Gleichungen 01</td>
-        <td><a class="file" href="../uebungen/lineare-gleichungen-01.html">Öffnen</a></td>
-        <td>–</td>
-      </tr>
-      <tr>
-        <td>Bruchrechnen 01</td>
-        <td><a class="file" href="../uebungen/bruchrechnen-01.html">Öffnen</a></td>
-        <td><a class="file" href="../arbeitsblaetter/bruchrechnen-01.docx">Word herunterladen</a></td>
-      </tr>
-      <tr>
-        <td>Bruchrechnen 02 (mehrteilig)</td>
-        <td><a class="file" href="../uebungen/bruchrechnen-02-multi.html">Öffnen</a></td>
-        <td>–</td>
-      </tr>
-    </tbody>
+    <tbody id="materials-body"></tbody>
   </table>
-  <p style="font-size:0.85rem;color:#666;">Neue Themen/Dateien werden hier manuell ergänzt, sobald sie erstellt sind.</p>
-
-  <h2>Neue Datei hochladen (landet automatisch auf GitHub)</h2>
-  <div>
-    <label>Zielordner:</label><br>
-    <select id="upload-folder">
-      <option value="uebungen">uebungen/ (HTML-Übung)</option>
-      <option value="arbeitsblaetter">arbeitsblaetter/ (PDF/Word-Druckvorlage)</option>
-    </select><br><br>
-    <label>Datei auswählen:</label><br>
-    <input type="file" id="upload-file"><br><br>
-    <button onclick="uploadFile()">Hochladen</button>
-    <div id="upload-msg" class="msg"></div>
-  </div>
+  <p style="font-size:0.85rem;color:#666;">Neue Blätter werden per SQL in die Tabelle "materials" eingetragen und erscheinen dann automatisch hier und im Schüler-Dashboard.</p>
 </div>
 
 <script>
@@ -124,6 +95,7 @@ async function showApp() {
   await loadClasses();
   await loadProgress();
   await loadErrorAnalysis();
+  await loadMaterials();
 }
 
 async function loadClasses() {
@@ -165,49 +137,53 @@ async function loadProgress() {
 
   const stats = {};
   (attempts || []).forEach(a => {
-    const prof = profileById[a.user_id];
-    if (classFilter && (!prof || prof.class_id !== classFilter)) return; // nach Klasse filtern
     if (!stats[a.user_id]) stats[a.user_id] = { total: 0, correct: 0, last: a.created_at };
     stats[a.user_id].total++;
     if (a.is_correct) stats[a.user_id].correct++;
     if (new Date(a.created_at) > new Date(stats[a.user_id].last)) stats[a.user_id].last = a.created_at;
   });
 
+  // Basis ist jetzt jeder registrierte Schüler (aus profiles), nicht nur wer schon aktiv war.
+  // So können auch neue Schüler ohne bisherige Versuche einer Klasse zugewiesen werden.
+  const allStudents = (profiles || []).filter(p => !p.is_teacher);
+
   lastProgressRows = [];
-  Object.keys(stats).forEach(uid => {
-    const s = stats[uid];
-    const prof = profileById[uid] || {};
-    const quote = Math.round((s.correct / s.total) * 100);
-    const badgeClass = quote >= 70 ? 'ok' : 'warn';
-    const className = classNameById[prof.class_id] || '–';
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${prof.email || uid}</td>
-      <td>
-        <select onchange="assignClass('${uid}', this.value)">
-          <option value="">–</option>
-          ${(classes || []).map(c => `<option value="${c.id}" ${prof.class_id === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
-        </select>
-      </td>
-      <td>${s.total}</td>
-      <td>${s.correct}</td>
-      <td><span class="badge ${badgeClass}">${quote}%</span></td>
-      <td>${new Date(s.last).toLocaleString()}</td>
-    `;
-    tbody.appendChild(row);
+  allStudents
+    .filter(prof => !classFilter || prof.class_id === classFilter)
+    .forEach(prof => {
+      const uid = prof.id;
+      const s = stats[uid] || { total: 0, correct: 0, last: null };
+      const quote = s.total > 0 ? Math.round((s.correct / s.total) * 100) : null;
+      const badgeClass = quote === null ? 'warn' : (quote >= 70 ? 'ok' : 'warn');
+      const className = classNameById[prof.class_id] || '–';
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${prof.email || uid}</td>
+        <td>
+          <select onchange="assignClass('${uid}', this.value)">
+            <option value="">–</option>
+            ${(classes || []).map(c => `<option value="${c.id}" ${prof.class_id === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+          </select>
+        </td>
+        <td>${s.total}</td>
+        <td>${s.correct}</td>
+        <td>${quote === null ? '–' : `<span class="badge ${badgeClass}">${quote}%</span>`}</td>
+        <td>${s.last ? new Date(s.last).toLocaleString() : 'noch keine Aktivität'}</td>
+      `;
+      tbody.appendChild(row);
 
-    lastProgressRows.push({
-      "Schüler": prof.email || uid,
-      "Klasse": className,
-      "Versuche gesamt": s.total,
-      "Richtig": s.correct,
-      "Quote (%)": quote,
-      "Zuletzt aktiv": new Date(s.last).toLocaleString()
+      lastProgressRows.push({
+        "Schüler": prof.email || uid,
+        "Klasse": className,
+        "Versuche gesamt": s.total,
+        "Richtig": s.correct,
+        "Quote (%)": quote === null ? '' : quote,
+        "Zuletzt aktiv": s.last ? new Date(s.last).toLocaleString() : 'noch keine Aktivität'
+      });
     });
-  });
 
-  if (Object.keys(stats).length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6">Noch keine Versuche vorhanden.</td></tr>';
+  if (allStudents.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6">Noch keine Schüler registriert.</td></tr>';
   }
 }
 
@@ -258,65 +234,34 @@ function exportExcel() {
   XLSX.writeFile(wb, `klassen-statistik-${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
-// ---- Datei-Upload zu GitHub (via Edge Function) ----
-async function uploadFile() {
-  const fileInput = document.getElementById('upload-file');
-  const folder = document.getElementById('upload-folder').value;
-  const msg = document.getElementById('upload-msg');
-  const file = fileInput.files[0];
+// ---- Materialien: dynamisch aus DB, inkl. Übersicht "fertig markiert von X Schülern" ----
+async function loadMaterials() {
+  const { data: materials } = await sb.from('materials').select('*').order('thema');
+  const { data: allStatuses } = await sb.from('student_material_status').select('material_id, status');
 
-  if (!file) { msg.textContent = 'Bitte zuerst eine Datei auswählen.'; msg.className = 'msg error'; return; }
-
-  msg.textContent = 'Lade hoch...';
-  msg.className = 'msg';
-
-  const contentBase64 = await fileToBase64(file);
-  const path = `${folder}/${file.name}`;
-
-  const { data: { session } } = await sb.auth.getSession();
-
-  try {
-    const resp = await fetch(
-      "https://pyixmbjxhaogiugtsxma.supabase.co/functions/v1/upload-to-github",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          path,
-          contentBase64,
-          message: `Upload via Dashboard: ${path}`
-        })
-      }
-    );
-    const result = await resp.json();
-    if (!resp.ok) {
-      msg.textContent = 'Fehler: ' + (result.error || 'unbekannt');
-      msg.className = 'msg error';
-    } else {
-      msg.textContent = `Erfolgreich hochgeladen: ${path}`;
-      msg.className = 'msg ok';
-      fileInput.value = '';
+  const doneCountByMaterial = {};
+  (allStatuses || []).forEach(s => {
+    if (s.status === 'fertig') {
+      doneCountByMaterial[s.material_id] = (doneCountByMaterial[s.material_id] || 0) + 1;
     }
-  } catch (e) {
-    msg.textContent = 'Fehler: ' + e.message;
-    msg.className = 'msg error';
-  }
-}
-
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      // Ergebnis ist "data:...;base64,XXXX" — nur den Teil nach dem Komma behalten
-      const base64 = reader.result.split(',')[1];
-      resolve(base64);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
   });
+
+  const tbody = document.getElementById('materials-body');
+  tbody.innerHTML = '';
+  (materials || []).forEach(m => {
+    const linkLabel = m.type === 'html' ? 'Öffnen' : (m.type === 'word' ? 'Word herunterladen' : 'PDF herunterladen');
+    const doneCount = doneCountByMaterial[m.id] || 0;
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${m.title}${m.thema ? `<br><span style="color:#888;font-size:0.8rem;">${m.thema}</span>` : ''}</td>
+      <td><a class="file" href="../${m.file_path}">${linkLabel}</a></td>
+      <td>${doneCount} Schüler</td>
+    `;
+    tbody.appendChild(row);
+  });
+  if ((materials || []).length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3">Noch keine Materialien vorhanden.</td></tr>';
+  }
 }
 
 checkSession();

@@ -59,24 +59,8 @@
 
   <h2>Alle Übungen &amp; Arbeitsblätter</h2>
   <table>
-    <thead><tr><th>Thema</th><th>HTML-Übung</th><th>Druckvorlage</th></tr></thead>
-    <tbody>
-      <tr>
-        <td>Lineare Gleichungen 01</td>
-        <td><a class="file" href="../uebungen/lineare-gleichungen-01.html">Öffnen</a></td>
-        <td>–</td>
-      </tr>
-      <tr>
-        <td>Bruchrechnen 01</td>
-        <td><a class="file" href="../uebungen/bruchrechnen-01.html">Öffnen</a></td>
-        <td><a class="file" href="../arbeitsblaetter/bruchrechnen-01.docx">Word herunterladen</a></td>
-      </tr>
-      <tr>
-        <td>Bruchrechnen 02 (mehrteilig)</td>
-        <td><a class="file" href="../uebungen/bruchrechnen-02-multi.html">Öffnen</a></td>
-        <td>–</td>
-      </tr>
-    </tbody>
+    <thead><tr><th>Thema</th><th>Datei</th><th>Status</th><th>Notiz</th><th>Fällig</th></tr></thead>
+    <tbody id="materials-body"></tbody>
   </table>
 
   <h2>Eigene Aufgaben (z. B. aus dem Schulbuch)</h2>
@@ -112,6 +96,7 @@ function showApp(user) {
   document.getElementById('user-email').textContent = user.email;
   loadProgress();
   loadMultiProgress();
+  loadMaterials();
   loadTasks();
   loadNotes();
 }
@@ -194,6 +179,54 @@ async function loadMultiProgress() {
   if ((data || []).length === 0) {
     tbody.innerHTML = '<tr><td colspan="2">Noch keine mehrteiligen Übungen begonnen.</td></tr>';
   }
+}
+
+// ---- Materialien: dynamisch geladen, mit Status/Notiz/Fälligkeit je Blatt ----
+async function loadMaterials() {
+  const { data: { user } } = await sb.auth.getUser();
+
+  const { data: materials } = await sb.from('materials').select('*').order('thema');
+  const { data: statuses } = await sb
+    .from('student_material_status')
+    .select('*')
+    .eq('user_id', user.id);
+
+  const statusByMaterial = {};
+  (statuses || []).forEach(s => statusByMaterial[s.material_id] = s);
+
+  const tbody = document.getElementById('materials-body');
+  tbody.innerHTML = '';
+
+  (materials || []).forEach(m => {
+    const s = statusByMaterial[m.id] || { status: 'nicht_begonnen', note: '', due_date: null };
+    const linkLabel = m.type === 'html' ? 'Öffnen' : (m.type === 'word' ? 'Word herunterladen' : 'PDF herunterladen');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${m.title}${m.thema ? `<br><span style="color:#888;font-size:0.8rem;">${m.thema}</span>` : ''}</td>
+      <td><a class="file" href="../${m.file_path}">${linkLabel}</a></td>
+      <td>
+        <select onchange="updateMaterialStatus('${m.id}', 'status', this.value)">
+          <option value="nicht_begonnen" ${s.status === 'nicht_begonnen' ? 'selected' : ''}>Nicht begonnen</option>
+          <option value="in_bearbeitung" ${s.status === 'in_bearbeitung' ? 'selected' : ''}>In Bearbeitung</option>
+          <option value="fertig" ${s.status === 'fertig' ? 'selected' : ''}>Fertig</option>
+        </select>
+      </td>
+      <td><input type="text" value="${s.note || ''}" placeholder="Notiz..." onchange="updateMaterialStatus('${m.id}', 'note', this.value)"></td>
+      <td><input type="date" value="${s.due_date || ''}" onchange="updateMaterialStatus('${m.id}', 'due_date', this.value)"></td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  if ((materials || []).length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5">Noch keine Materialien vorhanden.</td></tr>';
+  }
+}
+
+async function updateMaterialStatus(materialId, field, value) {
+  const { data: { user } } = await sb.auth.getUser();
+  const update = { user_id: user.id, material_id: materialId, updated_at: new Date().toISOString() };
+  update[field] = value || null;
+  await sb.from('student_material_status').upsert(update, { onConflict: 'user_id,material_id' });
 }
 
 // ---- Eigene Aufgaben (manuell erfasst) ----
