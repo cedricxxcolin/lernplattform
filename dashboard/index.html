@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Lehrer-Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../shared/supabase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; color: #222; }
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.2rem; margin-top: 40px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e0e0e0; font-size: 0.9rem; }
+  th { background: #f5f5f5; }
+  .msg { margin: 10px 0; font-size: 0.9rem; }
+  .msg.error { color: #b00020; }
+  input { padding: 8px; margin: 6px 0; font-size: 1rem; width: 260px; }
+  button { padding: 8px 16px; cursor: pointer; }
+  .badge { padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; }
+  .badge.ok { background: #dcf5dc; color: #1a7a1a; }
+  .badge.warn { background: #fde8cc; color: #9a5b00; }
+  a.file { color: #1a5fb4; text-decoration: none; }
+  a.file:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div id="auth">
+  <h1>Lehrer-Login</h1>
+  <input id="email" type="email" placeholder="E-Mail"><br>
+  <input id="password" type="password" placeholder="Passwort"><br>
+  <button onclick="signIn()">Einloggen</button>
+  <div id="auth-msg" class="msg"></div>
+</div>
+
+<div id="app" style="display:none;">
+  <h1>Lehrer-Dashboard</h1>
+  <button onclick="signOut()">Ausloggen</button>
+
+  <h2>Fortschritt pro Schüler</h2>
+  <label>Klasse filtern:</label>
+  <select id="class-filter" onchange="loadProgress()">
+    <option value="">Alle Klassen</option>
+  </select>
+  <button onclick="exportExcel()">Als Excel exportieren</button>
+  <table id="progress-table">
+    <thead>
+      <tr><th>Schüler (E-Mail)</th><th>Klasse</th><th>Versuche gesamt</th><th>Richtig</th><th>Quote</th><th>Zuletzt aktiv</th></tr>
+    </thead>
+    <tbody id="progress-body"></tbody>
+  </table>
+
+  <h2>Fehleranalyse: schwierigste Übungen (klassenweit)</h2>
+  <table>
+    <thead><tr><th>Übung</th><th>Versuche</th><th>Richtig-Quote</th></tr></thead>
+    <tbody id="error-analysis-body"></tbody>
+  </table>
+
+  <h2>Materialien (Übungsblätter)</h2>
+  <table>
+    <thead>
+      <tr><th>Thema</th><th>HTML-Übung</th><th>Druckvorlage</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Lineare Gleichungen 01</td>
+        <td><a class="file" href="../uebungen/lineare-gleichungen-01.html">Öffnen</a></td>
+        <td>–</td>
+      </tr>
+      <tr>
+        <td>Bruchrechnen 01</td>
+        <td><a class="file" href="../uebungen/bruchrechnen-01.html">Öffnen</a></td>
+        <td><a class="file" href="../arbeitsblaetter/bruchrechnen-01.docx">Word herunterladen</a></td>
+      </tr>
+      <tr>
+        <td>Bruchrechnen 02 (mehrteilig)</td>
+        <td><a class="file" href="../uebungen/bruchrechnen-02-multi.html">Öffnen</a></td>
+        <td>–</td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size:0.85rem;color:#666;">Neue Themen/Dateien werden hier manuell ergänzt, sobald sie erstellt sind.</p>
+
+  <h2>Neue Datei hochladen (landet automatisch auf GitHub)</h2>
+  <div>
+    <label>Zielordner:</label><br>
+    <select id="upload-folder">
+      <option value="uebungen">uebungen/ (HTML-Übung)</option>
+      <option value="arbeitsblaetter">arbeitsblaetter/ (PDF/Word-Druckvorlage)</option>
+    </select><br><br>
+    <label>Datei auswählen:</label><br>
+    <input type="file" id="upload-file"><br><br>
+    <button onclick="uploadFile()">Hochladen</button>
+    <div id="upload-msg" class="msg"></div>
+  </div>
+</div>
+
+<script>
+async function checkSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) { showApp(); } else { document.getElementById('auth').style.display = 'block'; }
+}
+
+async function signIn() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  const msg = document.getElementById('auth-msg');
+  if (error) { msg.textContent = error.message; msg.className = 'msg error'; return; }
+  showApp();
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+let lastProgressRows = []; // für Excel-Export gemerkt
+
+async function showApp() {
+  document.getElementById('auth').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  await loadClasses();
+  await loadProgress();
+  await loadErrorAnalysis();
+}
+
+async function loadClasses() {
+  const { data: classes } = await sb.from('classes').select('*').order('name');
+  const select = document.getElementById('class-filter');
+  (classes || []).forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c.id;
+    opt.textContent = c.name;
+    select.appendChild(opt);
+  });
+}
+
+async function loadProgress() {
+  const classFilter = document.getElementById('class-filter').value;
+
+  const { data: attempts, error } = await sb
+    .from('exercise_attempts')
+    .select('user_id, is_correct, created_at');
+
+  const { data: profiles } = await sb
+    .from('profiles')
+    .select('id, email, class_id');
+
+  const { data: classes } = await sb.from('classes').select('*');
+  const classNameById = {};
+  (classes || []).forEach(c => classNameById[c.id] = c.name);
+
+  const tbody = document.getElementById('progress-body');
+  tbody.innerHTML = '';
+
+  if (error) {
+    tbody.innerHTML = `<tr><td colspan="6" style="color:#b00020;">Fehler: ${error.message}. Bist du als Lehrer markiert (is_teacher = true)?</td></tr>`;
+    return;
+  }
+
+  const profileById = {};
+  (profiles || []).forEach(p => profileById[p.id] = p);
+
+  const stats = {};
+  (attempts || []).forEach(a => {
+    const prof = profileById[a.user_id];
+    if (classFilter && (!prof || prof.class_id !== classFilter)) return; // nach Klasse filtern
+    if (!stats[a.user_id]) stats[a.user_id] = { total: 0, correct: 0, last: a.created_at };
+    stats[a.user_id].total++;
+    if (a.is_correct) stats[a.user_id].correct++;
+    if (new Date(a.created_at) > new Date(stats[a.user_id].last)) stats[a.user_id].last = a.created_at;
+  });
+
+  lastProgressRows = [];
+  Object.keys(stats).forEach(uid => {
+    const s = stats[uid];
+    const prof = profileById[uid] || {};
+    const quote = Math.round((s.correct / s.total) * 100);
+    const badgeClass = quote >= 70 ? 'ok' : 'warn';
+    const className = classNameById[prof.class_id] || '–';
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${prof.email || uid}</td>
+      <td>
+        <select onchange="assignClass('${uid}', this.value)">
+          <option value="">–</option>
+          ${(classes || []).map(c => `<option value="${c.id}" ${prof.class_id === c.id ? 'selected' : ''}>${c.name}</option>`).join('')}
+        </select>
+      </td>
+      <td>${s.total}</td>
+      <td>${s.correct}</td>
+      <td><span class="badge ${badgeClass}">${quote}%</span></td>
+      <td>${new Date(s.last).toLocaleString()}</td>
+    `;
+    tbody.appendChild(row);
+
+    lastProgressRows.push({
+      "Schüler": prof.email || uid,
+      "Klasse": className,
+      "Versuche gesamt": s.total,
+      "Richtig": s.correct,
+      "Quote (%)": quote,
+      "Zuletzt aktiv": new Date(s.last).toLocaleString()
+    });
+  });
+
+  if (Object.keys(stats).length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6">Noch keine Versuche vorhanden.</td></tr>';
+  }
+}
+
+async function assignClass(userId, classId) {
+  await sb.from('profiles').update({ class_id: classId || null }).eq('id', userId);
+}
+
+// ---- Fehleranalyse: welche Übungen sind klassenweit am schwierigsten ----
+async function loadErrorAnalysis() {
+  const { data: attempts } = await sb
+    .from('exercise_attempts')
+    .select('exercise_id, is_correct');
+
+  const stats = {};
+  (attempts || []).forEach(a => {
+    if (!stats[a.exercise_id]) stats[a.exercise_id] = { total: 0, correct: 0 };
+    stats[a.exercise_id].total++;
+    if (a.is_correct) stats[a.exercise_id].correct++;
+  });
+
+  const rows = Object.keys(stats).map(ex => {
+    const s = stats[ex];
+    return { exercise_id: ex, total: s.total, quote: Math.round((s.correct / s.total) * 100) };
+  }).sort((a, b) => a.quote - b.quote); // schwierigste (niedrigste Quote) zuerst
+
+  const tbody = document.getElementById('error-analysis-body');
+  tbody.innerHTML = '';
+  rows.forEach(r => {
+    const badgeClass = r.quote >= 70 ? 'ok' : 'warn';
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${r.exercise_id}</td><td>${r.total}</td><td><span class="badge ${badgeClass}">${r.quote}%</span></td>`;
+    tbody.appendChild(row);
+  });
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3">Noch keine Daten vorhanden.</td></tr>';
+  }
+}
+
+// ---- Export als Excel ----
+function exportExcel() {
+  if (lastProgressRows.length === 0) {
+    alert('Keine Daten zum Exportieren vorhanden.');
+    return;
+  }
+  const ws = XLSX.utils.json_to_sheet(lastProgressRows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Fortschritt");
+  XLSX.writeFile(wb, `klassen-statistik-${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+// ---- Datei-Upload zu GitHub (via Edge Function) ----
+async function uploadFile() {
+  const fileInput = document.getElementById('upload-file');
+  const folder = document.getElementById('upload-folder').value;
+  const msg = document.getElementById('upload-msg');
+  const file = fileInput.files[0];
+
+  if (!file) { msg.textContent = 'Bitte zuerst eine Datei auswählen.'; msg.className = 'msg error'; return; }
+
+  msg.textContent = 'Lade hoch...';
+  msg.className = 'msg';
+
+  const contentBase64 = await fileToBase64(file);
+  const path = `${folder}/${file.name}`;
+
+  const { data: { session } } = await sb.auth.getSession();
+
+  try {
+    const resp = await fetch(
+      "https://pyixmbjxhaogiugtsxma.supabase.co/functions/v1/upload-to-github",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          path,
+          contentBase64,
+          message: `Upload via Dashboard: ${path}`
+        })
+      }
+    );
+    const result = await resp.json();
+    if (!resp.ok) {
+      msg.textContent = 'Fehler: ' + (result.error || 'unbekannt');
+      msg.className = 'msg error';
+    } else {
+      msg.textContent = `Erfolgreich hochgeladen: ${path}`;
+      msg.className = 'msg ok';
+      fileInput.value = '';
+    }
+  } catch (e) {
+    msg.textContent = 'Fehler: ' + e.message;
+    msg.className = 'msg error';
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      // Ergebnis ist "data:...;base64,XXXX" — nur den Teil nach dem Komma behalten
+      const base64 = reader.result.split(',')[1];
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+checkSession();
+</script>
+
+</body>
+</html>
