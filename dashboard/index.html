@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Lehrer-Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../shared/supabase-config.js"></script>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 20px; color: #222; }
+  h1 { font-size: 1.6rem; }
+  h2 { font-size: 1.2rem; margin-top: 40px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #e0e0e0; font-size: 0.9rem; }
+  th { background: #f5f5f5; }
+  .msg { margin: 10px 0; font-size: 0.9rem; }
+  .msg.error { color: #b00020; }
+  input { padding: 8px; margin: 6px 0; font-size: 1rem; width: 260px; }
+  button { padding: 8px 16px; cursor: pointer; }
+  .badge { padding: 2px 8px; border-radius: 10px; font-size: 0.8rem; }
+  .badge.ok { background: #dcf5dc; color: #1a7a1a; }
+  .badge.warn { background: #fde8cc; color: #9a5b00; }
+  a.file { color: #1a5fb4; text-decoration: none; }
+  a.file:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<div id="auth">
+  <h1>Lehrer-Login</h1>
+  <input id="email" type="email" placeholder="E-Mail"><br>
+  <input id="password" type="password" placeholder="Passwort"><br>
+  <button onclick="signIn()">Einloggen</button>
+  <div id="auth-msg" class="msg"></div>
+</div>
+
+<div id="app" style="display:none;">
+  <h1>Lehrer-Dashboard</h1>
+  <button onclick="signOut()">Ausloggen</button>
+
+  <h2>Fortschritt pro Schüler</h2>
+  <table id="progress-table">
+    <thead>
+      <tr><th>Schüler (E-Mail)</th><th>Versuche gesamt</th><th>Richtig</th><th>Quote</th><th>Zuletzt aktiv</th></tr>
+    </thead>
+    <tbody id="progress-body"></tbody>
+  </table>
+
+  <h2>Materialien (Übungsblätter)</h2>
+  <table>
+    <thead>
+      <tr><th>Thema</th><th>HTML-Übung</th><th>Druckvorlage</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Lineare Gleichungen 01</td>
+        <td><a class="file" href="../uebungen/lineare-gleichungen-01.html">Öffnen</a></td>
+        <td>–</td>
+      </tr>
+      <tr>
+        <td>Bruchrechnen 01</td>
+        <td><a class="file" href="../uebungen/bruchrechnen-01.html">Öffnen</a></td>
+        <td><a class="file" href="../arbeitsblaetter/bruchrechnen-01.docx">Word herunterladen</a></td>
+      </tr>
+    </tbody>
+  </table>
+  <p style="font-size:0.85rem;color:#666;">Neue Themen/Dateien werden hier manuell ergänzt, sobald sie erstellt sind.</p>
+</div>
+
+<script>
+async function checkSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) { showApp(); } else { document.getElementById('auth').style.display = 'block'; }
+}
+
+async function signIn() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+  const msg = document.getElementById('auth-msg');
+  if (error) { msg.textContent = error.message; msg.className = 'msg error'; return; }
+  showApp();
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+async function showApp() {
+  document.getElementById('auth').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  await loadProgress();
+}
+
+async function loadProgress() {
+  // Benötigt: Tabelle "profiles" (id, email, is_teacher) + entsprechende RLS-Policy,
+  // siehe SQL-Setup. Ohne "profiles" bleibt diese Liste leer.
+  const { data: attempts, error } = await sb
+    .from('exercise_attempts')
+    .select('user_id, is_correct, created_at');
+
+  const { data: profiles } = await sb
+    .from('profiles')
+    .select('id, email');
+
+  const tbody = document.getElementById('progress-body');
+  tbody.innerHTML = '';
+
+  if (error) {
+    tbody.innerHTML = `<tr><td colspan="5" style="color:#b00020;">Fehler: ${error.message}. Bist du als Lehrer markiert (is_teacher = true)?</td></tr>`;
+    return;
+  }
+
+  const emailById = {};
+  (profiles || []).forEach(p => emailById[p.id] = p.email);
+
+  const stats = {};
+  (attempts || []).forEach(a => {
+    if (!stats[a.user_id]) stats[a.user_id] = { total: 0, correct: 0, last: a.created_at };
+    stats[a.user_id].total++;
+    if (a.is_correct) stats[a.user_id].correct++;
+    if (new Date(a.created_at) > new Date(stats[a.user_id].last)) stats[a.user_id].last = a.created_at;
+  });
+
+  Object.keys(stats).forEach(uid => {
+    const s = stats[uid];
+    const quote = Math.round((s.correct / s.total) * 100);
+    const badgeClass = quote >= 70 ? 'ok' : 'warn';
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${emailById[uid] || uid}</td>
+      <td>${s.total}</td>
+      <td>${s.correct}</td>
+      <td><span class="badge ${badgeClass}">${quote}%</span></td>
+      <td>${new Date(s.last).toLocaleString()}</td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  if (Object.keys(stats).length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5">Noch keine Versuche vorhanden.</td></tr>';
+  }
+}
+
+checkSession();
+</script>
+
+</body>
+</html>
