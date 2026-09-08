@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BIP Masterclass - Das interaktive Wirtschafts-Spiel</title>
+    <style>
+        /* ==========================================================================
+           CSS VARIABLES & GLOBAL STYLES
+           ========================================================================== */
+        :root {
+            --primary-color: #4F46E5;
+            --primary-hover: #4338CA;
+            --secondary-color: #38BDF8;
+            --success-color: #10B981;
+            --error-color: #EF4444;
+            --bg-color: #F8FAFC;
+            --card-bg: #FFFFFF;
+            --text-main: #1E293B;
+            --text-light: #64748B;
+            --border-color: #E2E8F0;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            --border-radius: 12px;
+            --font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* ==========================================================================
+           LAYOUT & CONTAINERS
+           ========================================================================== */
+        .game-container {
+            width: 100%;
+            max-width: 1000px;
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* Header / Stats */
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 4px solid rgba(0,0,0,0.1);
+        }
+
+        .header-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 20px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            align-items: center;
+        }
+
+        .score-box {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            background-color: var(--border-color);
+            height: 8px;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--success-color);
+            width: 0%;
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* Main Content Area */
+        .content-area {
+            padding: 30px;
+            min-height: 450px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .level-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .level-title {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        .level-description {
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        /* ==========================================================================
+           DRAG & DROP CLASSIFICATION UI
+           ========================================================================== */
+        .classification-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            flex-grow: 1;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .classification-grid {
+                grid-template-columns: 1fr; /* Stack vertically on mobile */
+            }
+        }
+
+        .drop-zone {
+            background-color: var(--bg-color);
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 250px;
+            transition: all 0.3s ease;
+        }
+        
+        .drop-zone.drag-over {
+            background-color: #E0E7FF;
+            border-color: var(--primary-color);
+        }
+
+        .zone-title {
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        /* The middle pool for unassigned items */
+        .item-pool {
+            background-color: #F1F5F9;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-height: 250px;
+        }
+
+        .draggable-item {
+            background-color: white;
+            padding: 12px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow-sm);
+            cursor: grab;
+            font-weight: 500;
+            text-align: center;
+            user-select: none;
+            transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s;
+            position: relative;
+        }
+
+        .draggable-item:active {
+            cursor: grabbing;
+            transform: scale(0.98);
+        }
+        .draggable-item:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+        
+        .draggable-item.selected {
+            border-color: var(--primary-color);
+            background-color: #EEF2FF;
+            box-shadow: 0 0 0 2px var(--primary-color);
+        }
+
+        .draggable-item.correct {
+            background-color: #D1FAE5;
+            border-color: var(--success-color);
+            color: #065F46;
+            cursor: default;
+        }
+        .draggable-item.wrong {
+            animation: shake 0.5s;
+            background-color: #FEE2E2;
+            border-color: var(--error-color);
+            color: #991B1B;
+        }
+
+        /* ==========================================================================
+           CALCULATION UI
+           ========================================================================== */
+        .calculation-container {
+            max-width: 600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .calc-text {
+            background-color: #F8FAFC;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            border-left: 5px solid var(--primary-color);
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+        .input-group input {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 1.1rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        .input-group input.correct-input {
+            border-color: var(--success-color);
+            background-color: #F0FDF4;
+        }
+        .input-group input.wrong-input {
+            border-color: var(--error-color);
+            background-color: #FEF2F2;
+            animation: shake 0.5s;
+        }
+
+        /* ==========================================================================
+           CONTROLS & BUTTONS
+           ========================================================================== */
+        .action-area {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            box-shadow: var(--shadow-md);
+        }
+        .btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .btn:disabled {
+            background-color: #CBD5E1;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* ==========================================================================
+           FEEDBACK & OVERLAYS
+           ========================================================================== */
+        .teacher-note {
+            display: none;
+            background-color: #E0F2FE;
+            border-left: 5px solid var(--secondary-color);
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 0 8px 8px 0;
+            animation: slideIn 0.5s ease-out;
+        }
+        .teacher-note h4 {
+            color: #0269A4;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* End Screen */
+        .end-screen {
+            text-align: center;
+            padding: 40px 20px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .end-score {
+            font-size: 4rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin: 20px 0;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Confetti */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0;
+        }
+
+        /* Menu Screen */
+        .menu-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .level-card {
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: left;
+        }
+        .level-card:hover {
+            border-color: var(--primary-color);
+            transform: translateX(5px);
+            box-shadow: var(--shadow-md);
+        }
+        .level-card h3 { margin: 0; color: var(--primary-color); font-size: 1.2rem; }
+        .level-card p { margin: 5px 0 0 0; color: var(--text-light); font-size: 0.95rem; }
+        
+        .btn-menu {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.4);
+            padding: 5px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+            font-size: 0.9rem;
+        }
+        .btn-menu:hover { background: rgba(255,255,255,0.3); }
+
+    </style>
+</head>
+<body>
+
+    <div class="game-container" id="game-app">
+        <!-- Header -->
+        <div class="header">
+            <h1 class="header-title">🎓 BIP Masterclass</h1>
+            <div class="stats-bar">
+                <button class="btn-menu" id="btn-back-menu" onclick="showMenu()" style="display:none;">☰ Menü</button>
+                <span id="level-display">Level 1/5</span>
+                <div class="score-box">
+                    ⭐ <span id="score-display">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Progress Bar -->
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+
+        <!-- Menu Screen (New) -->
+        <div class="content-area" id="menu-screen">
+            <!-- Menu gets injected here by JavaScript -->
+        </div>
+
+        <!-- Dynamic Content Area -->
+        <div class="content-area" id="content-area" style="display: none;">
+            <!-- Level Content gets injected here by JavaScript -->
+        </div>
+
+        <!-- End Screen (Hidden initially) -->
+        <div class="content-area end-screen" id="end-screen">
+            <h2 class="level-title">Herzlichen Glückwunsch! 🎉</h2>
+            <p class="level-description">Du hast das Wirtschafts-Spiel erfolgreich abgeschlossen.</p>
+            <div class="end-score" id="final-score">0</div>
+            <p id="end-message" style="font-size: 1.2rem; margin-bottom: 30px; max-width: 600px; color: var(--text-light);"></p>
+            <button class="btn" onclick="showMenu()">Zurück zum Menü</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * ==========================================================================
+         * GAME DATA & CONTENT DEFINITION
+         * ==========================================================================
+         */
+        const gameData = [
+            {
+                type: 'classification',
+                title: 'Level 1: Was gehört ins BIP?',
+                description: 'Das Bruttoinlandsprodukt (BIP) misst den Wert aller neu hergestellten Waren und Dienstleistungen. Ordne die Aktivitäten per Drag & Drop (oder durch Anklicken) in die richtige Box.',
+                categories: ['Zählt zum BIP', 'Zählt NICHT zum BIP'],
+                items: [
+                    { id: '1-1', text: 'Kauf eines neuen Autos', cat: 0 },
+                    { id: '1-2', text: 'Bau einer neuen Schule durch den Staat', cat: 0 },
+                    { id: '1-3', text: 'Haarschnitt beim Friseur', cat: 0 },
+                    { id: '1-4', text: 'Export von Maschinen', cat: 0 },
+                    { id: '1-5', text: 'Kauf eines gebrauchten Autos (wurde schon mal gezählt)', cat: 1 },
+                    { id: '1-6', text: 'Schwarzarbeit', cat: 1 },
+                    { id: '1-7', text: 'Ehrenamtliche Arbeit', cat: 1 },
+                    { id: '1-8', text: 'Taschengeld', cat: 1 }
+                ],
+                teacherNote: "Sehr gut! Nur Güter und Dienstleistungen, die in einer Periode offiziell auf dem Markt gehandelt und <b>neu</b> produziert werden, fließen ins BIP ein. Schattenwirtschaft (Schwarzarbeit) und reine Transferleistungen (Taschengeld) zählen nicht."
+            },
+            {
+                type: 'classification',
+                title: 'Level 2: Der Autounfall-Trugschluss',
+                description: 'These: „Ein Autounfall ist gut für die Wirtschaft.“ Ordne die folgenden Auswirkungen den beiden Kategorien zu.',
+                categories: ['Steigert das BIP kurzfristig (Pro Wirtschaft)', 'Negativ für Wohlstand/BIP (Contra)'],
+                items: [
+                    { id: '2-1', text: 'Einsatz von Krankenwagen', cat: 0 },
+                    { id: '2-2', text: 'Abschleppdienst wird bezahlt', cat: 0 },
+                    { id: '2-3', text: 'Ersatzteile werden verkauft', cat: 0 },
+                    { id: '2-4', text: 'Neukauf eines Autos', cat: 0 },
+                    { id: '2-5', text: 'Wertverlust/Zerstörung von Vermögen', cat: 1 },
+                    { id: '2-6', text: 'Arbeitsunfähigkeit der Verletzten (Produktionsausfall)', cat: 1 },
+                    { id: '2-7', text: 'Opportunitätskosten (Geld für neues Auto fehlt für Urlaub)', cat: 1 }
+                ],
+                teacherNote: "Perfekt! Der Autounfall-Trugschluss (Broken-Window-Fallacy) zeigt: Zerstörung schafft keinen echten Wohlstand. Zwar blähen die Reparaturkosten das BIP künstlich auf, aber der Gesellschaft geht Vermögen und Produktionskraft verloren."
+            },
+            {
+                type: 'calculation',
+                title: 'Level 3: Das Nominale BIP berechnen',
+                description: 'Berechne das BIP mithilfe der Verwendungsrechnung. Trage das richtige Ergebnis ein.',
+                text: `In unserer kleinen Volkswirtschaft gab es dieses Jahr folgende Ausgaben:<br><br>
+                       <ul>
+                           <li>Privater Konsum: <strong>2.000 €</strong></li>
+                           <li>Bruttoinvestitionen der Unternehmen: <strong>500 €</strong></li>
+                           <li>Staatsausgaben: <strong>800 €</strong></li>
+                           <li>Exporte: <strong>1.200 €</strong></li>
+                           <li>Importe: <strong>1.000 €</strong></li>
+                       </ul><br>
+                       Berechne das nominale BIP!<br>
+                       <strong>Formel:</strong> Konsum + Investitionen + Staatsausgaben + (Exporte - Importe)`,
+                inputs: [
+                    { label: 'Nominales BIP (€)', answer: 3500 }
+                ],
+                teacherNote: "Richtig gerechnet! 2000 + 500 + 800 + (1200 - 1000) = 3500. Die Verwendungsrechnung zeigt, wofür das produzierte Einkommen einer Volkswirtschaft ausgegeben wird."
+            },
+            {
+                type: 'calculation',
+                title: 'Level 4: Nominales vs. Reales BIP',
+                description: 'Inflation verfälscht das Wachstum. Das reale BIP rechnet die Inflation heraus.',
+                text: `Ein Land produziert nur Fahrräder.<br><br>
+                       Im Jahr 2020 (Basisjahr) wurden 10 Fahrräder für je 100 € verkauft. Das BIP war 1.000 €.<br><br>
+                       Im Jahr 2021 wurden wieder genau 10 Fahrräder produziert, aber wegen der Inflation kostet ein Fahrrad nun 150 €.<br>`,
+                inputs: [
+                    { label: 'Frage 1: Wie hoch ist das NOMINALE BIP für 2021?', answer: 1500 },
+                    { label: 'Frage 2: Wie hoch ist das REALE BIP für 2021 (in Preisen von 2020)?', answer: 1000 }
+                ],
+                teacherNote: "Klasse! Obwohl das nominale BIP von 1000 auf 1500 gestiegen ist, wurden nicht mehr Güter produziert. Das <b>reale BIP</b> bleibt bei 1000 und ist daher der viel bessere Indikator für echtes Wirtschaftswachstum."
+            },
+            {
+                type: 'classification',
+                title: 'Level 5: Die Grenzen des BIP',
+                description: 'Das BIP misst nicht alles, was für ein gutes Leben wichtig ist. Teile die Faktoren ein.',
+                categories: ['Steigert das BIP, aber mindert Lebensqualität', 'Steigert Lebensqualität, wird aber vom BIP ignoriert'],
+                items: [
+                    { id: '5-1', text: 'Abholzung von Regenwäldern für Holzverkauf', cat: 0 },
+                    { id: '5-2', text: 'Beseitigung von massiven Umweltschäden (z.B. Ölteppich)', cat: 0 },
+                    { id: '5-3', text: 'Reparaturen nach einem Autounfall', cat: 0 },
+                    { id: '5-4', text: 'Zeit mit der Familie (Freizeit)', cat: 1 },
+                    { id: '5-5', text: 'Saubere Atemluft', cat: 1 },
+                    { id: '5-6', text: 'Unbezahlte Pflege von Angehörigen zu Hause', cat: 1 }
+                ],
+                teacherNote: "Ausgezeichnet! Das BIP ist ein Maß für wirtschaftliche Aktivität, aber kein perfekter Indikator für den Wohlstand. Umweltschäden oder Stress durch Überarbeitung können das BIP steigern, senken aber die Lebensqualität drastisch."
+            }
+        ];
+
+        /**
+         * ==========================================================================
+         * STATE MANAGEMENT
+         * ==========================================================================
+         */
+        let currentLevelIndex = 0;
+        let score = 0;
+        let selectedElement = null; // For click-to-move fallback
+
+        // DOM Elements
+        const contentArea = document.getElementById('content-area');
+        const menuScreen = document.getElementById('menu-screen');
+        const btnBackMenu = document.getElementById('btn-back-menu');
+        const scoreDisplay = document.getElementById('score-display');
+        const levelDisplay = document.getElementById('level-display');
+        const progressBar = document.getElementById('progress-bar');
+        const endScreen = document.getElementById('end-screen');
+
+        /**
+         * ==========================================================================
+         * CORE LOGIC
+         * ==========================================================================
+         */
+
+        function initGame() {
+            showMenu();
+        }
+
+        function showMenu() {
+            contentArea.style.display = 'none';
+            endScreen.style.display = 'none';
+            menuScreen.style.display = 'block';
+            btnBackMenu.style.display = 'none';
+            
+            // Setze Punktestand beim Zurückkehren ins Menü auf 0 zurück, 
+            // damit es bei Wiederholungen nicht über die Maximalpunktzahl hinausgeht.
+            score = 0;
+            scoreDisplay.innerText = score;
+            levelDisplay.innerText = "Hauptmenü";
+            progressBar.style.width = `0%`;
+
+            menuScreen.innerHTML = `
+                <div class="level-header">
+                    <h2 class="level-title">Wähle ein Level</h2>
+                    <p class="level-description">Klicke auf ein Level, um es direkt zu starten.</p>
+                </div>
+                <div class="menu-grid">
+                    ${gameData.map((level, index) => {
+                        const shortDesc = level.description.length > 70 ? level.description.substring(0, 70) + '...' : level.description;
+                        return `
+                        <div class="level-card" onclick="startLevel(${index})">
+                            <div>
+                                <h3>${level.title}</h3>
+                                <p>${shortDesc}</p>
+                            </div>
+                            <span style="font-size: 1.5rem;">▶️</span>
+                        </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function startLevel(index) {
+            currentLevelIndex = index;
+            menuScreen.style.display = 'none';
+            endScreen.style.display = 'none';
+            contentArea.style.display = 'flex';
+            btnBackMenu.style.display = 'block';
+            
+            renderLevel(index);
+            updateHeaderStats();
+        }
+
+        function updateHeaderStats() {
+            scoreDisplay.innerText = score;
+            levelDisplay.innerText = `Level ${currentLevelIndex + 1}/${gameData.length}`;
+            const progress = ((currentLevelIndex) / gameData.length) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        // Fisher-Yates Shuffle
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function renderLevel(index) {
+            const level = gameData[index];
+            contentArea.innerHTML = '';
+            contentArea.style.animation = 'none';
+            contentArea.offsetHeight; // trigger reflow
+            contentArea.style.animation = 'fadeIn 0.5s ease-out';
+
+            // Base Header
+            const headerHTML = `
+                <div class="level-header">
+                    <h2 class="level-title">${level.title}</h2>
+                    <p class="level-description">${level.description}</p>
+                </div>
+            `;
+            contentArea.insertAdjacentHTML('beforeend', headerHTML);
+
+            if (level.type === 'classification') {
+                renderClassificationLevel(level);
+            } else if (level.type === 'calculation') {
+                renderCalculationLevel(level);
+            }
+
+            // Teacher Note Box (Hidden initially)
+            const noteHTML = `
+                <div class="teacher-note" id="teacher-note">
+                    <h4>💡 Teacher's Note</h4>
+                    <p>${level.teacherNote}</p>
+                </div>
+            `;
+            contentArea.insertAdjacentHTML('beforeend', noteHTML);
+
+            // Action Area
+            const actionArea = document.createElement('div');
+            actionArea.className = 'action-area';
+            
+            const btn = document.createElement('button');
+            btn.className = 'btn';
+            btn.id = 'check-btn';
+            btn.innerText = 'Antwort prüfen';
+            
+            if (level.type === 'classification') {
+                btn.disabled = true; // Disabled until pool is empty
+                btn.onclick = checkClassification;
+            } else {
+                btn.onclick = checkCalculation;
+            }
+
+            actionArea.appendChild(btn);
+            contentArea.appendChild(actionArea);
+        }
+
+        /**
+         * ==========================================================================
+         * CLASSIFICATION (DRAG & DROP) LOGIC
+         * ==========================================================================
+         */
+        function renderClassificationLevel(level) {
+            const grid = document.createElement('div');
+            grid.className = 'classification-grid';
+
+            // Left Zone
+            const leftZone = createDropZone(0, level.categories[0]);
+            
+            // Middle Pool
+            const pool = document.createElement('div');
+            pool.className = 'item-pool';
+            pool.id = 'item-pool';
+            const poolTitle = document.createElement('div');
+            poolTitle.className = 'zone-title';
+            poolTitle.style.color = 'var(--text-light)';
+            poolTitle.innerText = 'Ziehe oder klicke Elemente von hier';
+            pool.appendChild(poolTitle);
+
+            // Right Zone
+            const rightZone = createDropZone(1, level.categories[1]);
+
+            // Add items to pool
+            const shuffledItems = shuffleArray([...level.items]);
+            shuffledItems.forEach(itemData => {
+                const el = document.createElement('div');
+                el.className = 'draggable-item';
+                el.innerText = itemData.text;
+                el.id = itemData.id;
+                el.dataset.category = itemData.cat;
+                
+                // Drag Events
+                el.draggable = true;
+                el.addEventListener('dragstart', handleDragStart);
+                el.addEventListener('dragend', handleDragEnd);
+
+                // Click to Move (Mobile Fallback)
+                el.addEventListener('click', handleItemClick);
+
+                pool.appendChild(el);
+            });
+
+            grid.appendChild(leftZone);
+            grid.appendChild(pool);
+            grid.appendChild(rightZone);
+            contentArea.appendChild(grid);
+
+            // Pool also needs to accept drops (to put items back)
+            setupDropZoneEvents(pool, 'pool');
+        }
+
+        function createDropZone(catId, titleText) {
+            const zone = document.createElement('div');
+            zone.className = 'drop-zone';
+            zone.dataset.zoneId = catId;
+
+            const title = document.createElement('div');
+            title.className = 'zone-title';
+            title.innerText = titleText;
+            
+            zone.appendChild(title);
+            setupDropZoneEvents(zone, catId);
+            
+            return zone;
+        }
+
+        // --- Drag & Drop Handlers ---
+        function handleDragStart(e) {
+            if(this.classList.contains('correct')) return; // Correct items locked
+            e.dataTransfer.setData('text/plain', e.target.id);
+            setTimeout(() => { this.style.opacity = '0.5'; }, 0);
+        }
+
+        function handleDragEnd(e) {
+            this.style.opacity = '1';
+        }
+
+        function setupDropZoneEvents(zone, zoneId) {
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('drag-over');
+            });
+            zone.addEventListener('dragleave', (e) => {
+                zone.classList.remove('drag-over');
+            });
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('drag-over');
+                const id = e.dataTransfer.getData('text/plain');
+                const draggableElement = document.getElementById(id);
+                
+                if (draggableElement && !draggableElement.classList.contains('correct')) {
+                    zone.appendChild(draggableElement);
+                    checkIfPoolEmpty();
+                }
+            });
+
+            // Click Handler for Zone (Move selected item here)
+            zone.addEventListener('click', () => {
+                if (selectedElement && !selectedElement.classList.contains('correct')) {
+                    zone.appendChild(selectedElement);
+                    selectedElement.classList.remove('selected');
+                    selectedElement = null;
+                    checkIfPoolEmpty();
+                }
+            });
+        }
+
+        // --- Click Fallback Handlers ---
+        function handleItemClick(e) {
+            if(this.classList.contains('correct')) return; // locked
+            e.stopPropagation(); // prevent triggering zone click immediately
+            
+            // Deselect previous
+            if (selectedElement && selectedElement !== this) {
+                selectedElement.classList.remove('selected');
+            }
+
+            if (this.classList.contains('selected')) {
+                this.classList.remove('selected');
+                selectedElement = null;
+            } else {
+                this.classList.add('selected');
+                selectedElement = this;
+            }
+        }
+
+        function checkIfPoolEmpty() {
+            const pool = document.getElementById('item-pool');
+            const checkBtn = document.getElementById('check-btn');
+            // count draggable items in pool
+            const itemsInPool = pool.querySelectorAll('.draggable-item').length;
+            checkBtn.disabled = itemsInPool > 0;
+        }
+
+        function checkClassification() {
+            const level = gameData[currentLevelIndex];
+            const zones = document.querySelectorAll('.drop-zone');
+            let allCorrect = true;
+            let newlyCorrectCount = 0;
+
+            zones.forEach(zone => {
+                const zoneId = zone.dataset.zoneId;
+                const items = zone.querySelectorAll('.draggable-item');
+
+                items.forEach(item => {
+                    // Skip already locked items
+                    if(item.classList.contains('correct')) return;
+
+                    if (item.dataset.category === zoneId) {
+                        item.classList.add('correct');
+                        item.draggable = false;
+                        newlyCorrectCount++;
+                    } else {
+                        item.classList.add('wrong');
+                        allCorrect = false;
+                        // Return wrong items to pool after animation
+                        setTimeout(() => {
+                            item.classList.remove('wrong');
+                            document.getElementById('item-pool').appendChild(item);
+                            checkIfPoolEmpty();
+                        }, 800);
+                    }
+                });
+            });
+
+            // Update Score: 10 points per correct new item
+            score += newlyCorrectCount * 10;
+            updateHeaderStats();
+
+            if (allCorrect) {
+                levelCompleted();
+            }
+        }
+
+        /**
+         * ==========================================================================
+         * CALCULATION LOGIC
+         * ==========================================================================
+         */
+        function renderCalculationLevel(level) {
+            const container = document.createElement('div');
+            container.className = 'calculation-container';
+
+            const textDiv = document.createElement('div');
+            textDiv.className = 'calc-text';
+            textDiv.innerHTML = level.text;
+            container.appendChild(textDiv);
+
+            level.inputs.forEach((inputData, index) => {
+                const group = document.createElement('div');
+                group.className = 'input-group';
+                
+                const label = document.createElement('label');
+                label.innerText = inputData.label;
+                
+                const input = document.createElement('input');
+                input.type = 'number';
+                input.id = `calc-input-${index}`;
+                input.placeholder = "Zahl eingeben...";
+                
+                group.appendChild(label);
+                group.appendChild(input);
+                container.appendChild(group);
+            });
+
+            contentArea.appendChild(container);
+        }
+
+        function checkCalculation() {
+            const level = gameData[currentLevelIndex];
+            let allCorrect = true;
+
+            level.inputs.forEach((inputData, index) => {
+                const inputEl = document.getElementById(`calc-input-${index}`);
+                // Remove previous classes
+                inputEl.classList.remove('correct-input', 'wrong-input');
+                
+                // Allow small float errors or exact integer match
+                const userVal = parseFloat(inputEl.value);
+                
+                if (userVal === inputData.answer) {
+                    inputEl.classList.add('correct-input');
+                    inputEl.disabled = true; // Lock
+                    if (!inputEl.dataset.scored) {
+                        score += 20; // 20 points per correct calculation
+                        inputEl.dataset.scored = "true";
+                    }
+                } else {
+                    inputEl.classList.add('wrong-input');
+                    allCorrect = false;
+                    setTimeout(() => inputEl.classList.remove('wrong-input'), 800);
+                }
+            });
+
+            updateHeaderStats();
+
+            if (allCorrect) {
+                levelCompleted();
+            }
+        }
+
+        /**
+         * ==========================================================================
+         * LEVEL TRANSITIONS & END SCREEN
+         * ==========================================================================
+         */
+        function levelCompleted() {
+            // Show Teacher Note
+            const note = document.getElementById('teacher-note');
+            note.style.display = 'block';
+
+            // Change Button to "Next Level"
+            const btn = document.getElementById('check-btn');
+            btn.innerText = "Nächstes Level ➡️";
+            btn.onclick = goToNextLevel;
+            btn.classList.add('correct-input'); // Turn green to signify success
+            btn.style.backgroundColor = 'var(--success-color)';
+            btn.disabled = false;
+        }
+
+        function goToNextLevel() {
+            currentLevelIndex++;
+            if (currentLevelIndex < gameData.length) {
+                startLevel(currentLevelIndex);
+            } else {
+                showEndScreen();
+            }
+        }
+
+        function showEndScreen() {
+            contentArea.style.display = 'none';
+            menuScreen.style.display = 'none';
+            btnBackMenu.style.display = 'none';
+            endScreen.style.display = 'flex';
+            
+            // Update final progress to 100%
+            progressBar.style.width = `100%`;
+            levelDisplay.innerText = "Abgeschlossen";
+            
+            // Calculate max possible score (8 items L1, 7 items L2, 1 calc L3, 2 calcs L4, 6 items L5)
+            // (8*10) + (7*10) + (1*20) + (2*20) + (6*10) = 80 + 70 + 20 + 40 + 60 = 270 points
+            const maxScore = 270;
+            
+            document.getElementById('final-score').innerText = `${score} / ${maxScore} Punkte`;
+            
+            const msgEl = document.getElementById('end-message');
+            if (score === maxScore) {
+                msgEl.innerText = "Perfekt! Du bist ein echter Wirtschafts-Experte und hast die Funktionsweise sowie die Grenzen des BIP komplett verstanden.";
+                triggerConfetti();
+            } else if (score >= maxScore * 0.7) {
+                msgEl.innerText = "Sehr gute Leistung! Du hast die wesentlichen Konzepte rund um das BIP super verstanden.";
+                triggerConfetti();
+            } else {
+                msgEl.innerText = "Guter Versuch! Ein paar Details waren noch knifflig, aber du hast sicher einiges gelernt. Probiere es doch direkt nochmal!";
+            }
+        }
+
+        // Fun Confetti Animation for the end
+        function triggerConfetti() {
+            const colors = ['#4F46E5', '#10B981', '#38BDF8', '#F59E0B', '#EF4444'];
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Randomize animation
+                const duration = Math.random() * 3 + 2; // 2 to 5 seconds
+                const delay = Math.random() * 2;
+                
+                confetti.animate([
+                    { transform: `translate3d(0, -10vh, 0) rotate(0deg)`, opacity: 1 },
+                    { transform: `translate3d(${Math.random()*200 - 100}px, 100vh, 0) rotate(${Math.random()*720}deg)`, opacity: 0 }
+                ], {
+                    duration: duration * 1000,
+                    delay: delay * 1000,
+                    easing: 'cubic-bezier(.37,0,.63,1)',
+                    fill: 'forwards'
+                });
+                
+                document.body.appendChild(confetti);
+                
+                // Cleanup
+                setTimeout(() => confetti.remove(), (duration + delay) * 1000);
+            }
+        }
+
+        // Start Game
+        initGame();
+
+    </script>
+</body>
+</html>

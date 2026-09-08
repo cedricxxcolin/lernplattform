@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Insel der Bedürfnisse</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
+body { background: #1a252c; color: #f4ecd8; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2073&q=80'); background-size: cover; background-position: center; }
+#game-container { width: 100%; max-width: 1200px; height: 100%; max-height: 800px; position: relative; background: rgba(20, 30, 25, 0.85); backdrop-filter: blur(10px); box-shadow: 0 0 30px rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; overflow: hidden; }
+.screen { display: none; width: 100%; height: 100%; padding: 30px; flex-direction: column; align-items: center; justify-content: center; text-align: center; overflow-y: auto; }
+.screen.active { display: flex; animation: fadeIn 0.5s ease-in-out; }
+h1 { font-size: 3rem; color: #f4ecd8; text-transform: uppercase; letter-spacing: 4px; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.8); }
+h2 { font-size: 2rem; color: #d4af37; margin-bottom: 20px; font-weight: normal; }
+h3 { font-size: 1.5rem; color: #a8c3bc; margin-bottom: 15px; }
+p { font-size: 1.1rem; line-height: 1.6; margin-bottom: 20px; max-width: 800px; color: #d0d0d0; }
+button { background: linear-gradient(135deg, #4a6b5d, #2e4a3d); color: #f4ecd8; border: 1px solid #7a9b8d; padding: 12px 24px; font-size: 1.2rem; cursor: pointer; border-radius: 6px; transition: all 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.3); text-transform: uppercase; letter-spacing: 1px; margin: 10px; }
+button:hover:not(:disabled) { background: linear-gradient(135deg, #5c8272, #3c5e4e); transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.4); }
+button:disabled { background: #333; color: #777; border-color: #555; cursor: not-allowed; }
+.grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; width: 100%; max-width: 1000px; margin-bottom: 20px; }
+.card { background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 15px; cursor: pointer; transition: all 0.2s; text-align: left; }
+.card:hover { border-color: #d4af37; background: rgba(40,40,40,0.7); }
+.card.selected { border-color: #4CAF50; background: rgba(76, 175, 80, 0.2); box-shadow: 0 0 15px rgba(76, 175, 80, 0.4); }
+.card.char-action { border: 1px solid #d4af37; background: linear-gradient(135deg, rgba(212, 175, 55, 0.1), rgba(0,0,0,0.4)); }
+.card.char-action:hover { border-color: #f4ecd8; background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(0,0,0,0.6)); box-shadow: 0 0 10px rgba(212, 175, 55, 0.3); }
+.card-badge { font-size: 0.7rem; background: #d4af37; color: #1a252c; padding: 2px 6px; border-radius: 4px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; margin-left: 10px; flex-shrink: 0; align-self: center;}
+.card h4 { color: #d4af37; margin-bottom: 8px; font-size: 1.2rem; display: flex; justify-content: space-between; align-items: flex-start; }
+.card p { font-size: 0.95rem; margin-bottom: 0; color: #aaa; }
+.dashboard { display: grid; grid-template-columns: 1fr 300px; height: 100%; width: 100%; gap: 20px; text-align: left; }
+.panel { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+.need-group { margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 10px; border-radius: 8px; }
+.need-title { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 8px; color: #f4ecd8; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 4px; }
+.sub-need { display: flex; align-items: center; margin-bottom: 6px; }
+.sub-need-name { width: 140px; font-size: 0.9rem; color: #ccc; }
+.bar-container { flex-grow: 1; background: #222; height: 12px; border-radius: 6px; overflow: hidden; position: relative; margin: 0 10px; border: 1px solid #111; }
+.bar-fill { height: 100%; transition: width 0.5s ease-in-out, background-color 0.5s; }
+.sub-need-value { width: 30px; text-align: right; font-size: 0.9rem; font-weight: bold; }
+.status-panel { display: flex; flex-direction: column; gap: 15px; }
+.team-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.team-member { display: flex; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 6px; border-left: 4px solid #4CAF50; }
+.team-member.dead { border-left-color: #f44336; opacity: 0.5; }
+.team-member-name { font-weight: bold; color: #d4af37; }
+.team-member-role { font-size: 0.8rem; color: #aaa; }
+.special-bar { margin-top: 20px; }
+.special-bar .need-title { color: #a8c3bc; }
+.dashboard-actions { margin-top: auto; display: flex; flex-direction: column; gap: 10px; }
+#day-announcement { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #0a0e11; display: flex; justify-content: center; align-items: center; z-index: 100; font-size: 4rem; color: #d4af37; letter-spacing: 5px; opacity: 0; pointer-events: none; transition: opacity 1s; background-image: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1519046904884-53103b34b206?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80'); background-size: cover; background-position: center; }
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 200; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+.modal { background: #1a252c; border: 1px solid #d4af37; padding: 30px; border-radius: 12px; max-width: 600px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+.change-positive { color: #4CAF50; font-weight: bold; }
+.change-negative { color: #f44336; font-weight: bold; }
+.change-neutral { color: #d4af37; font-weight: bold; }
+.log-area { max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.3); padding: 10px; border-radius: 6px; font-size: 0.85rem; color: #aaa; margin-top: 15px; border: 1px solid rgba(255,255,255,0.05); }
+.log-entry { margin-bottom: 4px; border-bottom: 1px solid rgba(255,255,255,0.02); padding-bottom: 4px; }
+.day-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #d4af37; padding-bottom: 10px; margin-bottom: 20px; }
+.star-rating { font-size: 3rem; color: #d4af37; letter-spacing: 10px; margin: 15px 0; text-shadow: 0 0 15px rgba(212, 175, 55, 0.8); }
+.end-story { font-style: italic; color: #a8c3bc; margin-bottom: 30px; font-size: 1.1rem; line-height: 1.8; border-left: 4px solid #d4af37; padding-left: 20px; text-align: left; }
+.end-verdict { font-size: 1.8rem; font-weight: bold; color: #f4ecd8; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 2px; }
+@keyframes fadeIn { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
+</style>
+</head>
+<body>
+<div id="game-container">
+<div id="screen-title" class="screen active">
+<h1>Insel der Bedürfnisse</h1>
+<h2>Überleben zwischen Mangel, Hoffnung und Entscheidung</h2>
+<p>Ein interaktives Überlebensspiel basierend auf der Maslowschen Bedürfnispyramide.</p>
+<button onclick="nextScreen('screen-intro')">Spiel starten</button>
+</div>
+<div id="screen-intro" class="screen">
+<h2>Die Strandung</h2>
+<p>Sie waren gemeinsam auf einem Schiff unterwegs, als ein schwerer Sturm die See aufriss. In der Nacht zerbarsten Teile des Schiffs, Wasser drang ein, Schreie hallten durch das Dunkel. In letzter Minute konnte sich Ihre Gruppe in ein Rettungsboot retten.</p>
+<p>Als der Morgen anbricht, stranden Sie erschöpft auf einer einsamen Insel mitten im Ozean. Einige Kisten aus dem Schiffbruch treiben noch in Ihre Nähe. Sie haben nur wenig Zeit, um sich zu organisieren.</p>
+<p>Ziel des Spiels ist es, 10 Tage zu überleben oder die Insel erfolgreich zu verlassen. Pro Tag handeln genau zwei zufällige Personen. Sie müssen die Bedürfnisse aller sichern. Physiologische Bedürfnisse wie Hunger und Durst sind existenziell. Wenn grundlegende Bedürfnisse zu wenig erfüllt sind, verschlechtert sich die Handlungsfähigkeit der Gruppe und alle Aktionen werden schwächer.</p>
+<button onclick="nextScreen('screen-players')">Verstanden</button>
+</div>
+<div id="screen-players" class="screen">
+<h2>Gruppengrösse wählen</h2>
+<p>Wie viele Personen haben sich auf die Insel gerettet?</p>
+<div style="display: flex; gap: 20px; justify-content: center;">
+<button onclick="setPlayerCount(3)">3 Personen</button>
+<button onclick="setPlayerCount(4)">4 Personen</button>
+</div>
+</div>
+<div id="screen-characters" class="screen">
+<h2>Das Team zusammenstellen</h2>
+<p id="char-select-info" style="font-weight: bold; color: #d4af37; margin-bottom: 10px;">Wählen Sie genau X Charaktere.</p>
+<p style="font-size: 0.95rem; color: #a8c3bc; max-width: 700px; margin-bottom: 25px; line-height: 1.5;">Wählen Sie Ihr Team weise. Jeder Charakter bringt andere <strong>Startvoraussetzungen</strong> in die Gruppe ein und schaltet im Spielverlauf <strong>einzigartige Spezial-Aktionen</strong> frei. Eine ausgewogene Gruppe ist der Schlüssel zum Überleben.</p>
+<div class="grid-container" id="char-grid"></div>
+<button id="btn-confirm-chars" onclick="confirmCharacters()" disabled>Team bestätigen</button>
+</div>
+<div id="screen-items" class="screen">
+<h2>Gegenstände retten</h2>
+<p>Wählen Sie genau 10 Gegenstände aus den Trümmern.</p>
+<p id="item-select-info">Ausgewählt: 0 von 10</p>
+<div class="grid-container" id="item-grid" style="max-height: 50vh; overflow-y: auto;"></div>
+<button id="btn-confirm-items" onclick="confirmItems()" disabled>Ausrüstung bestätigen</button>
+</div>
+<div id="screen-dashboard" class="screen">
+<div class="dashboard">
+<div class="panel">
+<div class="day-header">
+<h2 id="dash-day-title" style="margin:0;">Tag 1</h2>
+<span id="dash-avg-title" style="color:#d4af37; font-weight:bold;"></span>
+</div>
+<div id="needs-container"></div>
+<div class="log-area" id="main-log"></div>
+</div>
+<div class="panel status-panel">
+<h3>Das Team</h3>
+<div class="team-list" id="dash-team"></div>
+<div class="special-bar">
+<div class="need-title"><span>Basis</span><span id="val-basis">0</span></div>
+<div class="sub-need">
+<div class="bar-container"><div class="bar-fill" id="bar-basis" style="background:#8b5a2b; width:0%;"></div></div>
+</div>
+<p style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:15px;">Lager, Schutz und Infrastruktur.</p>
+<div class="need-title"><span>Flucht</span><span id="val-flucht">0</span></div>
+<div class="sub-need">
+<div class="bar-container"><div class="bar-fill" id="bar-flucht" style="background:#1e90ff; width:0%;"></div></div>
+</div>
+<p style="font-size:0.8rem; color:#aaa; margin-top:5px; margin-bottom:0;">Fortschritt für Rettung und Verlassen der Insel.</p>
+</div>
+<div class="dashboard-actions">
+<button id="btn-start-actions" onclick="startActionPhase()">Aktionen wählen</button>
+<button id="btn-start-night" onclick="startNightPhase()" style="display:none; background: linear-gradient(135deg, #2c3e50, #1a252f);">Nacht beginnen</button>
+</div>
+</div>
+</div>
+</div>
+<div id="screen-action" class="screen">
+<h2 id="action-title">Aktion für</h2>
+<p>Wählen Sie eine Aufgabe. Konkrete Erfolge zeigen sich erst bei der Ausführung.</p>
+<div class="grid-container" id="action-grid"></div>
+</div>
+<div id="screen-result" class="screen">
+<h2>Aktionsergebnis</h2>
+<div id="result-content" style="text-align:left; background:rgba(0,0,0,0.5); padding:20px; border-radius:10px; width:100%; max-width:600px; margin-bottom:20px;"></div>
+<button onclick="nextActionStep()">Weiter</button>
+</div>
+<div id="screen-event" class="screen">
+<h2 style="color:#f44336;">Nacht auf der Insel</h2>
+<h3 id="event-title" style="color:#d4af37;"></h3>
+<p id="event-desc"></p>
+<div id="event-result" style="text-align:left; background:rgba(0,0,0,0.5); padding:20px; border-radius:10px; width:100%; max-width:600px; margin-bottom:20px;"></div>
+<button onclick="finishNight()">Der nächste Morgen</button>
+</div>
+<div id="screen-end" class="screen">
+<h1 id="end-title">Ende</h1>
+<h2 id="end-subtitle" style="font-size: 1.2rem; color: #aaa; margin-bottom: 30px; text-transform: none;"></h2>
+<div style="background: rgba(0,0,0,0.6); padding: 40px; border-radius: 15px; border: 1px solid #d4af37; max-width: 800px; width: 100%; box-shadow: 0 15px 40px rgba(0,0,0,0.9);">
+<div id="end-verdict" class="end-verdict"></div>
+<div id="end-stars" class="star-rating"></div>
+<div id="end-story" class="end-story"></div>
+<h3 style="text-align:left; color:#f4ecd8; border-bottom: 1px solid #555; padding-bottom: 10px; margin-bottom: 15px; font-size: 1.2rem;">Schlussbilanz</h3>
+<div id="end-stats" style="text-align:left; display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom: 10px; font-size: 1.1rem;"></div>
+</div>
+<button onclick="location.reload()" style="margin-top: 30px;">Neu starten</button>
+</div>
+</div>
+<div id="day-announcement">TAG 1</div>
+<div class="modal-overlay" id="escape-modal">
+<div class="modal">
+<h2>Rettung in Sicht!</h2>
+<p>Ihre Gruppe hat eine echte Chance, die Insel zu verlassen. Möchten Sie fliehen oder auf der Insel bleiben und weiterleben?</p>
+<div style="display:flex; justify-content:center; gap:20px;">
+<button onclick="handleEscapeChoice(true)">Fliehen</button>
+<button onclick="handleEscapeChoice(false)">Bleiben</button>
+</div>
+</div>
+</div>
+<div class="modal-overlay" id="death-modal">
+<div class="modal">
+<h2 style="color:#f44336;">Ein tragischer Verlust</h2>
+<p id="death-text"></p>
+<button onclick="closeDeathModal()">Verstanden</button>
+</div>
+</div>
+<script>
+const charsData=[
+{id:1,name:"Mara Stein",role:"Ärztin",desc:"Ruhig, präzise und belastbar. Mara erkennt Risiken früh.",b:{gesundheit:18,schutz:6,gemeinschaft:4},
+acts:[{t:"Versorgen",d:"Mara kümmert sich um Wunden und Erschöpfung.",e:{gesundheit:15,gemeinschaft:5}},{t:"Heilkräuter suchen",d:"Mara sucht gezielt nach lindernden Pflanzen.",e:{gesundheit:11,zukunftsperspektive:4}},{t:"Lagerhygiene verbessern",d:"Mara schafft Ordnung, um Krankheiten zu vermeiden.",e:{gesundheit:9,schutz:6,basis:5}},{t:"Beruhigen",d:"Mara nimmt Angst und Hektik aus der Gruppe.",e:{lebensfreude:9,kommunikation:6}}]},
+{id:2,name:"Jonas Brand",role:"Pfadfinder",desc:"Jonas kennt sich mit Feuer und Überlebenstechniken aus.",b:{schutz:12,zukunftsperspektive:8,selbstvertrauen:6},
+acts:[{t:"Holz sammeln",d:"Jonas beschafft gezielt gutes Material.",e:{schutz:8,basis:9}},{t:"Feuerstelle verbessern",d:"Jonas macht die Feuerstelle sicherer.",e:{schutz:9,basis:8,lebensfreude:3}},{t:"Erkunden",d:"Jonas bewegt sich sicher durch unbekanntes Gelände.",e:{zukunftsperspektive:9,flucht:6,gesundheit:-3}},{t:"Fallen bauen",d:"Jonas errichtet einfache Jagdhilfen.",e:{hunger:12,basis:5}}]},
+{id:3,name:"Elena Cruz",role:"Navigatorin",desc:"Elena denkt langfristig und erkennt Chancen auf Rettung.",b:{zukunftsperspektive:16,lebensfreude:8,kommunikation:4},
+acts:[{t:"Küste kartieren",d:"Elena untersucht Küstenlinie und Wege.",e:{zukunftsperspektive:15,flucht:11}},{t:"Signalplatz bauen",d:"Elena wählt einen guten Ort für Rettungszeichen.",e:{flucht:13,basis:5,schutz:3}},{t:"Rettungsplan erstellen",d:"Elena entwickelt einen klaren Fluchtplan.",e:{zukunftsperspektive:11,kommunikation:5,flucht:9}},{t:"Sterne beobachten",d:"Elena nutzt Himmel und Richtung zur Orientierung.",e:{lebensfreude:7,zukunftsperspektive:9}}]},
+{id:4,name:"Tarek Moser",role:"Handwerker",desc:"Tarek baut und improvisiert aus fast allem etwas Nützliches.",b:{schutz:14,zukunftsperspektive:6,anerkennung:6},
+acts:[{t:"Unterkunft ausbauen",d:"Tarek verbessert das Lager strukturell.",e:{schutz:15,basis:13}},{t:"Werkzeuge improvisieren",d:"Tarek baut nützliche Hilfsmittel.",e:{anerkennung:6,zukunftsperspektive:7,basis:9}},{t:"Wasserstelle sichern",d:"Tarek baut eine sichere Versorgungslösung.",e:{durst:12,schutz:7,basis:6}},{t:"Basis verstärken",d:"Tarek stabilisiert das Lager gegen Abnutzung.",e:{schutz:11,basis:11}}]},
+{id:5,name:"Sofia Keller",role:"Psychologin",desc:"Sofia stärkt den Zusammenhalt in Krisen.",b:{gemeinschaft:14,selbstvertrauen:12,lebensfreude:6},
+acts:[{t:"Streit schlichten",d:"Sofia löst Spannungen in der Gruppe.",e:{gemeinschaft:11,kommunikation:9,lebensfreude:5}},{t:"Mut zusprechen",d:"Sofia gibt Halt und stärkt den Zusammenhalt.",e:{lebensfreude:11,selbstvertrauen:9}},{t:"Gruppenritual durchführen",d:"Sofia schafft ein Gefühl von Zugehörigkeit.",e:{gemeinschaft:9,lebensfreude:9,anerkennung:5}},{t:"Gesprächsrunde leiten",d:"Sofia sorgt für Offenheit und Zuhören.",e:{kommunikation:11,gemeinschaft:7,zukunftsperspektive:4}}]},
+{id:6,name:"Leo Fischer",role:"Angler",desc:"Leo ist geduldig und geschickt bei der Nahrungssuche.",b:{hunger:16,durst:4,selbstvertrauen:4},
+acts:[{t:"Fischen",d:"Leo gewinnt Nahrung direkt aus dem Meer.",e:{hunger:20,selbstvertrauen:5}},{t:"Muscheln sammeln",d:"Leo sucht im flachen Wasser nach leichter Beute.",e:{hunger:12,lebensfreude:4}},{t:"Speerfischen",d:"Leo wagt eine anstrengende Jagd im Wasser.",e:{hunger:16,anerkennung:5,gesundheit:-3}},{t:"Vorräte trocknen",d:"Leo macht gefundene Nahrung länger haltbar.",e:{hunger:10,zukunftsperspektive:5,basis:4}}]},
+{id:7,name:"Nina Graf",role:"Forscherin",desc:"Nina beobachtet, dokumentiert und entdeckt Zusammenhänge.",b:{lebensfreude:14,zukunftsperspektive:10,anerkennung:6},
+acts:[{t:"Pflanzen untersuchen",d:"Nina erkennt Nutzen und Risiken der Pflanzen.",e:{gesundheit:7,zukunftsperspektive:9}},{t:"Inselinneres erforschen",d:"Nina dringt tiefer vor und entdeckt Neues.",e:{zukunftsperspektive:9,lebensfreude:7,gesundheit:-4,flucht:4}},{t:"Spuren deuten",d:"Nina liest Hinweise in der Landschaft.",e:{zukunftsperspektive:8,selbstvertrauen:5}},{t:"Wissensbuch führen",d:"Nina hält Erfahrungen fest.",e:{anerkennung:7,lebensfreude:6,kommunikation:3}}]},
+{id:8,name:"Ben Vogt",role:"Koch",desc:"Ben hebt Moral und Struktur im Lager durch Verwertung.",b:{hunger:12,gemeinschaft:8,anerkennung:8},
+acts:[{t:"Kochen",d:"Ben macht aus Wenigem etwas Wärmendes.",e:{hunger:18,gemeinschaft:6,lebensfreude:5}},{t:"Rationen planen",d:"Ben ordnet Vorräte für gerechtere Nutzung.",e:{zukunftsperspektive:7,hunger:8,anerkennung:5}},{t:"Trinkwasser abkochen",d:"Ben macht Wasser sicherer und nutzbarer.",e:{durst:12,gesundheit:7}},{t:"Gemeinsames Essen organisieren",d:"Ben schafft einen Moment von Normalität.",e:{gemeinschaft:11,hunger:10,lebensfreude:7}}]},
+{id:9,name:"Carla Winter",role:"Rettungsspezialistin",desc:"Carla organisiert Hoffnung und Notfallabläufe.",b:{kommunikation:10,zukunftsperspektive:14,schutz:6},
+acts:[{t:"Signalraketen koordinieren",d:"Carla plant sichtbare Rettungszeichen.",e:{flucht:17,zukunftsperspektive:7}},{t:"Notsignal errichten",d:"Carla baut eine erkennbare Hilfestruktur.",e:{flucht:13,schutz:5,basis:4}},{t:"Rettungsroutine üben",d:"Carla trainiert die Gruppe für den Ernstfall.",e:{zukunftsperspektive:7,kommunikation:6,selbstvertrauen:5}},{t:"Spiegelzeichen senden",d:"Carla nutzt Licht für Aufmerksamkeit.",e:{flucht:12,lebensfreude:4,zukunftsperspektive:5}}]},
+{id:10,name:"Viktor Rost",role:"Ex-Soldat",desc:"Viktor ist diszipliniert und wachsam, fokussiert auf physische Sicherheit.",b:{schutz:16,selbstvertrauen:10,gesundheit:4},
+acts:[{t:"Nachtwache übernehmen",d:"Viktor sichert das Lager in der Dunkelheit.",e:{schutz:15,basis:5,gesundheit:-5}},{t:"Verteidigungswaffen schnitzen",d:"Viktor fertigt Speere und Schutzwaffen an.",e:{basis:9,schutz:11,anerkennung:3}},{t:"Gefahrenzonen absperren",d:"Viktor markiert und sichert riskante Bereiche.",e:{schutz:13,flucht:3}},{t:"Strikte Disziplin einfordern",d:"Viktor zwingt die Gruppe zu harter Ordnung.",e:{basis:11,schutz:7,lebensfreude:-3}}]},
+{id:11,name:"Samira Blum",role:"Musikerin",desc:"Samira hält den Geist der Gruppe am Leben und weckt neue Hoffnung.",b:{lebensfreude:16,gemeinschaft:10,anerkennung:4},
+acts:[{t:"Lieder am Feuer singen",d:"Samira hebt die Stimmung der ganzen Gruppe.",e:{lebensfreude:15,gemeinschaft:9}},{t:"Geschichten erzählen",d:"Samira lenkt von der harten Realität ab.",e:{gemeinschaft:11,anerkennung:7}},{t:"Schönheit im Chaos finden",d:"Samira zeigt der Gruppe kleine Lichtblicke.",e:{zukunftsperspektive:13,lebensfreude:7}},{t:"Kreative Spiele erfinden",d:"Samira sorgt für gemeinsames Lachen.",e:{lebensfreude:11,selbstvertrauen:7,gemeinschaft:5}}]},
+{id:12,name:"Diego Cruz",role:"Barkeeper",desc:"Diego mischt aus ungeniessbaren Früchten und Wasserresten hydrierende Getränke.",b:{durst:14,lebensfreude:10,gemeinschaft:6},
+acts:[{t:"Insel-Cocktails mischen",d:"Diego kreiert ein hydrierendes und aufmunterndes Getränk.",e:{durst:18,lebensfreude:9}},{t:"Saft aus Wurzeln pressen",d:"Diego gewinnt mühsam trinkbare Flüssigkeit.",e:{durst:16,gesundheit:5}},{t:"Abendliche Runde schmeissen",d:"Diego verteilt Getränke und hebt die Moral spürbar.",e:{gemeinschaft:11,lebensfreude:7,durst:12}},{t:"Kokosnüsse fachgerecht öffnen",d:"Diego sorgt schnell und sicher für Nahrung und Wasser.",e:{hunger:8,durst:14,basis:3}}]}
+];
+const itemsData=[
+{id:1,n:"Angelhaken und Schnur",d:"Sichert Nahrung aus dem Meer und gibt Hoffnung.",b:{hunger:10,zukunftsperspektive:4}},
+{id:2,n:"10 Liter Trinkwasser",d:"Die direkteste Rettung vor dem Verdursten.",b:{durst:16}},
+{id:3,n:"5 kg Brot",d:"Füllt sofort die hungrigen Mägen der Gruppe.",b:{hunger:14}},
+{id:4,n:"1 Zelt",d:"Bietet sofortigen Schutz vor den Elementen.",b:{schutz:16}},
+{id:5,n:"Erste Hilfe Set",d:"Kann im Notfall Schlimmeres verhindern.",b:{gesundheit:16}},
+{id:6,n:"Feuerzeug",d:"Wärme, Schutz und ein kleines Licht in der Dunkelheit.",b:{schutz:6,lebensfreude:4}},
+{id:7,n:"Kochtopf",d:"Macht Essen nahrhafter und bringt die Gruppe zusammen.",b:{hunger:6,gemeinschaft:4}},
+{id:8,n:"Plane",d:"Hält den erbarmungslosen Regen ab.",b:{schutz:10}},
+{id:9,n:"Taschenlampe",d:"Vertreibt die Angst und hilft bei der Orientierung.",b:{schutz:4,zukunftsperspektive:4}},
+{id:10,n:"Signalspiegel",d:"Könnte die Aufmerksamkeit eines fernen Schiffs erregen.",b:{zukunftsperspektive:10}},
+{id:11,n:"Seil",d:"Unverzichtbar für den Ausbau des Lagers und Erkundungen.",b:{schutz:6,zukunftsperspektive:3}},
+{id:12,n:"Messer",d:"Hilft beim Verarbeiten von Nahrung und Werkzeugen.",b:{hunger:4,schutz:6}},
+{id:13,n:"Fischernetz",d:"Sorgt für regelmässigen Fang im flachen Wasser.",b:{hunger:12}},
+{id:14,n:"Kompass",d:"Gibt Richtung und das Gefühl, nicht ganz verloren zu sein.",b:{zukunftsperspektive:10,selbstvertrauen:4}},
+{id:15,n:"Notizbuch",d:"Erfahrungen festhalten hilft der Psyche und dem Wissen.",b:{anerkennung:4,lebensfreude:6}},
+{id:16,n:"Solarlampe",d:"Eine sichere Lichtquelle, die die Moral in der Nacht hebt.",b:{schutz:6,lebensfreude:6}},
+{id:17,n:"Decken",d:"Verhindern das Auskühlen und fördern gesunden Schlaf.",b:{gesundheit:8,schutz:6}},
+{id:18,n:"Funkgerät",d:"Die leise Hoffnung, eine Stimme von draussen zu hören.",b:{kommunikation:12,zukunftsperspektive:8}},
+{id:19,n:"Wasserfilter",d:"Macht zweifelhafte Wasserquellen sicher trinkbar.",b:{durst:14,gesundheit:6}},
+{id:20,n:"Werkzeugkiste",d:"Essentiell, um das Lager stabil aufzubauen.",b:{schutz:8,zukunftsperspektive:6}}
+];
+const genActs=[
+{t:"Nahrung suchen",d:"Sie durchkämmen Strand und Insel.",e:{hunger:13,gesundheit:-2,lebensfreude:-1}},{t:"Wasser suchen",d:"Sie suchen nach frischem Wasser.",e:{durst:15,gesundheit:-1}},{t:"Ausruhen",d:"Sie sammeln Kraft und kommen zur Ruhe.",e:{gesundheit:8,selbstvertrauen:2}},{t:"Erkunden",d:"Sie wagen sich weiter ins Inselinnere.",e:{zukunftsperspektive:6,lebensfreude:4,gesundheit:-3,flucht:6}},
+{t:"Feuer bewachen",d:"Sie halten das Feuer am Leben.",e:{schutz:6,basis:4}},{t:"Lager ordnen",d:"Sie bringen Struktur ins Lager.",e:{gemeinschaft:4,schutz:4,basis:3}},{t:"Gespräch führen",d:"Sie sprechen offen über die Lage.",e:{kommunikation:8,gemeinschaft:6,lebensfreude:3}},{t:"Am Strand Wache halten",d:"Sie halten Ausschau nach Schiffen.",e:{zukunftsperspektive:5,selbstvertrauen:3,flucht:7}},
+{t:"Spuren verfolgen",d:"Sie folgen Hinweisen im Sand.",e:{zukunftsperspektive:4,lebensfreude:3,gesundheit:-2}},{t:"Material sammeln",d:"Sie sammeln nützliche Ressourcen.",e:{schutz:4,basis:6,hunger:-2}},{t:"Kochen",d:"Sie bereiten eine einfache Mahlzeit zu.",e:{hunger:11,gemeinschaft:4,lebensfreude:3}},{t:"Reparieren",d:"Sie flicken was im Lager brüchig wurde.",e:{schutz:6,anerkennung:4,basis:5}},
+{t:"Mut machen",d:"Sie richten die Gruppe seelisch auf.",e:{lebensfreude:8,selbstvertrauen:5,gemeinschaft:2}},{t:"Schutz verbessern",d:"Sie verstärken Schlafplätze und Grenzen.",e:{schutz:10,basis:6}},{t:"Rettungszeichen vorbereiten",d:"Sie schaffen sichtbare Zeichen.",e:{zukunftsperspektive:8,flucht:12}},
+{t:"Pflanzen untersuchen",d:"Sie prüfen was nützlich sein könnte.",e:{gesundheit:4,zukunftsperspektive:4,lebensfreude:2}},{t:"Fischen",d:"Sie gewinnen Nahrung aus dem Meer.",e:{hunger:15,selbstvertrauen:3}},{t:"Signalfeuer stärken",d:"Sie machen das Feuer zuverlässiger.",e:{flucht:14,schutz:3,zukunftsperspektive:4}},{t:"Route planen",d:"Sie denken über Wege und Strömungen nach.",e:{zukunftsperspektive:10,kommunikation:3,flucht:8}},
+{t:"Tautropfen sammeln",d:"Sie sammeln frühmorgens Tau von grossen Blättern.",e:{durst:17,gesundheit:2,lebensfreude:1}},{t:"Regenrinne bauen",d:"Sie improvisieren eine Rinne aus Palmenblättern, um Wasser zu fangen.",e:{durst:13,basis:4,zukunftsperspektive:2}},
+{t:"Erfolge feiern",d:"Sie rufen die Gruppe zusammen, um kleine Überlebenserfolge zu würdigen.",e:{anerkennung:8,gemeinschaft:4,lebensfreude:3}},
+{t:"Wunden auswaschen",d:"Sie nutzen wertvolles Süsswasser, um Verletzungen zu behandeln.",e:{gesundheit:10,durst:-4}},
+{t:"Not-Unterkunft erzwingen",d:"Sie arbeiten bis zur totalen Erschöpfung an einem behelfsmässigen Dach.",e:{schutz:16,basis:4,gesundheit:-6,lebensfreude:-4}},
+{t:"Riskante Klippenjagd",d:"Sie klettern ungesichert an scharfen Felsen, um an Nester zu gelangen.",e:{hunger:21,gesundheit:-8,selbstvertrauen:3}},
+{t:"Rationierung durchsetzen",d:"Sie teilen die knappen Funde rigoros und streng ein.",e:{hunger:9,durst:9,zukunftsperspektive:5,lebensfreude:-4}}
+];
+const eventsData=[
+{t:"Kiste an Land gespült",d:"Eine Holzkiste aus dem Wrack wird an den Strand gespült.",e:{hunger:8,zukunftsperspektive:6,basis:5},type:1},{t:"Klarer Quellenfund",d:"Im Inselinneren entdecken Sie eine kleine Süsswasserquelle.",e:{durst:14,gesundheit:6},type:1},{t:"Ruhige Nacht",d:"Die Nacht verläuft trocken, still und ohne Zwischenfälle.",e:{gesundheit:8,lebensfreude:6},type:1},{t:"Fischschwarm nahe Küste",d:"Direkt am Ufer ziehen ungewöhnlich viele Fische vorbei.",e:{hunger:12,selbstvertrauen:5},type:1},{t:"Sonniger Morgen",d:"Das Wetter ist freundlich, die Gruppe spürt neue Energie.",e:{lebensfreude:10,zukunftsperspektive:6},type:1},
+{t:"Treibholz in grosser Menge",d:"Die Strömung bringt nützliches Holz an den Strand.",e:{schutz:8,basis:10},type:1},{t:"Heilpflanze entdeckt",d:"Zwischen den Steinen wächst eine Pflanze mit lindernder Wirkung.",e:{gesundheit:10,zukunftsperspektive:5},type:1},{t:"Gute Sicht aufs Meer",d:"Die Luft ist klar, der Horizont offen, alles wirkt erreichbarer.",e:{zukunftsperspektive:9,lebensfreude:6},type:1},{t:"Gelungene Mahlzeit",d:"Aus Resten und Funden wird überraschend etwas Sättigendes.",e:{hunger:10,gemeinschaft:6},type:1},{t:"Erfolgreiches Signal",d:"Ein entferntes Schiff scheint kurz auf Ihr Zeichen reagiert zu haben.",e:{flucht:12,zukunftsperspektive:8},type:1},
+{t:"Kühle Nachtluft",d:"Die Temperaturen sind angenehm, Schlaf und Erholung gelingen besser.",e:{gesundheit:7,schutz:5},type:1},{t:"Unerwarteter Regenfang",d:"Eine kurze Regenphase füllt einige Behälter.",e:{durst:12,basis:4},type:1},{t:"Zusammenhalt wächst",d:"Nach einem starken Moment wirkt die Gruppe enger verbunden.",e:{gemeinschaft:10,kommunikation:7},type:1},{t:"Nützliche Metallteile",d:"Im Sand finden Sie brauchbare Reste vom Wrack.",e:{basis:8,zukunftsperspektive:6},type:1},{t:"Freundlicher Wind",d:"Rauch und Signale tragen weit hinaus aufs Meer.",e:{flucht:10,schutz:4},type:1},
+{t:"Erfolgreiche Jagdspur",d:"Sie entdecken Hinweise, die Nahrungssuche erleichtern.",e:{hunger:8,zukunftsperspektive:7},type:1},{t:"Klarer Sternenhimmel",d:"Die Nacht gibt Orientierung und ein Gefühl von Ordnung zurück.",e:{zukunftsperspektive:10,lebensfreude:5},type:1},{t:"Wärmender Tag",d:"Die Bedingungen sind angenehm, niemand friert.",e:{schutz:7,lebensfreude:7},type:1},{t:"Mutiger Augenblick",d:"Jemand aus der Gruppe wächst über sich hinaus.",e:{selbstvertrauen:9,anerkennung:6},type:1},{t:"Inselgarten gefunden",d:"Sie entdecken essbare Früchte an einem geschützten Ort.",e:{hunger:11,gesundheit:5},type:1},
+
+{t:"Sicheres Fundament",d:"Das gut ausgebaute Lager schützt vor der Witterung und fördert die Erholung.",e:{},dynamicBasis:"gesundheit",type:1},
+{t:"Stolz auf Erschaffenes",d:"Der Blick auf das funktionierende Lager gibt der Gruppe starken mentalen Auftrieb.",e:{},dynamicBasis:"lebensfreude",type:1},
+{t:"Sicherer Schlaf",d:"Die stabilen Wände der Basis halten die Ängste der Nacht fern.",e:{},dynamicBasis:"schutz",type:1},
+{t:"Infrastruktur-Hoffnung",d:"Die stetigen Verbesserungen am Lager lassen an eine langfristige Rettung glauben.",e:{},dynamicBasis:"zukunftsperspektive",type:1},
+{t:"Gemeinsames Zuhause",d:"Das Lager fühlt sich langsam wie ein echtes, gemeinsames Zuhause an.",e:{},dynamicBasis:"gemeinschaft",type:1},
+
+{t:"Wunderbare Rettungskapsel",d:"Eine intakte Rettungskapsel wird angespült, prall gefüllt mit Vorräten und Ausrüstung.",e:{hunger:30,durst:30,basis:20,schutz:20},type:1},
+{t:"Euphorie-Schub",d:"Ein Moment absoluter Klarheit und gemeinsamen Lachens durchbricht die Dunkelheit. Die Moral explodiert.",e:{lebensfreude:40,gemeinschaft:30,selbstvertrauen:30},type:1},
+{t:"Perfekter Inseltag",d:"Die Insel zeigt sich von ihrer paradiesischen Seite. Reiche Beute, sicheres Wasser und traumhaftes Wetter.",e:{hunger:25,durst:25,gesundheit:25,lebensfreude:20},type:1},
+{t:"Funkkontakt!",d:"Für wenige Sekunden hören Sie eine verzerrte Stimme aus einem alten Funkgerät. Die Rettung scheint greifbar!",e:{flucht:30,zukunftsperspektive:40,lebensfreude:30},type:1},
+{t:"Gesundheits-Wunder",d:"Eine seltene, stark heilende Quelle wäscht alle Erschöpfung und Krankheit aus den Gliedern der Gruppe.",e:{gesundheit:40,schutz:20,selbstvertrauen:20},type:1},
+
+{t:"Tropenregen",d:"Ein heftiger Regen durchnässt Schlafplätze und Vorräte.",e:{schutz:-12,gesundheit:-7,basis:-8},type:-1},{t:"Schlaflose Nacht",d:"Lärm, Angst und Unruhe verhindern echte Erholung.",e:{gesundheit:-9,lebensfreude:-8},type:-1},{t:"Verdorbenes Wasser",d:"Ein Teil des gesammelten Wassers war unbrauchbar.",e:{durst:-12,gesundheit:-9},type:-1},{t:"Streit im Lager",d:"Eine Kleinigkeit eskaliert und belastet die Gruppe.",e:{gemeinschaft:-12,kommunikation:-10,lebensfreude:-7},type:-1},{t:"Verletzung an Felsen",d:"Beim Klettern oder Tragen verletzt sich jemand.",e:{gesundheit:-12,selbstvertrauen:-7},type:-1},
+{t:"Feuer fast erloschen",d:"Glut, Wärme und Sicherheit gehen beinahe verloren.",e:{schutz:-11,basis:-7,zukunftsperspektive:-6},type:-1},{t:"Vorräte verdorben",d:"Ein Teil der Nahrung wird ungeniessbar.",e:{hunger:-13,lebensfreude:-6},type:-1},{t:"Brennende Sonne",d:"Die Hitze laugt alle aus und erschwert das Arbeiten.",e:{durst:-14,gesundheit:-7},type:-1},{t:"Sand in den Augen",d:"Wind und Staub machen den Tag anstrengend.",e:{lebensfreude:-9,kommunikation:-6},type:-1},{t:"Nächtliche Geräusche",d:"Unbekannte Geräusche im Dunkeln schüren Angst.",e:{schutz:-8,zukunftsperspektive:-8,selbstvertrauen:-7},type:-1},
+{t:"Scharfkantiger Verlust",d:"Ein wichtiges Werkzeug geht kaputt oder verloren.",e:{basis:-10,anerkennung:-6},type:-1},{t:"Mückenplage",d:"Stiche und schlechter Schlaf schwächen die Gruppe.",e:{gesundheit:-10,lebensfreude:-7},type:-1},{t:"Falsche Hoffnung",d:"Ein vermeintliches Rettungszeichen entpuppt sich als Täuschung.",e:{zukunftsperspektive:-12,lebensfreude:-8},type:-1},{t:"Salzwasser im Vorrat",d:"Ein Fehler macht Wasserversorgung unbrauchbar.",e:{durst:-13,selbstvertrauen:-6},type:-1},{t:"Lager verrutscht",d:"Wind oder Bodenbewegung beschädigen die Ordnung.",e:{schutz:-10,basis:-9},type:-1},
+{t:"Kraftloser Tag",d:"Die Gruppe wirkt insgesamt erschöpft und langsam.",e:{hunger:-9,lebensfreude:-8,gesundheit:-6},type:-1},{t:"Rückschlag bei Rettungsplan",d:"Eine aufgebaute Idee erweist sich als untauglich.",e:{flucht:-12,zukunftsperspektive:-9},type:-1},{t:"Nasser Brennstoff",d:"Das Feuer wird unzuverlässig und schwer zu halten.",e:{schutz:-9,basis:-8},type:-1},{t:"Einsamkeitsschub",d:"Die Realität der Isolation trifft die Gruppe mit Wucht.",e:{lebensfreude:-11,gemeinschaft:-7},type:-1},{t:"Ungeschickter Unfall",d:"Beim Hantieren geht etwas schief.",e:{gesundheit:-9,basis:-7,anerkennung:-6},type:-1},
+{t:"Schimmel im Lager",d:"Schimmel befällt einen Teil der Ausrüstung.",e:{basis:-9,gesundheit:-6},type:-1},{t:"Steinschlag",d:"Ein kleiner Erdrutsch sorgt in der Nähe für Panik.",e:{schutz:-8,selbstvertrauen:-7},type:-1},
+{t:"Giftige Beere",d:"Jemand isst aus Versehen eine leicht giftige Frucht.",e:{gesundheit:-12,hunger:-6},type:-1},{t:"Starker Wind",d:"Ein unerbittlicher Wind bläst den Sand überall hin.",e:{lebensfreude:-8,durst:-7},type:-1},
+{t:"Heimweh",d:"Gedanken an Zuhause rauben der Gruppe die Hoffnung.",e:{lebensfreude:-10,zukunftsperspektive:-9},type:-1},{t:"Krabbeltiere im Schlafplatz",d:"Eine Horde Insekten überfällt nachts das Lager.",e:{schutz:-7,gesundheit:-7,lebensfreude:-6},type:-1},
+{t:"Verirrter Vogel",d:"Ein panischer Vogel flattert durchs Lager und zerstört Vorräte.",e:{hunger:-8,basis:-6},type:-1},{t:"Fieberanfall",d:"Ein Mitglied der Gruppe bekommt plötzlich hohes Fieber.",e:{gesundheit:-11,gemeinschaft:-6},type:-1},
+{t:"Reissende Strömung",d:"Beim Waschen wird wichtige Ausrüstung fast weggespült.",e:{basis:-7,anerkennung:-6},type:-1},{t:"Paranoia",d:"Ein seltsames Geräusch lässt Misstrauen in der Gruppe wachsen.",e:{kommunikation:-9,gemeinschaft:-8},type:-1},
+{t:"Schwelender Brand",d:"Das Feuer gerät kurz ausser Kontrolle und versengt Material.",e:{basis:-10,schutz:-8},type:-1},{t:"Trübes Wasser",d:"Das gesammelte Wasser schmeckt heute extrem brackig.",e:{durst:-10,lebensfreude:-7},type:-1},
+{t:"Knöchel verstaucht",d:"Ein Fehltritt auf felsigem Grund schränkt die Mobilität ein.",e:{gesundheit:-9,flucht:-7},type:-1},{t:"Riss im Dach",d:"Das Dach des Lagers reisst ein und muss mühsam repariert werden.",e:{schutz:-10,basis:-8},type:-1},
+{t:"Fehlende Worte",d:"Ein Tag voller Schweigen baut eine unsichtbare Mauer auf.",e:{kommunikation:-11,selbstvertrauen:-6},type:-1},{t:"Erschöpfende Hitze",d:"Selbst im Schatten ist die Hitze unerträglich und zehrt an den Nerven.",e:{durst:-9,gesundheit:-8},type:-1},
+{t:"Verlorene Orientierung",d:"Ein kleiner Erkundungsgang endet fast im Desaster.",e:{zukunftsperspektive:-8,selbstvertrauen:-8},type:-1},{t:"Kaputte Schuhe",d:"Das Schuhwerk gibt den Geist auf, jeder Schritt schmerzt.",e:{gesundheit:-7,lebensfreude:-8},type:-1},
+{t:"Streit um Rationen",d:"Die knappe Nahrung führt zu einem lauten Konflikt.",e:{gemeinschaft:-10,hunger:-6},type:-1},{t:"Nächtlicher Kälteeinbruch",d:"Die Temperaturen fallen unerwartet tief.",e:{schutz:-9,gesundheit:-8,lebensfreude:-6},type:-1},
+{t:"Kurzer Sturm, klare Luft danach",d:"Der Sturm richtet Schaden an, danach ist Sicht weit.",e:{schutz:-9,flucht:8,zukunftsperspektive:5},type:0},{t:"Erschöpfende Jagd, gute Beute",d:"Nahrungssuche kostet Kraft, lohnt sich aber.",e:{hunger:12,gesundheit:-8,selbstvertrauen:5},type:0},{t:"Unheimliche Höhle",d:"Eine Höhle bietet Schutz, wirkt aber bedrohlich.",e:{schutz:10,lebensfreude:-8,basis:5},type:0},{t:"Streit mit Erkenntnis",d:"Ein harter Konflikt bringt wichtige Wahrheiten.",e:{kommunikation:8,gemeinschaft:-8,zukunftsperspektive:5},type:0},{t:"Schwerer Marsch, neue Route",d:"Anstrengender Weg zeigt möglichen Vorteil.",e:{gesundheit:-8,flucht:10,zukunftsperspektive:7},type:0},
+{t:"Seltene Früchte",d:"Nahrung gefunden, unsicher ob verträglich.",e:{hunger:10,gesundheit:-6,lebensfreude:4},type:0},{t:"Wrackteil mit Risiko",d:"Brauchbares Teil geborgen, fast zu weit gegangen.",e:{basis:9,gesundheit:-7,zukunftsperspektive:5},type:0},{t:"Regen und Gemeinschaft",d:"Regen ist lästig, bringt aber gemeinsamen Moment.",e:{durst:8,gemeinschaft:7,schutz:-7},type:0},{t:"Fernes Schiff am Horizont",d:"Rettung scheint greifbar, dann verschwindet Silhouette.",e:{flucht:9,lebensfreude:-6,zukunftsperspektive:6},type:0},{t:"Neue Ordnung aus Mangel",d:"Die Knappheit zwingt zu besserer Organisation.",e:{anerkennung:6,zukunftsperspektive:6,hunger:-7,gemeinschaft:4},type:0},
+{t:"Zerstörerischer Orkan",d:"Ein beispielloser Sturm wütet über die Insel und reisst alles mit sich.",e:{schutz:-30,basis:-20,gesundheit:-15,lebensfreude:-15},type:-1},
+{t:"Vergiftete Vorräte",d:"Ein unbemerkter Pilzbefall hat grosse Teile der Nahrung und Wasservorräte zerstört.",e:{hunger:-25,durst:-25,gesundheit:-20},type:-1},
+{t:"Heftiges Erdbeben",d:"Die Erde bebt! Das Lager stürzt in sich zusammen und tiefe Risse durchziehen den Boden.",e:{basis:-30,schutz:-25,zukunftsperspektive:-20,selbstvertrauen:-15},type:-1},
+{t:"Ausbruch einer Seuche",d:"Eine gefährliche Tropenkrankheit breitet sich rasend schnell im Lager aus.",e:{gesundheit:-30,gemeinschaft:-20,lebensfreude:-20},type:-1},
+{t:"Katastrophale Flutwelle",d:"Eine gigantische Welle überspült den Strand und vernichtet monatelange Arbeit.",e:{flucht:-30,basis:-25,schutz:-20,durst:-15},type:-1},
+{t:"Tragischer Felssturz",d:"Beim Sammeln von Holz lösen sich schwere Felsbrocken. Jemand wird unter den Steinen begraben.",e:{lebensfreude:-30,gemeinschaft:-25,zukunftsperspektive:-20},type:-1,lethal:true},
+{t:"Tödlicher Schlangenbiss",d:"Ein unachtsamer Schritt ins hohe Gras hat fatale Folgen. Das Gift wirkt rasend schnell.",e:{lebensfreude:-30,gemeinschaft:-25,selbstvertrauen:-20},type:-1,lethal:true},
+{t:"In die Tiefe gerissen",d:"Eine tückische Unterströmung zieht jemanden beim Waschen unaufhaltsam ins offene Meer.",e:{lebensfreude:-30,gemeinschaft:-25,flucht:-10},type:-1,lethal:true},
+{t:"Schweres Fieber",d:"Trotz aller Bemühungen verliert jemand in der Nacht den Kampf gegen ein rasend schnelles Tropenfieber.",e:{lebensfreude:-30,gemeinschaft:-25,gesundheit:-15},type:-1,lethal:true},
+{t:"Spurlos verschwunden",d:"Am Morgen ist ein Schlafplatz leer. Nur Spuren führen in den dichten Dschungel. Wir sehen diese Person nie wieder.",e:{lebensfreude:-30,gemeinschaft:-30,selbstvertrauen:-25},type:-1,lethal:true},
+{t:"Meisterwerk des Überlebens",d:"Das komplexe Lager beweist der Gruppe, wozu sie fähig ist, und stärkt den Glauben an sich selbst.",e:{},dynamicBasis:"selbstvertrauen",type:1},
+{t:"Sichtbarer Beitrag",d:"Jeder Einzelne sieht seinen Anteil an der Basis, was ein starkes Gefühl der Wertschätzung auslöst.",e:{},dynamicBasis:"anerkennung",type:1},
+{t:"Zentraler Treffpunkt",d:"Ein gut ausgebauter Platz im Lager fördert stundenlange, tiefe Gespräche am Abend.",e:{},dynamicBasis:"kommunikation",type:1},
+{t:"Sichere Vorratskammer",d:"Die robuste Basis schützt gefundene Nahrung perfekt vor Tieren und Fäulnis.",e:{},dynamicBasis:"hunger",type:1},
+{t:"Effiziente Wasserfallen",d:"Die cleveren Basis-Strukturen sammeln den nächtlichen Tau optimal ein.",e:{},dynamicBasis:"durst",type:1},
+{t:"Rettungsboje gesichtet",d:"Eine alte Rettungsboje treibt vorbei. Sie liefert wertvolle Materialien für einen Fluchtplan.",e:{flucht:15,zukunftsperspektive:10,basis:5},type:1},
+{t:"Flugzeug am Himmel",d:"Ein Flugzeug zieht hoch oben seine Kondensstreifen. Die Gruppe arbeitet fieberhaft an neuen Signalen.",e:{flucht:20,lebensfreude:15,zukunftsperspektive:15},type:1},
+{t:"Intakte Seekarte",d:"In einer wasserdichten Hülle am Strand finden Sie eine Seekarte der Region.",e:{flucht:18,selbstvertrauen:10,kommunikation:5},type:1},
+{t:"Entdeckte Meeresströmung",d:"Durch Beobachtung des Treibguts erkennen Sie eine starke, ablandige Strömung, perfekt für ein Floss.",e:{flucht:15,zukunftsperspektive:12},type:1},
+{t:"Leuchtrakete gefunden",d:"Im Sand vergraben stossen Sie auf eine unversehrte Signalrakete. Ein massiver Hoffnungsschimmer!",e:{flucht:25,lebensfreude:10,zukunftsperspektive:20},type:1}
+];
+const needNames={hunger:"Hunger",durst:"Durst",schutz:"Schutz",gesundheit:"Gesundheit",gemeinschaft:"Gemeinschaft",kommunikation:"Kommunikation",selbstvertrauen:"Selbstvertrauen",anerkennung:"Anerkennung",lebensfreude:"Lebensfreude",zukunftsperspektive:"Zukunftsperspektive",basis:"Basis",flucht:"Flucht"};
+let s={
+day:1,pCount:0,t:[],selI:[],log:[],
+n:{hunger:50,durst:57,schutz:-20,gesundheit:40,gemeinschaft:55,kommunikation:48,selbstvertrauen:46,anerkennung:40,lebensfreude:38,zukunftsperspektive:42,basis:18,flucht:8},
+aStep:0,aChars:[],aChoices:[],aMultLogs:[],escapeOffered:false,actionsDone:false,availableEvents:[]
+};
+function cNeed(val){return Math.max(0,Math.min(100,Math.round(val)));}
+function getCol(val){if(val>=60)return "#4CAF50";if(val>=30)return "#d4af37";if(val>=15)return "#ff9800";return "#f44336";}
+function getAvg(n1,n2){return Math.round((s.n[n1]+s.n[n2])/2);}
+function nextScreen(id){document.querySelectorAll('.screen').forEach(el=>el.classList.remove('active'));document.getElementById(id).classList.add('active');}
+function setPlayerCount(num){
+s.pCount=num;
+s.t=[];
+if(num===3){s.n.hunger=50;s.n.durst=57;}
+else if(num===4){s.n.hunger=40;s.n.durst=47;}
+document.getElementById('char-select-info').innerText=`Wählen Sie genau ${num} Charaktere.`;
+renderCharSelect();
+nextScreen('screen-characters');
+}
+function renderCharSelect(){
+const g=document.getElementById('char-grid');g.innerHTML='';
+charsData.forEach(c=>{
+const d=document.createElement('div');d.className='card';
+d.innerHTML=`<h4>${c.name}</h4><p style="color:#a8c3bc;font-weight:bold;margin-bottom:5px;">${c.role}</p><p>${c.desc}</p>`;
+d.onclick=()=>{
+if(s.t.includes(c)){s.t=s.t.filter(x=>x!==c);d.classList.remove('selected');}
+else if(s.t.length<s.pCount){s.t.push(c);d.classList.add('selected');}
+document.getElementById('btn-confirm-chars').disabled=s.t.length!==s.pCount;
+};g.appendChild(d);});
+}
+function confirmCharacters(){s.t.forEach(c=>{for(let k in c.b)s.n[k]+=c.b[k];c.dead=false;});renderItemSelect();nextScreen('screen-items');}
+function renderItemSelect(){
+const g=document.getElementById('item-grid');g.innerHTML='';
+itemsData.forEach(i=>{
+const d=document.createElement('div');d.className='card';
+d.innerHTML=`<h4>${i.n}</h4><p>${i.d}</p>`;
+d.onclick=()=>{
+if(s.selI.includes(i)){s.selI=s.selI.filter(x=>x!==i);d.classList.remove('selected');}
+else if(s.selI.length<10){s.selI.push(i);d.classList.add('selected');}
+document.getElementById('item-select-info').innerText=`Ausgewählt: ${s.selI.length} von 10`;
+document.getElementById('btn-confirm-items').disabled=s.selI.length!==10;
+};g.appendChild(d);});
+}
+function confirmItems(){
+s.selI.forEach(i=>{for(let k in i.b)s.n[k]+=i.b[k];});
+for(let k in s.n)s.n[k]=cNeed(s.n[k]);
+s.availableEvents = Array.from({length: eventsData.length}, (_, i) => i);
+startDay();
+}
+function startDay(){
+s.actionsDone=false;
+const da=document.getElementById('day-announcement');
+da.innerText=`TAG ${s.day}`;da.style.opacity=1;
+setTimeout(()=>{da.style.opacity=0;renderDashboard();nextScreen('screen-dashboard');},2000);
+}
+function renderDashboard(){
+document.getElementById('dash-day-title').innerText=`Tag ${s.day} von 10`;
+const ov=Math.round(Object.values(s.n).slice(0,10).reduce((a,b)=>a+b,0)/10);
+document.getElementById('dash-avg-title').innerText=`Ø Zustand: ${ov}`;
+const groups=[
+{t:"Physiologische Bedürfnisse",n:["hunger","durst"]},{t:"Sicherheitsbedürfnisse",n:["schutz","gesundheit"]},
+{t:"Soziale Bedürfnisse",n:["gemeinschaft","kommunikation"]},{t:"Individualbedürfnisse",n:["selbstvertrauen","anerkennung"]},
+{t:"Selbstverwirklichung",n:["lebensfreude","zukunftsperspektive"]}
+];
+const nc=document.getElementById('needs-container');nc.innerHTML='';
+groups.forEach(g=>{
+const avg=getAvg(g.n[0],g.n[1]);
+let h=`<div class="need-group"><div class="need-title"><span>${g.t}</span><span style="color:${getCol(avg)}">${avg}</span></div>`;
+g.n.forEach(k=>{
+h+=`<div class="sub-need"><div class="sub-need-name">${needNames[k]}</div><div class="bar-container"><div class="bar-fill" style="width:${s.n[k]}%;background:${getCol(s.n[k])}"></div></div><div class="sub-need-value" style="color:${getCol(s.n[k])}">${s.n[k]}</div></div>`;
+});h+=`</div>`;nc.innerHTML+=h;
+});
+document.getElementById('dash-team').innerHTML=s.t.map(c=>`<div class="team-member ${c.dead?'dead':''}"><div class="team-member-name">${c.name} ${c.dead?'(Verstorben)':''}</div><div class="team-member-role">${c.role}</div></div>`).join('');
+document.getElementById('val-basis').innerText=s.n.basis;document.getElementById('bar-basis').style.width=`${s.n.basis}%`;
+document.getElementById('val-flucht').innerText=s.n.flucht;document.getElementById('bar-flucht').style.width=`${s.n.flucht}%`;
+const logEl=document.getElementById('main-log');
+logEl.innerHTML=s.log.map(l=>`<div class="log-entry">${l}</div>`).reverse().join('');
+if(s.actionsDone){
+document.getElementById('btn-start-actions').style.display='none';
+document.getElementById('btn-start-night').style.display='block';
+}else{
+document.getElementById('btn-start-actions').style.display='block';
+document.getElementById('btn-start-night').style.display='none';
+}
+}
+function addLog(txt){s.log.push(`[Tag ${s.day}] `+txt);if(s.log.length>30)s.log.shift();}
+function startActionPhase(){
+const alive=s.t.filter(c=>!c.dead);
+if(alive.length===0){endGame("Die Gruppe ist vernichtet.", "fail");return;}
+if(alive.length===1)s.aChars=[alive[0],alive[0]];
+else{let shuffled=[...alive].sort(()=>0.5-Math.random());s.aChars=[shuffled[0],shuffled[1]];}
+addLog(`Heute handeln: ${s.aChars[0].name} und ${s.aChars[1].name}`);
+s.aStep=0;
+buildActionScreen();
+}
+function buildActionScreen(){
+const c=s.aChars[s.aStep];
+document.getElementById('action-title').innerText=`Aktion für ${c.name}`;
+let gOpts=[...genActs].sort(()=>0.5-Math.random()).slice(0,4);
+let cOpts=[...c.acts].sort(()=>0.5-Math.random()).slice(0,2);
+s.aChoices=[...gOpts,...cOpts].sort(()=>0.5-Math.random());
+const g=document.getElementById('action-grid');g.innerHTML='';
+s.aChoices.forEach(a=>{
+const isSpecial = c.acts.includes(a);
+const d=document.createElement('div');
+d.className='card' + (isSpecial ? ' char-action' : '');
+d.innerHTML=`<h4>${a.t}${isSpecial ? '<span class="card-badge">Spezial</span>' : ''}</h4><p>${a.d}</p>`;
+d.onclick=()=>executeAction(c,a);
+g.appendChild(d);
+});
+nextScreen('screen-action');
+}
+function getMults(){
+const pAvg=getAvg("hunger","durst"),sAvg=getAvg("schutz","gesundheit"),soAvg=getAvg("gemeinschaft","kommunikation");
+let p=pAvg>60?1:pAvg>40?0.8:pAvg>20?0.6:0.4;
+let sec=sAvg>60?1:sAvg>40?0.9:sAvg>20?0.75:0.55;
+let soc=soAvg>60?1:soAvg>40?0.95:soAvg>20?0.8:0.6;
+return {p,sec,soc};
+}
+function executeAction(char,act){
+const m=getMults();
+let eff={};s.aMultLogs=[];
+let pFlag=false,secFlag=false,socFlag=false;
+for(let k in act.e){
+let v=act.e[k];
+if(v>0){
+v*=m.p;pFlag=true;
+if(!["hunger","durst"].includes(k)){v*=m.sec;secFlag=true;}
+if(["selbstvertrauen","anerkennung","lebensfreude","zukunftsperspektive"].includes(k)){v*=m.soc;socFlag=true;}
+}
+eff[k]=Math.round(v);
+}
+if(pFlag&&m.p<1)s.aMultLogs.push("Physiologischer Mangel schwächte den Erfolg.");
+if(secFlag&&m.sec<1)s.aMultLogs.push("Mangelnde Sicherheit behinderte die Aktion.");
+if(socFlag&&m.soc<1)s.aMultLogs.push("Soziale Anspannung verringerte den persönlichen Gewinn.");
+let rH=`<h3>Auswirkungen:</h3><ul style="list-style-type:none;padding:0;">`;
+let logTxt=`${char.name} wählt "${act.t}". `;
+for(let k in eff){
+s.n[k]=cNeed(s.n[k]+eff[k]);
+let sign=eff[k]>0?'+':eff[k]<0?'':'';
+let cls=eff[k]>0?'change-positive':eff[k]<0?'change-negative':'change-neutral';
+rH+=`<li>${needNames[k]}: <span class="${cls}">${sign}${eff[k]}</span></li>`;
+logTxt+=`${needNames[k]} ${sign}${eff[k]}, `;
+}
+rH+=`</ul>`;
+if(s.aMultLogs.length>0)rH+=`<p style="margin-top:15px;color:#ff9800;font-size:0.9rem;">${[...new Set(s.aMultLogs)].join(' ')}</p>`;
+addLog(logTxt.slice(0,-2));
+document.getElementById('result-content').innerHTML=rH;
+nextScreen('screen-result');
+}
+function nextActionStep(){
+s.aStep++;
+if(s.aStep<2)buildActionScreen();
+else{s.actionsDone=true;renderDashboard();nextScreen('screen-dashboard');}
+}
+function startNightPhase(){
+if(s.availableEvents.length === 0) s.availableEvents = Array.from({length: eventsData.length}, (_, i) => i);
+let rIndex = Math.floor(Math.random() * s.availableEvents.length);
+let evIndex = s.availableEvents[rIndex];
+s.availableEvents.splice(rIndex, 1);
+const ev = eventsData[evIndex];
+
+let eff={...ev.e};
+let displayDesc = ev.d;
+
+if(ev.dynamicBasis){
+    let bonus = Math.round(s.n.basis * 0.40);
+    eff[ev.dynamicBasis] = (eff[ev.dynamicBasis] || 0) + bonus;
+    displayDesc += ` (Bonus durch Basis: +${bonus} ${needNames[ev.dynamicBasis]})`;
+}
+
+if(s.n.basis>70&&eff.schutz<0)eff.schutz=Math.min(0,eff.schutz+2);
+else if(s.n.basis<20&&eff.schutz<0)eff.schutz-=2;
+
+let lethalMsg = "";
+if(ev.lethal){
+  let alive = s.t.filter(c => !c.dead);
+  if(alive.length > 0){
+    let victim = alive[Math.floor(Math.random() * alive.length)];
+    victim.dead = true;
+    lethalMsg = `<div style="margin-top:20px; padding-top:15px; border-top:2px solid #f44336; text-align:center;">
+                 <span style="color:#f44336; font-weight:bold; font-size:1.2rem;">☠️ Tragödie: ${victim.name} hat dieses Ereignis nicht überlebt!</span>
+                 </div>`;
+    addLog(`Tragödie: ${victim.name} ist bei einem nächtlichen Vorfall gestorben.`);
+  }
+}
+
+let rH=`<ul style="list-style-type:none;padding:0;">`;
+let logTxt=`Ereignis: ${ev.t}. `;
+for(let k in eff){
+s.n[k]=cNeed(s.n[k]+eff[k]);
+let sign=eff[k]>0?'+':eff[k]<0?'':'';
+let cls=eff[k]>0?'change-positive':eff[k]<0?'change-negative':'change-neutral';
+rH+=`<li>${needNames[k]}: <span class="${cls}">${sign}${eff[k]}</span></li>`;
+logTxt+=`${needNames[k]} ${sign}${eff[k]}, `;
+}
+rH+=`</ul>`;
+addLog(logTxt.slice(0,-2));
+document.getElementById('event-title').innerText=ev.t;
+document.getElementById('event-desc').innerText=displayDesc;
+document.getElementById('event-result').innerHTML=rH + lethalMsg;
+nextScreen('screen-event');
+}
+function finishNight(){
+let nd={hunger:-10,durst:-8,gesundheit:-2,lebensfreude:-2,zukunftsperspektive:-2};
+if(s.n.hunger<25)nd.gesundheit-=3;
+if(s.n.durst<25)nd.gesundheit-=3;
+if(s.n.gemeinschaft<30)nd.lebensfreude-=2;
+if(s.n.schutz<25)nd.gesundheit-=2;
+for(let k in nd)s.n[k]=cNeed(s.n[k]+nd[k]);
+addLog(`Nachtverbrauch: Hunger ${nd.hunger}, Durst ${nd.durst}, Gesundheit ${nd.gesundheit}, Lebensfreude ${nd.lebensfreude}, Zukunft ${nd.zukunftsperspektive}`);
+let deadTrigger=false;
+if(s.n.hunger<10||s.n.durst<10||s.n.schutz<10||s.n.gesundheit<10){
+let alive=s.t.filter(c=>!c.dead);
+if(alive.length>0){
+let victim=alive[Math.floor(Math.random()*alive.length)];
+victim.dead=true;
+deadTrigger=true;
+document.getElementById('death-text').innerText=`Wegen drastischem Mangel an Grundbedürfnissen ist ${victim.name} in der Nacht verstorben.`;
+document.getElementById('death-modal').style.display='flex';
+addLog(`${victim.name} ist durch Mangel verstorben.`);
+}
+}
+if(!deadTrigger)checkState();
+}
+function closeDeathModal(){
+document.getElementById('death-modal').style.display='none';
+checkState();
+}
+function checkState(){
+for(let k in s.n)if(s.n[k]<=0&&k!=="basis"&&k!=="flucht"){endGame("Ein Bedürfnis ist auf 0 gefallen. Die Gruppe zerbricht.", "fail");return;}
+if(s.t.filter(c=>!c.dead).length===0){endGame("Alle sind verstorben.", "fail");return;}
+if(s.n.flucht>=100&&!s.escapeOffered){document.getElementById('escape-modal').style.display='flex';return;}
+s.day++;
+if(s.day>10){
+if(s.n.flucht>=100)endGame("Zeit abgelaufen, aber Flucht war bereit. Sie entschieden sich bewusst zu bleiben.", "survive");
+else endGame("Tag 10 erreicht. Das Überleben geht weiter.", "survive");
+return;
+}
+startDay();
+}
+function handleEscapeChoice(fly){
+document.getElementById('escape-modal').style.display='none';
+s.escapeOffered=true;
+if(fly)endGame("Flucht geglückt! Sie konnten die Insel verlassen.", "escape");
+else checkState();
+}
+function endGame(reason, type){
+document.getElementById('end-subtitle').innerText=reason;
+
+let stars = 0;
+let evalTxt = "";
+let storyTxt = "";
+
+// Flaschenhals-Prinzip für die Bewertung
+let aliveCount = s.t.filter(c => !c.dead).length;
+let noDead = (aliveCount === s.t.length);
+let coreNeeds = [s.n.hunger, s.n.durst, s.n.gesundheit, s.n.schutz];
+let minCore = Math.min(...coreNeeds);
+let upperNeeds = [s.n.gemeinschaft, s.n.kommunikation, s.n.selbstvertrauen, s.n.anerkennung, s.n.lebensfreude, s.n.zukunftsperspektive];
+let upperAvg = Math.round(upperNeeds.reduce((a,b)=>a+b,0)/upperNeeds.length);
+let totalAvg = Math.round(Object.values(s.n).slice(0,10).reduce((a,b)=>a+b,0)/10);
+
+if (type === "fail") {
+    stars = 0;
+    evalTxt = "Gescheitert";
+    storyTxt = "Die Insel war gnadenlos. Nach erbittertem Kampf gegen die Elemente, den Mangel und die eigenen Abgründe brach die Gruppe schliesslich auseinander. Was bleibt, ist nur das Flüstern des Windes und verblasste Spuren im Sand.";
+} else if (type === "escape") {
+    stars = 5;
+    evalTxt = "Legendäre Flucht";
+    storyTxt = "Ein lautes Hupen zerreisst die Stille. Ein Schiff! Die Signalraketen und Ihr unermüdlicher Wille haben funktioniert. Als Sie die rettende Reling greifen und zurück auf die kleiner werdende Insel blicken, wissen Sie: Diese Tage haben Sie für immer verändert.";
+} else if (type === "survive") {
+    if (!noDead || minCore < 15) { 
+        stars = 1; 
+        evalTxt = "Ungewisse Zukunft"; 
+        storyTxt = "Tag 10 bricht an. Sie haben die Nächte überstanden, doch die Erschöpfung sitzt tief. Wichtige Grundbedürfnisse sind kritisch knapp. Die Zukunft auf der Insel bleibt ungewiss, aber solange man atmet, gibt es noch Hoffnung.";
+    }
+    else if (minCore < 30) { 
+        stars = 2; 
+        evalTxt = "Knappes Überleben"; 
+        storyTxt = "Tag 10 bricht an. Sie haben sich hartnäckig gegen die Natur behauptet. Das reine Überleben ist fürs Erste gesichert, aber für den Aufbau einer erfüllten Gemeinschaft fehlten bisher die Kraft und die Mittel.";
+    }
+    else if (minCore >= 50 && totalAvg >= 65) { 
+        stars = 5; 
+        evalTxt = "Beeindruckende Gemeinschaft"; 
+        storyTxt = "Tag 10 bricht an. Aus Gestrandeten ist eine funktionierende, starke Gemeinschaft geworden, die in Respekt und Fülle zusammenlebt. Alle sind gesund und wohlauf. Ein absolutes Vorzeigelager!";
+    }
+    else if (minCore >= 40 && totalAvg >= 50) { 
+        stars = 4; 
+        evalTxt = "Starkes Überleben"; 
+        storyTxt = "Tag 10 bricht an. Was als Schiffbruch begann, ist nun ein gut organisiertes Camp. Sie haben nicht nur den Mangel besiegt, sondern gelernt, zusammenzuarbeiten und sich wichtige Momente der Freude zu bewahren.";
+    }
+    else { 
+        stars = 3; 
+        evalTxt = "Solides Überleben"; 
+        storyTxt = "Tag 10 bricht an. Das Lager steht, der Magen ist gefüllt und niemand friert. Doch die Isolation nagt noch an der Psyche. Sie funktionieren hervorragend als Überlebende, aber noch nicht wieder als eine Gesellschaft.";
+    } 
+}
+
+let starHtml = "★".repeat(stars) + "☆".repeat(5-stars);
+document.getElementById('end-verdict').innerText = evalTxt;
+document.getElementById('end-stars').innerText = starHtml;
+document.getElementById('end-story').innerText = storyTxt;
+
+let stHtml="";
+for(let k in s.n)stHtml+=`<div style="display:flex; justify-content:space-between; padding-right:20px;"><span>${needNames[k]}:</span> <strong style="color:${getCol(s.n[k])}">${s.n[k]}</strong></div>`;
+document.getElementById('end-stats').innerHTML=stHtml;
+nextScreen('screen-end');
+}
+</script>
+</body>
+</html>

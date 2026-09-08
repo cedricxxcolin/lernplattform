@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZGB-Trainer: Personenrecht</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg-color: #F3F4F6;
+            --card-bg: #FFFFFF;
+            --text-main: #1F2937;
+            --text-muted: #6B7280;
+            --success: #10B981;
+            --danger: #EF4444;
+            --warning: #F59E0B;
+            --border: #E5E7EB;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        .container {
+            width: 100%;
+            max-width: 950px;
+            position: relative;
+        }
+        /* Top Bar Navigation */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .btn-home {
+            background: white;
+            border: 2px solid var(--border);
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            color: var(--text-main);
+            transition: all 0.2s;
+            display: none; /* Auf Startseite verborgen */
+        }
+        .btn-home:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        /* Start Screen Styles */
+        #startScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        .hero-title {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+        .learning-goal {
+            background: #EEF2FF;
+            border-left: 4px solid var(--primary);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+            width: 100%;
+        }
+        .modes-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            width: 100%;
+            margin: 30px 0;
+        }
+        @media (min-width: 768px) {
+            .modes-container {
+                flex-direction: row;
+            }
+        }
+        .mode-card {
+            flex: 1;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .mode-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.1);
+            transform: translateY(-5px);
+        }
+        .mode-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        .mode-card h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 1.4rem;
+        }
+        .disclaimer {
+            margin-top: 30px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+            width: 100%;
+        }
+        /* Game UI Styles */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            background: var(--card-bg);
+            padding: 15px 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            width: 100%;
+        }
+        .lives { color: var(--danger); display: flex; gap: 5px; }
+        .points { color: var(--primary); }
+        .round { color: var(--warning); }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        @media (min-width: 768px) {
+            .game-container {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+        }
+        .card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            flex: 1;
+            width: 100%;
+        }
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; }
+        .label-long {
+            font-size: 0.95rem;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+        input[type="text"], select {
+            width: 100%;
+            padding: 10px 15px;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        .toggle-group { display: flex; gap: 10px; }
+        .toggle-btn {
+            flex: 1; padding: 10px; border: 2px solid var(--border);
+            background: var(--card-bg); border-radius: 8px; cursor: pointer;
+            font-weight: bold; transition: all 0.2s; text-align: center;
+        }
+        .toggle-btn.active-yes { background-color: var(--success); border-color: var(--success); color: white; }
+        .toggle-btn.active-no { background-color: var(--danger); border-color: var(--danger); color: white; }
+        .avatar-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: sticky;
+            top: 20px;
+        }
+        .avatar-svg {
+            width: 200px;
+            height: 200px;
+            background: #E0E7FF;
+            border-radius: 50%;
+            border: 4px solid var(--primary);
+            overflow: hidden;
+            margin-bottom: 15px;
+            transition: all 0.1s ease;
+        }
+        .char-summary {
+            width: 100%;
+            background: #F9FAFB;
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 15px;
+            border: 1px dashed var(--border);
+            font-size: 0.9rem;
+        }
+        .btn-main {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s;
+        }
+        .btn-main:hover { background: var(--primary-hover); }
+        .btn-main:disabled { background: var(--text-muted); cursor: not-allowed; }
+        .quiz-item {
+            margin-bottom: 15px;
+            background: #F9FAFB;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .result-item {
+            margin-bottom: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 5px solid;
+            background: #F9FAFB;
+        }
+        .result-correct { border-left-color: var(--success); background: #ECFDF5; }
+        .result-incorrect { border-left-color: var(--danger); background: #FEF2F2; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+        .shake { animation: shake 0.4s ease-in-out; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .spinning { animation: spin 0.5s linear infinite; display: inline-block; }
+        #gameUI, #quizSection, #resultSection, #gameOverSection, #randomizerSection { display: none; }
+
+        /* Multiplayer / Profil */
+        #startScreen { display: none; }
+        #profileScreen, #emojiScreen, #multiplayerMenu, #roomLobby, #multiWaiting, #multiRanking { display: none; }
+        .profile-card { max-width: 720px; margin: 30px auto; }
+        .muted { color: var(--text-muted); }
+        .error-box { display:none; margin-top:12px; padding:10px 12px; border-radius:8px; background:#FEF2F2; color:#991B1B; }
+        .btn-secondary { width:100%; padding:13px; background:white; color:var(--primary); border:2px solid var(--primary); border-radius:8px; font-weight:700; cursor:pointer; }
+        .btn-secondary:hover { background:#EEF2FF; }
+        .multi-actions { display:grid; gap:10px; margin-top:16px; }
+        .player-list { display:grid; gap:8px; margin:18px 0; }
+        .player-row { display:flex; justify-content:space-between; align-items:center; padding:12px 14px; border:1px solid var(--border); border-radius:10px; background:#F9FAFB; gap:12px; }
+        .player-main { display:flex; align-items:center; gap:10px; min-width:0; }
+        .player-emoji { font-size:1.7rem; width:38px; text-align:center; }
+        .multi-badge { display:inline-block; padding:4px 8px; border-radius:999px; background:#EEF2FF; color:var(--primary); font-size:.82rem; font-weight:700; }
+        .ready-count { font-size:1.5rem; font-weight:800; color:var(--primary); margin:16px 0; text-align:center; }
+        .wait-box { text-align:center; padding:28px 15px; }
+        .rank-row { display:grid; grid-template-columns:42px 1fr auto; gap:10px; align-items:center; padding:13px; border-bottom:1px solid var(--border); }
+        .rank-row.top-rank { background:#EEF2FF; border-radius:10px; }
+        .emoji-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:10px; margin:22px 0; }
+        .emoji-btn { border:2px solid var(--border); background:white; border-radius:14px; padding:12px 4px; font-size:2rem; cursor:pointer; transition:.15s; }
+        .emoji-btn:hover { transform:translateY(-2px); border-color:var(--primary); }
+        .emoji-btn.selected { border-color:var(--primary); background:#EEF2FF; box-shadow:0 0 0 2px rgba(79,70,229,.08); }
+        .rooms-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:20px 0; }
+        .room-card { border:2px solid var(--border); border-radius:14px; padding:16px; background:white; cursor:pointer; transition:.15s; text-align:left; }
+        .room-card:hover:not(.disabled) { border-color:var(--primary); transform:translateY(-2px); }
+        .room-card.disabled { opacity:.55; cursor:not-allowed; }
+        .room-card h3 { margin:0 0 6px; color:var(--primary); }
+        .room-meta { display:flex; justify-content:space-between; gap:10px; font-size:.92rem; }
+        .room-status { font-weight:700; }
+        .host-settings { border:1px solid var(--border); background:#F9FAFB; border-radius:12px; padding:14px; margin-top:16px; }
+        .setting-option { display:flex; gap:10px; align-items:flex-start; padding:10px 0; }
+        .setting-option input { margin-top:4px; }
+        .timer-pill { display:none; min-width:88px; text-align:center; padding:6px 10px; border-radius:999px; background:#FFF7ED; color:#9A3412; font-weight:800; }
+        .timer-pill.danger { background:#FEF2F2; color:#991B1B; }
+        .round-stats { margin-top:18px; display:grid; gap:8px; }
+        .round-stat { display:flex; justify-content:space-between; gap:12px; padding:9px 11px; background:#F9FAFB; border-radius:8px; }
+        .intermediate-ranking { margin-top:22px; border-top:2px solid var(--border); padding-top:18px; }
+        .room-title { text-align:center; font-size:1.4rem; color:var(--primary); font-weight:800; margin:8px 0 2px; }
+        @media (max-width:700px) { .emoji-grid{grid-template-columns:repeat(4,1fr);} .rooms-grid{grid-template-columns:1fr;} }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Top Navigation -->
+        <div class="top-nav">
+            <button id="btnHome" class="btn-home" onclick="returnToStart()">🏠 Zurück zur Startseite</button>
+            <h1 style="font-size: 1.5rem; color: var(--primary); margin:0; display:none;" id="smallTitle">Personenrecht Trainer</h1>
+        </div>
+
+        <!-- PROFIL -->
+        <div id="profileScreen" class="card profile-card" style="display:block;">
+            <h1 class="hero-title">Personenrecht Trainer</h1>
+            <div class="learning-goal">
+                <h3 style="color: var(--primary); margin-bottom: 8px;">Start</h3>
+                <p>Geben Sie Ihren Namen ein und wählen Sie Ihre Klasse.</p>
+            </div>
+            <div class="form-group">
+                <label for="profileName">Name</label>
+                <input type="text" id="profileName" maxlength="40" placeholder="Vorname">
+            </div>
+            <div class="form-group">
+                <label for="profileClass">Klasse</label>
+                <select id="profileClass">
+                    <option value="">Bitte wählen</option>
+                    <option>2b</option><option>3b</option><option>BBMa</option><option>BBMb</option>
+                    <option>BMa</option><option>BMb</option><option>BMc</option><option>BMd</option><option>BMe</option>
+                    <option>1W</option><option>2W</option><option>3W</option><option>4W</option><option>Sonstige</option>
+                </select>
+            </div>
+            <button class="btn-main" onclick="saveProfileAndContinue()">Weiter</button>
+            <div id="profileError" class="error-box"></div>
+        </div>
+
+        <!-- START SCREEN -->
+        <div id="startScreen" class="card">
+            <h1 class="hero-title">Personenrecht Trainer</h1>
+            <div class="learning-goal">
+                <h3 style="color: var(--primary); margin-bottom: 8px;">🎯 Lernziel & Aufgabe</h3>
+                <p>Übe die Anwendung der rechtlichen Grundbegriffe des Schweizer Personenrechts (ZGB). Erstelle oder generiere Charaktere und beurteile anhand ihrer Eigenschaften, ob sie <strong>rechtsfähig</strong>, <strong>urteilsfähig</strong> und <strong>handlungsfähig</strong> sind.</p>
+                <p style="margin-top: 10px;"><em>Du hast insgesamt 3 Leben. Bei falschen Antworten verlierst du Leben, bei richtigen sammelst du Punkte.</em></p>
+            </div>
+            <div class="modes-container">
+                <div class="mode-card" onclick="startMode('free')">
+                    <div class="mode-icon">🛠️</div><h3>Freier Modus</h3>
+                    <p><strong>Charakter Builder:</strong> Erstelle gezielt eigene Figuren mit gewünschten Eigenschaften und beurteile sie.</p>
+                </div>
+                <div class="mode-card" onclick="startMode('random')">
+                    <div class="mode-icon">🎲</div><h3>Zufalls Modus</h3>
+                    <p><strong>Generator:</strong> Das System würfelt zufällige Charaktere aus. Teste dein Wissen mit wechselnden Fällen.</p>
+                </div>
+                <div class="mode-card" onclick="openMultiplayerMenu()">
+                    <div class="mode-icon">👥</div><h3>Onlinemodus</h3>
+                    <p><strong>Gemeinsam spielen:</strong> Wählen Sie einen Raum, erstellen Sie Charaktere und lösen Sie die Runden gemeinsam.</p>
+                </div>
+            </div>
+            <p class="disclaimer"><strong>Hinweis:</strong> Die visuelle Darstellung der Charaktere dient ausschliesslich der anschaulichen Vermittlung abstrakter juristischer Konzepte.</p>
+        </div>
+
+        <!-- EMOJI WAHL -->
+        <div id="emojiScreen" class="card profile-card">
+            <h2>Emoji wählen</h2>
+            <p class="muted" style="margin-top:8px;">Dieses Emoji zeigt Sie im Raum und in den Ranglisten an.</p>
+            <div id="emojiGrid" class="emoji-grid"></div>
+            <button id="btnEmojiContinue" class="btn-main" onclick="confirmEmoji()" disabled>Zu den Räumen</button>
+            <button class="btn-secondary" style="margin-top:12px;" onclick="showOnly('startScreen')">Zurück</button>
+        </div>
+
+        <!-- RAUMAUSWAHL -->
+        <div id="multiplayerMenu" class="card profile-card">
+            <h2>Onlinemodus</h2>
+            <p class="muted" style="margin-top:8px;">Wählen Sie einen Raum. Pro Raum können maximal 6 Personen spielen.</p>
+            <div id="roomsGrid" class="rooms-grid"></div>
+            <div id="multiMenuError" class="error-box"></div>
+            <button class="btn-secondary" style="margin-top:12px;" onclick="showOnly('emojiScreen')">Emoji ändern</button>
+            <button class="btn-secondary" style="margin-top:10px;" onclick="returnToStart()">Zurück</button>
+        </div>
+
+        <!-- WARTERAUM -->
+        <div id="roomLobby" class="card profile-card">
+            <h2>Warteraum</h2>
+            <div id="lobbyRoomTitle" class="room-title">Raum</div>
+            <div class="ready-count"><span id="lobbyCount">0</span> / 6 Personen</div>
+            <div id="lobbyPlayers" class="player-list"></div>
+            <div id="hostControls" style="display:none;">
+                <div class="host-settings">
+                    <strong>Spielmodus</strong>
+                    <label class="setting-option"><input type="radio" name="timerMode" value="off" checked><span><strong>Ohne Zeitlimit</strong><br><span class="muted">Alle geben selbstständig ab.</span></span></label>
+                    <label class="setting-option"><input type="radio" name="timerMode" value="on"><span><strong>Mit Zeitlimit</strong><br><span class="muted">2 Minuten für die Charaktererstellung, 1 Minute für jede Antwortrunde.</span></span></label>
+                </div>
+                <button id="btnStartRoom" class="btn-main" onclick="hostStartCharacterCreation()" disabled>Spiel starten</button>
+                <p class="muted" style="margin-top:8px; text-align:center;">Mindestens 2 Personen erforderlich.</p>
+            </div>
+            <div id="guestWaitText" class="muted" style="text-align:center;">Warten, bis die Raumleitung das Spiel startet...</div>
+            <button class="btn-secondary" style="margin-top:16px;" onclick="leaveRoom()">Raum verlassen</button>
+        </div>
+
+        <!-- MULTIPLAYER WARTEN -->
+        <div id="multiWaiting" class="card profile-card">
+            <div class="wait-box">
+                <h2 id="multiWaitingTitle">Warten...</h2>
+                <div id="multiWaitingIcon" style="font-size:3rem; margin:18px 0;">⏳</div>
+                <div id="multiWaitingCount" class="ready-count"></div>
+                <p id="multiWaitingText" class="muted"></p>
+            </div>
+        </div>
+
+        <!-- ENDRANGLISTE -->
+        <div id="multiRanking" class="card profile-card">
+            <h2>🏆 Endrangliste</h2>
+            <p class="muted" style="margin:8px 0 18px;">Alle Charaktere wurden gespielt.</p>
+            <div id="rankingList"></div>
+            <button class="btn-main" style="margin-top:20px;" onclick="leaveRoom(true)">Zurück zum Hauptmenü</button>
+        </div>
+        <!-- GAME UI -->
+        <div id="gameUI">
+            <div class="status-bar">
+                <div>Leben: <span id="livesDisplay">❤️❤️❤️</span></div>
+                <div>Runde <span id="roundDisplay" class="round">1</span> (<span id="modeDisplay" style="color: var(--primary);">Frei</span>)</div>
+                <div>Punkte: <span id="pointsDisplay">0</span></div>
+                <div id="multiTimerWrap" class="timer-pill">⏱ <span id="multiTimer">--:--</span></div>
+            </div>
+            <div class="game-container">
+                <div class="card" id="interactionArea">
+                    <!-- 1A. Builder Section (Free Mode) -->
+                    <div id="builderSection">
+                        <h2>Charakter erstellen</h2>
+                        <div class="form-group">
+                            <label for="charName">Name</label>
+                            <input type="text" id="charName" value="Alex">
+                        </div>
+                        <div class="form-group">
+                            <label>Alter: <span id="ageVal" style="color: var(--primary);">25</span> Jahre</label>
+                            <input type="range" id="charAge" min="0" max="100" value="25" style="width:100%; accent-color: var(--primary);">
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <div style="flex: 1;">
+                                <label for="charGender">Geschlecht</label>
+                                <select id="charGender">
+                                    <option value="f">Weiblich</option>
+                                    <option value="m">Männlich</option>
+                                    <option value="d">Divers</option>
+                                </select>
+                            </div>
+                            <div style="flex: 1;">
+                                <label for="charHair">Haarstil</label>
+                                <select id="charHair">
+                                    <option value="short">Kurz</option>
+                                    <option value="long">Lang</option>
+                                    <option value="curly">Lockig</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group" id="hairColorGroup">
+                            <label for="charHairColor">Haarfarbe</label>
+                            <select id="charHairColor">
+                                <option value="#4B5563">Schwarz</option>
+                                <option value="#78350F">Braun</option>
+                                <option value="#FDE047">Blond</option>
+                                <option value="#B91C1C">Rot</option>
+                            </select>
+                        </div>
+                        <hr style="margin: 20px 0; border: 1px solid var(--border);">
+                        <h3>Rechtlicher Zustand</h3><br>
+                        <div class="form-group">
+                            <label class="label-long">Ist die Person in der Lage, vernunftgemäss zu handeln (aufgrund von Alter und Zustand)?</label>
+                            <div class="toggle-group" id="tg-klar">
+                                <div class="toggle-btn active-yes" onclick="setToggle('klar', true)">Ja</div>
+                                <div class="toggle-btn" onclick="setToggle('klar', false)">Nein</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Liegt eine Trunkenheit / Rausch vor?</label>
+                            <div class="toggle-group" id="tg-alkohol">
+                                <div class="toggle-btn" onclick="setToggle('alkohol', true)">Ja</div>
+                                <div class="toggle-btn active-no" onclick="setToggle('alkohol', false)">Nein</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Besteht eine geistige Behinderung / psychische Störung?</label>
+                            <div class="toggle-group" id="tg-geistig">
+                                <div class="toggle-btn" onclick="setToggle('geistig', true)">Ja</div>
+                                <div class="toggle-btn active-no" onclick="setToggle('geistig', false)">Nein</div>
+                            </div>
+                        </div>
+                        <button id="btnBuilderAction" class="btn-main" onclick="startQuiz()">Beurteilung beginnen</button>
+                    </div>
+                    <!-- 1B. Randomizer Section (Random Mode) -->
+                    <div id="randomizerSection" style="text-align: center; padding: 20px 0;">
+                        <h2>Zufalls-Generator</h2>
+                        <p style="margin-bottom: 20px; color: var(--text-muted);">Das System ermittelt nun einen zufälligen Charakter...</p>
+                        <div id="randomizerStatus" style="font-size: 3rem; margin: 30px 0;">
+                            <span class="spinning">🎲</span>
+                        </div>
+                        <div id="randomizerResultText" style="display:none; font-size: 1.1rem; margin-bottom: 20px;">
+                            <strong>Charakter erfolgreich generiert!</strong><br>
+                            Wirf einen Blick auf die Werte rechts und starte die Prüfung.
+                        </div>
+                        <button id="btnStartRandomQuiz" class="btn-main" onclick="startQuiz()" disabled>Beurteilung beginnen</button>
+                    </div>
+                    <!-- 2. Quiz Section -->
+                    <div id="quizSection">
+                        <h2>Rechtliche Prüfung</h2>
+                        <p style="margin-bottom: 20px;">Beurteile <strong id="quizCharName">die Figur</strong> anhand der gelernten Regeln des Personenrechts.</p>
+                        <div id="quizQuestions"></div>
+                        <button class="btn-main" id="btnCheckAnswers" onclick="checkAnswers()">Antworten prüfen</button>
+                    </div>
+                    <!-- 3. Result Section -->
+                    <div id="resultSection">
+                        <h2>Auswertung</h2>
+                        <div id="resultContent"></div>
+                        <button class="btn-main" onclick="nextRound()" style="margin-top: 20px;" id="btnNextRound">Weiter</button>
+                    </div>
+                    <!-- 4. Game Over Section -->
+                    <div id="gameOverSection" style="text-align: center;">
+                        <h2 style="color: var(--danger); border: none;">Game Over!</h2>
+                        <p>Du hast leider alle Leben verloren.</p>
+                        <p style="font-size: 1.5rem; margin: 20px 0;">Erreichte Punkte: <strong id="finalScore">0</strong></p>
+                        <button class="btn-main" onclick="restartGame()">Neu starten</button>
+                    </div>
+                </div>
+                <!-- Sidebar Avatar -->
+                <div class="card avatar-container">
+                    <h2 id="displayCharName" style="border:none; margin-bottom: 5px;">Alex, 25</h2>
+                    <svg class="avatar-svg" id="avatarSvg" viewBox="0 0 200 200">
+                        <g id="bodyGroup">
+                            <path id="avatarShirt" d="M 40 200 Q 100 120 160 200 Z" fill="#A78BFA" />
+                            <rect id="neck" x="85" y="120" width="30" height="40" fill="#FCD34D" />
+                            <circle id="faceCircle" cx="100" cy="90" r="45" fill="#FDE68A" />
+                            <g id="sunglasses" display="none">
+                                <rect x="70" y="80" width="25" height="15" rx="3" fill="#1F2937" />
+                                <rect x="105" y="80" width="25" height="15" rx="3" fill="#1F2937" />
+                                <line x1="95" y1="87" x2="105" y2="87" stroke="#1F2937" stroke-width="2" />
+                            </g>
+                            <circle id="cheekL" cx="70" cy="100" r="10" fill="#EF4444" opacity="0" />
+                            <circle id="cheekR" cx="130" cy="100" r="10" fill="#EF4444" opacity="0" />
+                            <g id="eyesNormal">
+                                <circle cx="80" cy="85" r="5" fill="#1F2937" />
+                                <circle cx="120" cy="85" r="5" fill="#1F2937" />
+                            </g>
+                            <g id="eyesAwake" display="none">
+                                <circle cx="80" cy="85" r="6" fill="#1F2937" />
+                                <circle cx="120" cy="85" r="6" fill="#1F2937" />
+                            </g>
+                            <g id="eyesDizzy" display="none">
+                                <path d="M 75 80 L 85 90 M 85 80 L 75 90" stroke="#1F2937" stroke-width="3" />
+                                <path d="M 115 80 L 125 90 M 125 80 L 115 90" stroke="#1F2937" stroke-width="3" />
+                            </g>
+                            <g id="eyesImpaired" display="none">
+                                <line x1="72" y1="85" x2="88" y2="85" stroke="#1F2937" stroke-width="3" />
+                                <line x1="112" y1="85" x2="128" y2="85" stroke="#1F2937" stroke-width="3" />
+                            </g>
+                            <path id="mouthSmile" d="M 85 110 Q 100 125 115 110" stroke="#1F2937" stroke-width="3" fill="none" stroke-linecap="round" />
+                            <path id="mouthNeutral" d="M 85 115 L 115 115" stroke="#1F2937" stroke-width="3" fill="none" stroke-linecap="round" display="none" />
+                            <path id="mouthSad" d="M 85 120 Q 100 105 115 120" stroke="#1F2937" stroke-width="3" fill="none" stroke-linecap="round" display="none" />
+                            <g id="pacifier" display="none">
+                                <circle cx="100" cy="115" r="10" fill="#60A5FA" />
+                                <rect x="92" y="112" width="16" height="6" rx="2" fill="#2563EB" />
+                            </g>
+                            <g id="hairGroup">
+                                <path id="hairShort" d="M 50 80 Q 50 30 100 30 Q 150 30 150 80 Q 140 45 100 45 Q 60 45 50 80 Z" />
+                                <path id="hairLong" d="M 55 90 Q 50 30 100 30 Q 150 30 145 90 L 155 160 Q 130 160 140 100 Q 100 45 60 100 Q 70 160 45 160 Z" display="none" />
+                                <g id="hairCurly" display="none">
+                                    <circle cx="100" cy="35" r="20" />
+                                    <circle cx="75" cy="45" r="22" />
+                                    <circle cx="125" cy="45" r="22" />
+                                    <circle cx="55" cy="70" r="18" />
+                                    <circle cx="145" cy="70" r="18" />
+                                </g>
+                            </g>
+                        </g>
+                    </svg>
+                    <div id="ageLabel" style="text-align: center; color: var(--primary); font-weight: bold; margin-bottom: 5px;">Phase: Erwachsen</div>
+                    <div id="charSummary" class="char-summary">
+                        <div class="char-summary-item"><span>Alter:</span><span id="sum-age">25</span></div>
+                        <div class="char-summary-item"><span>Vernunftgemäss handeln:</span><span id="sum-klar">Ja</span></div>
+                        <div class="char-summary-item"><span>Alkoholisiert:</span><span id="sum-alkohol">Nein</span></div>
+                        <div class="char-summary-item"><span>Beeinträchtigung:</span><span id="sum-geistig">Nein</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        // --- State Management ---
+        let state = {
+            gameMode: 'free',
+            lives: 3,
+            points: 0,
+            round: 1,
+            char: {
+                name: 'Alex',
+                age: 25,
+                gender: 'f',
+                hair: 'short',
+                hairColor: '#4B5563',
+                klar: true,
+                alkohol: false,
+                geistig: false
+            },
+            quizAnswers: {
+                rechtsfaehig: null,
+                urteilsfaehig: null,
+                volljaehrig: null,
+                handlungsfaehig: null,
+                beschraenkt: null
+            }
+        };
+        let randomizerInterval = null;
+        // 60% Schweizer Namen, 40% ausländische/diverse
+        const namesM = ["Reto", "Beat", "Urs", "Ueli", "Gian", "Andrin", "Lukas", "Julian", "Nico", "Ali", "Diego", "Drilon", "Yusuf", "Mateo"];
+        const namesF = ["Heidi", "Vreni", "Flurina", "Sina", "Lena", "Lara", "Aisha", "Fatima", "Elif", "Priya"];
+        const namesD = ["Alex", "Kim", "Sam", "Chen", "Luca", "Robin", "Sasha", "Maxi"];
+        const randomGenders = ['f', 'm', 'd'];
+        const randomHairs = ['short', 'long', 'curly'];
+        const randomHairColors = ['#4B5563', '#78350F', '#FDE047', '#B91C1C'];
+        const questionsData = [
+            { id: 'rechtsfaehig', label: 'Ist diese Person rechtsfähig?' },
+            { id: 'urteilsfaehig', label: 'Ist diese Person urteilsfähig?' },
+            { id: 'volljaehrig', label: 'Ist diese Person volljährig?' },
+            { id: 'handlungsfaehig', label: 'Ist diese Person handlungsfähig?' },
+            { id: 'beschraenkt', label: 'Ist diese Person beschränkt handlungsunfähig?' }
+        ];
+        // --- Init & UI Flow ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('charName').addEventListener('input', (e) => { state.char.name = e.target.value || 'Namenlos'; updateAvatar(); });
+            document.getElementById('charAge').addEventListener('input', (e) => {
+                state.char.age = parseInt(e.target.value);
+                document.getElementById('ageVal').innerText = state.char.age;
+                enforceRules();
+                updateAvatar();
+            });
+            document.getElementById('charGender').addEventListener('change', (e) => { state.char.gender = e.target.value; updateAvatar(); });
+            document.getElementById('charHair').addEventListener('change', (e) => { state.char.hair = e.target.value; updateAvatar(); });
+            document.getElementById('charHairColor').addEventListener('change', (e) => { state.char.hairColor = e.target.value; updateAvatar(); });
+        });
+        function returnToStart() {
+            clearInterval(randomizerInterval);
+            document.getElementById('gameUI').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'flex';
+            document.getElementById('btnHome').style.display = 'none';
+            document.getElementById('smallTitle').style.display = 'none';
+        }
+        function startMode(mode) {
+            state.gameMode = mode;
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('gameUI').style.display = 'block';
+            document.getElementById('btnHome').style.display = 'block';
+            document.getElementById('modeDisplay').innerText = mode === 'free' ? 'Frei' : 'Zufall';
+            document.getElementById('btnNextRound').innerText = mode === 'free' ? 'Nächster Charakter' : 'Nächster Zufalls-Charakter';
+            resetToPhase1();
+        }
+        function resetToPhase1() {
+            document.getElementById('quizSection').style.display = 'none';
+            document.getElementById('resultSection').style.display = 'none';
+            document.getElementById('gameOverSection').style.display = 'none';
+            if (state.gameMode === 'free') {
+                document.getElementById('builderSection').style.display = 'block';
+                document.getElementById('randomizerSection').style.display = 'none';
+                document.getElementById('charSummary').style.display = 'none';
+                updateBuilderUIFromState();
+                updateAvatar();
+            } else {
+                document.getElementById('builderSection').style.display = 'none';
+                document.getElementById('randomizerSection').style.display = 'block';
+                document.getElementById('charSummary').style.display = 'block';
+                runRandomizer();
+            }
+        }
+        function enforceRules() {
+            // 1. Alkohol ab 16 erzwingen
+            if (state.char.age < 16 && state.char.alkohol) {
+                state.char.alkohol = false;
+            }
+            // 2. Vernunftgemäss handeln auf Nein zwingen, falls die Ausnahmen greifen
+            if (state.char.age < 10 || state.char.alkohol || state.char.geistig) {
+                state.char.klar = false;
+            }
+            // Im freien Modus wird es hier NICHT automatisch auf true gesetzt, damit der Spieler frei wählen kann!
+            setToggleUI('alkohol', state.char.alkohol);
+            setToggleUI('klar', state.char.klar);
+            setToggleUI('geistig', state.char.geistig);
+            updateToggleDisabilities();
+        }
+        function updateBuilderUIFromState() {
+            document.getElementById('charName').value = state.char.name;
+            document.getElementById('charAge').value = state.char.age;
+            document.getElementById('ageVal').innerText = state.char.age;
+            document.getElementById('charGender').value = state.char.gender;
+            document.getElementById('charHair').value = state.char.hair;
+            document.getElementById('charHairColor').value = state.char.hairColor;
+            enforceRules();
+        }
+        // --- Free Builder Toggles ---
+        function setToggle(field, value) {
+            // Sperre manuelle Änderungen, die gegen die Regeln verstossen
+            if (field === 'klar') {
+                if (value === true && (state.char.age < 10 || state.char.alkohol || state.char.geistig)) return;
+            }
+            if (field === 'alkohol' && value === true && state.char.age < 16) return;
+            state.char[field] = value;
+            if ((field === 'alkohol' || field === 'geistig') && value === true) {
+                state.char.klar = false;
+            }
+            enforceRules();
+            updateAvatar();
+        }
+        function setToggleUI(field, value) {
+            const group = document.getElementById(`tg-${field}`);
+            const btns = group.querySelectorAll('.toggle-btn');
+            btns[0].className = `toggle-btn ${value ? 'active-yes' : ''}`;
+            btns[1].className = `toggle-btn ${!value ? 'active-no' : ''}`;
+        }
+        function updateToggleDisabilities() {
+            const klarYesBtn = document.getElementById('tg-klar').children[0];
+            const alkYesBtn = document.getElementById('tg-alkohol').children[0];
+            if (state.char.age < 10 || state.char.alkohol || state.char.geistig) {
+                klarYesBtn.style.opacity = '0.4';
+                klarYesBtn.style.cursor = 'not-allowed';
+            } else {
+                klarYesBtn.style.opacity = '1';
+                klarYesBtn.style.cursor = 'pointer';
+            }
+            if (state.char.age < 16) {
+                alkYesBtn.style.opacity = '0.4';
+                alkYesBtn.style.cursor = 'not-allowed';
+            } else {
+                alkYesBtn.style.opacity = '1';
+                alkYesBtn.style.cursor = 'pointer';
+            }
+        }
+        // --- Randomizer Logic ---
+        function rollRandomStats() {
+            state.char.gender = randomGenders[Math.floor(Math.random() * randomGenders.length)];
+            let namePool = namesD;
+            if (state.char.gender === 'm') namePool = namesM;
+            if (state.char.gender === 'f') namePool = namesF;
+            state.char.name = namePool[Math.floor(Math.random() * namePool.length)];
+            const ageCategoryRoll = Math.random();
+            if (ageCategoryRoll < 0.25) {
+                state.char.age = Math.floor(Math.random() * 10);
+            } else if (ageCategoryRoll < 0.50) {
+                state.char.age = Math.floor(Math.random() * 8) + 10;
+            } else {
+                state.char.age = Math.floor(Math.random() * 83) + 18;
+            }
+            state.char.hair = randomHairs[Math.floor(Math.random() * randomHairs.length)];
+            state.char.hairColor = randomHairColors[Math.floor(Math.random() * randomHairColors.length)];
+            state.char.alkohol = Math.random() > 0.70;
+            state.char.geistig = Math.random() > 0.70;
+            if (state.char.age < 16) state.char.alkohol = false;
+            if (state.char.age < 10 || state.char.alkohol || state.char.geistig) {
+                state.char.klar = false;
+            } else {
+                state.char.klar = true; // Im Zufallsmodus immer "Ja", ausser Ausnahmen greifen
+            }
+        }
+        function runRandomizer() {
+            document.getElementById('btnStartRandomQuiz').disabled = true;
+            document.getElementById('randomizerResultText').style.display = 'none';
+            const spinner = document.getElementById('randomizerStatus');
+            spinner.innerHTML = '<span class="spinning">🎲</span>';
+            let rolls = 0;
+            const maxRolls = 15;
+            clearInterval(randomizerInterval);
+            randomizerInterval = setInterval(() => {
+                rollRandomStats();
+                updateAvatar();
+                rolls++;
+                if (rolls >= maxRolls) {
+                    clearInterval(randomizerInterval);
+                    spinner.innerHTML = '✅';
+                    document.getElementById('randomizerResultText').style.display = 'block';
+                    document.getElementById('btnStartRandomQuiz').disabled = false;
+                }
+            }, 100);
+        }
+        // --- Avatar Updating ---
+        function updateAvatar() {
+            document.getElementById('displayCharName').innerText = `${state.char.name}, ${state.char.age}`;
+            const shirt = document.getElementById('avatarShirt');
+            const hairGroup = document.getElementById('hairGroup');
+            const ageLabel = document.getElementById('ageLabel');
+            const bodyGroup = document.getElementById('bodyGroup');
+            const faceCircle = document.getElementById('faceCircle');
+            const pacifier = document.getElementById('pacifier');
+            const sunglasses = document.getElementById('sunglasses');
+            const hairColorSelect = document.getElementById('hairColorGroup');
+            if(state.char.gender === 'f') shirt.setAttribute('fill', '#EC4899');
+            else if(state.char.gender === 'm') shirt.setAttribute('fill', '#3B82F6');
+            else shirt.setAttribute('fill', '#10B981');
+            const age = state.char.age;
+            let phase = "Erwachsen";
+            bodyGroup.setAttribute('transform', 'translate(0,0) scale(1)');
+            faceCircle.setAttribute('r', '45');
+            pacifier.setAttribute('display', 'none');
+            sunglasses.setAttribute('display', 'none');
+            hairGroup.setAttribute('display', 'block');
+            if(hairColorSelect) hairColorSelect.style.display = 'block';
+            let finalHairColor = state.char.hairColor;
+            if (age <= 5) {
+                phase = "Baby";
+                bodyGroup.setAttribute('transform', 'translate(15,35) scale(0.85)');
+                faceCircle.setAttribute('r', '50');
+                hairGroup.setAttribute('display', 'none');
+                pacifier.setAttribute('display', 'block');
+                if(hairColorSelect) hairColorSelect.style.display = 'none';
+            } else if (age <= 17) {
+                phase = "Kind";
+                bodyGroup.setAttribute('transform', 'translate(10,20) scale(0.9)');
+                sunglasses.setAttribute('display', 'block');
+            } else if (age >= 65) {
+                phase = "Senior";
+                finalHairColor = "#D1D5DB";
+                if(hairColorSelect) hairColorSelect.style.display = 'none';
+            }
+            ageLabel.innerText = `Phase: ${phase}`;
+            hairGroup.setAttribute('fill', finalHairColor);
+            document.getElementById('hairShort').setAttribute('display', state.char.hair === 'short' ? 'block' : 'none');
+            document.getElementById('hairLong').setAttribute('display', state.char.hair === 'long' ? 'block' : 'none');
+            document.getElementById('hairCurly').setAttribute('display', state.char.hair === 'curly' ? 'block' : 'none');
+            const cheeksL = document.getElementById('cheekL');
+            const cheeksR = document.getElementById('cheekR');
+            const eyesAwake = document.getElementById('eyesAwake');
+            const eyesDizzy = document.getElementById('eyesDizzy');
+            const eyesImpaired = document.getElementById('eyesImpaired');
+            const eyesNormal = document.getElementById('eyesNormal');
+            const mouthSmile = document.getElementById('mouthSmile');
+            const mouthNeutral = document.getElementById('mouthNeutral');
+            const mouthSad = document.getElementById('mouthSad');
+            cheeksL.setAttribute('opacity', '0');
+            cheeksR.setAttribute('opacity', '0');
+            [eyesNormal, eyesAwake, eyesDizzy, eyesImpaired, mouthSmile, mouthNeutral, mouthSad].forEach(el => el.setAttribute('display', 'none'));
+            if (state.char.alkohol) {
+                cheeksL.setAttribute('opacity', '0.6');
+                cheeksR.setAttribute('opacity', '0.6');
+                eyesDizzy.setAttribute('display', 'block');
+                mouthNeutral.setAttribute('display', 'block');
+            } else if (state.char.geistig) {
+                eyesImpaired.setAttribute('display', 'block');
+                mouthNeutral.setAttribute('display', 'block');
+            } else if (state.char.klar) {
+                eyesAwake.setAttribute('display', 'block');
+                if (age > 5) mouthSmile.setAttribute('display', 'block');
+            } else {
+                eyesNormal.setAttribute('display', 'block');
+                if (age > 5) mouthSad.setAttribute('display', 'block');
+            }
+            if (age > 5 && age <= 17) {
+                [eyesNormal, eyesAwake, eyesDizzy, eyesImpaired].forEach(el => el.setAttribute('display', 'none'));
+            }
+            document.getElementById('sum-age').innerText = state.char.age;
+            document.getElementById('sum-klar').innerText = state.char.klar ? "Ja" : "Nein";
+            document.getElementById('sum-alkohol').innerText = state.char.alkohol ? "Ja" : "Nein";
+            document.getElementById('sum-geistig').innerText = state.char.geistig ? "Ja" : "Nein";
+        }
+        // --- Quiz Logic ---
+        function startQuiz() {
+            document.getElementById('builderSection').style.display = 'none';
+            document.getElementById('randomizerSection').style.display = 'none';
+            document.getElementById('quizSection').style.display = 'block';
+            document.getElementById('charSummary').style.display = 'block';
+            document.getElementById('quizCharName').innerText = state.char.name;
+            state.quizAnswers = { rechtsfaehig: null, urteilsfaehig: null, volljaehrig: null, handlungsfaehig: null, beschraenkt: null };
+            renderQuizForm();
+            validateQuizReady();
+        }
+        function renderQuizForm() {
+            const container = document.getElementById('quizQuestions');
+            container.innerHTML = '';
+            questionsData.forEach(q => {
+                const div = document.createElement('div');
+                div.className = 'quiz-item';
+                const val = state.quizAnswers[q.id];
+                div.innerHTML = `
+                    <p>${q.label}</p>
+                    <div class="toggle-group">
+                        <div class="toggle-btn ${val === true ? 'active-yes' : ''}" onclick="setQuizAnswer('${q.id}', true)">Ja</div>
+                        <div class="toggle-btn ${val === false ? 'active-no' : ''}" onclick="setQuizAnswer('${q.id}', false)">Nein</div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+        function setQuizAnswer(questionId, value) {
+            state.quizAnswers[questionId] = value;
+            renderQuizForm();
+            validateQuizReady();
+        }
+        function validateQuizReady() {
+            const btn = document.getElementById('btnCheckAnswers');
+            const allAnswered = Object.values(state.quizAnswers).every(v => v !== null);
+            btn.disabled = !allAnswered;
+        }
+        function calculateCorrectAnswers() {
+            const c = state.char;
+            const rechtsfaehig = true;
+            const urteilsfaehig = c.age >= 10 && c.klar && !c.alkohol && !c.geistig;
+            const volljaehrig = c.age >= 18;
+            const handlungsfaehig = urteilsfaehig && volljaehrig;
+            const beschraenkt = urteilsfaehig && !volljaehrig;
+            return { rechtsfaehig, urteilsfaehig, volljaehrig, handlungsfaehig, beschraenkt };
+        }
+        function getExplanation(key, isCorrectActual, charData) {
+            switch(key) {
+                case 'rechtsfaehig': return "Jeder Mensch ist rechtsfähig ab Geburt.";
+                case 'urteilsfaehig':
+                    if (charData.age < 10) return "Kinder unter 10 Jahren gelten als urteilsunfähig, da sie die rechtlichen Folgen ihres Handelns noch nicht abschätzen können.";
+                    if (isCorrectActual) return "Person ist in der Lage vernunftgemäss zu handeln, ist alt genug, nüchtern und gesund.";
+                    if (charData.alkohol) return "Ein Rauschzustand schließt die Urteilsfähigkeit (temporär) aus.";
+                    if (charData.geistig) return "Geistige Beeinträchtigung verhindert hier die Urteilsfähigkeit.";
+                    return "Ein eingeschränkter Geisteszustand hebt die Urteilsfähigkeit auf.";
+                case 'volljaehrig':
+                    return charData.age >= 18 ? "Volljährig ab 18 Jahren." : "Minderjährig unter 18 Jahren.";
+                case 'handlungsfaehig':
+                    return "Erfordert zwingend Urteilsfähigkeit UND Volljährigkeit.";
+                case 'beschraenkt':
+                    return "Die Person ist urteilsfähig, aber noch minderjährig.";
+            }
+        }
+        function checkAnswers() {
+            const correctAnswers = calculateCorrectAnswers();
+            let mistakes = 0;
+            let correctCount = 0;
+            const resultContainer = document.getElementById('resultContent');
+            resultContainer.innerHTML = '';
+            questionsData.forEach(q => {
+                const userAns = state.quizAnswers[q.id];
+                const correctAns = correctAnswers[q.id];
+                const isCorrect = userAns === correctAns;
+                if (isCorrect) correctCount++; else mistakes++;
+                const item = document.createElement('div');
+                item.className = `result-item ${isCorrect ? 'result-correct' : 'result-incorrect'}`;
+                item.innerHTML = `
+                    <div class="result-title">
+                        <span>${q.label}</span>
+                        <span>${isCorrect ? '✅' : '❌'}</span>
+                    </div>
+                    <div class="result-explanation">
+                        Richtig: ${correctAns ? 'Ja' : 'Nein'}. ${getExplanation(q.id, correctAns, state.char)}
+                    </div>
+                `;
+                resultContainer.appendChild(item);
+            });
+            state.points += (correctCount * 10);
+            if (mistakes > 0) {
+                state.lives -= 1;
+                document.getElementById('interactionArea').classList.add('shake');
+                setTimeout(() => document.getElementById('interactionArea').classList.remove('shake'), 400);
+            }
+            updateStatusBar();
+            document.getElementById('quizSection').style.display = 'none';
+            if (state.lives <= 0) {
+                document.getElementById('finalScore').innerText = state.points;
+                document.getElementById('gameOverSection').style.display = 'block';
+                document.getElementById('charSummary').style.display = 'none';
+            } else {
+                document.getElementById('resultSection').style.display = 'block';
+            }
+        }
+        function updateStatusBar() {
+            let hearts = '';
+            for(let i=0; i<Math.max(0, state.lives); i++) hearts += '❤️';
+            document.getElementById('livesDisplay').innerText = state.lives <= 0 ? '💀' : hearts;
+            document.getElementById('pointsDisplay').innerText = state.points;
+            const roundDisplay = document.getElementById('roundDisplay');
+            if (roundDisplay) {
+                roundDisplay.innerText = state.round;
+            }
+        }
+        function nextRound() {
+            state.round++;
+            updateStatusBar();
+            resetToPhase1();
+        }
+        function restartGame() {
+            state.lives = 3;
+            state.points = 0;
+            state.round = 1;
+            updateStatusBar();
+            resetToPhase1();
+        }
+    </script>
+
+<script>
+// ============================================================
+// Supabase Multiplayer V2
+// ============================================================
+const SUPABASE_URL = 'https://xvgbisxwptnfupibcbpg.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_WF742ZbvUE8BzCTT2MZw2w_K2wFvYyt';
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
+const ROOM_SLOTS = [1,2,3,4,5,6,7,8];
+const EMOJIS = ['😎','🦊','🐸','🤖','👻','🐧','🦁','🐼','🐯','🦄','🐵','🐙','🦖','🐝','🦉','🐺','🦋','🚀'];
+let profile = { name:'', className:'', emoji:'' };
+let roomBrowserChannel = null;
+let timerInterval = null;
+let timerTimeoutHandled = false;
+let mp = freshMp();
+
+function freshMp(){ return { room:null, player:null, players:[], characters:[], currentCharacter:null, submittedAnswer:null, channel:null, advancing:false }; }
+
+const multiplayerScreens = ['profileScreen','startScreen','emojiScreen','multiplayerMenu','roomLobby','multiWaiting','multiRanking','gameUI'];
+
+function showOnly(id) {
+    multiplayerScreens.forEach(x => {
+        const el=document.getElementById(x);
+        if(el) el.style.display = x===id ? (id==='startScreen'?'flex':'block') : 'none';
+    });
+    const btnHome=document.getElementById('btnHome');
+    if(btnHome) btnHome.style.display = id==='gameUI' ? 'block' : 'none';
+    if(id!=='gameUI') hideTimer();
+}
+
+function showError(id,message){ const el=document.getElementById(id); if(!el)return; el.textContent=message; el.style.display=message?'block':'none'; }
+function escapeHtml(value){ return String(value??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+function friendlyError(e){ const m=e?.message||String(e); if(m.includes('Room is full')) return 'Der Raum ist voll.'; if(m.includes('unique_player_name_per_room')) return 'Dieser Name wird in diesem Raum bereits verwendet.'; if(m.includes('unique_player_emoji_per_room')) return 'Dieses Emoji wird im Raum bereits verwendet.'; return m; }
+
+function saveProfileAndContinue(){
+    const name=document.getElementById('profileName').value.trim();
+    const className=document.getElementById('profileClass').value;
+    if(!name||!className){ showError('profileError','Bitte geben Sie Ihren Namen ein und wählen Sie eine Klasse.'); return; }
+    profile={...profile,name,className};
+    localStorage.setItem('personenrecht_profile',JSON.stringify(profile));
+    showError('profileError','');
+    showOnly('startScreen');
+}
+
+function loadSavedProfile(){
+    try{
+        const saved=JSON.parse(localStorage.getItem('personenrecht_profile')||'null');
+        if(saved?.name) document.getElementById('profileName').value=saved.name;
+        if(saved?.className) document.getElementById('profileClass').value=saved.className;
+        if(saved?.emoji) profile.emoji=saved.emoji;
+    }catch(_){}
+}
+
+function openMultiplayerMenu(){
+    renderEmojiGrid();
+    showOnly('emojiScreen');
+}
+
+function renderEmojiGrid(){
+    const grid=document.getElementById('emojiGrid');
+    grid.innerHTML=EMOJIS.map(e=>`<button class="emoji-btn ${profile.emoji===e?'selected':''}" onclick="selectEmoji('${e}')">${e}</button>`).join('');
+    document.getElementById('btnEmojiContinue').disabled=!profile.emoji;
+}
+function selectEmoji(e){ profile.emoji=e; localStorage.setItem('personenrecht_profile',JSON.stringify(profile)); renderEmojiGrid(); }
+async function confirmEmoji(){ if(!profile.emoji)return; showOnly('multiplayerMenu'); await loadRoomOverview(); await subscribeRoomBrowser(); }
+
+async function ensureFixedRooms(){
+    const {data}=await sb.from('rooms').select('id,fixed_slot').in('fixed_slot',ROOM_SLOTS);
+    const have=new Set((data||[]).map(r=>r.fixed_slot));
+    for(const n of ROOM_SLOTS){
+        if(!have.has(n)) await sb.from('rooms').insert({room_code:`ROOM${n}`,fixed_slot:n,max_players:6,status:'waiting',current_round:0});
+    }
+}
+
+async function loadRoomOverview(){
+    showError('multiMenuError','');
+    try{
+        await ensureFixedRooms();
+        const {data:rooms,error}=await sb.from('rooms').select('*').in('fixed_slot',ROOM_SLOTS).order('fixed_slot');
+        if(error) throw error;
+        const {data:players,error:pe}=await sb.from('players').select('room_id');
+        if(pe) throw pe;
+        const counts={}; (players||[]).forEach(p=>counts[p.room_id]=(counts[p.room_id]||0)+1);
+        const bySlot=new Map((rooms||[]).map(r=>[r.fixed_slot,r]));
+        document.getElementById('roomsGrid').innerHTML=ROOM_SLOTS.map(n=>{
+            const r=bySlot.get(n), count=r?(counts[r.id]||0):0;
+            const canJoin=r && r.status==='waiting' && count<6;
+            const status=!r?'Wird erstellt':r.status==='waiting'?(count>=6?'Voll':'Offen'):'Spiel läuft';
+            return `<button class="room-card ${canJoin?'':'disabled'}" ${canJoin?`onclick="joinFixedRoom(${n})"`:'disabled'}><h3>Raum ${n}</h3><div class="room-meta"><span>${count}/6 Plätze</span><span class="room-status">${status}</span></div></button>`;
+        }).join('');
+    }catch(e){ showError('multiMenuError','Räume konnten nicht geladen werden: '+friendlyError(e)); }
+}
+
+async function subscribeRoomBrowser(){
+    if(roomBrowserChannel) await sb.removeChannel(roomBrowserChannel);
+    roomBrowserChannel=sb.channel('rooms-browser')
+      .on('postgres_changes',{event:'*',schema:'public',table:'rooms'},()=>loadRoomOverview())
+      .on('postgres_changes',{event:'*',schema:'public',table:'players'},()=>loadRoomOverview())
+      .subscribe();
+}
+
+async function joinFixedRoom(slot){
+    showError('multiMenuError','');
+    try{
+        const {data:room,error}=await sb.from('rooms').select('*').eq('fixed_slot',slot).single();
+        if(error) throw error;
+        if(room.status!=='waiting') throw new Error('In diesem Raum läuft bereits ein Spiel.');
+        const {count}=await sb.from('players').select('*',{count:'exact',head:true}).eq('room_id',room.id);
+        if((count||0)>=6) throw new Error('Room is full');
+        const {data:existingEmoji}=await sb.from('players').select('id').eq('room_id',room.id).eq('emoji',profile.emoji).maybeSingle();
+        if(existingEmoji){ profile.emoji=''; renderEmojiGrid(); throw new Error('unique_player_emoji_per_room'); }
+        const {data:player,error:pe}=await sb.from('players').insert({room_id:room.id,name:profile.name,class_name:profile.className,emoji:profile.emoji,is_host:(count||0)===0}).select().single();
+        if(pe) throw pe;
+        mp.room=room; mp.player=player;
+        localStorage.setItem('personenrecht_active_room',JSON.stringify({roomId:room.id,playerId:player.id}));
+        if(roomBrowserChannel){ await sb.removeChannel(roomBrowserChannel); roomBrowserChannel=null; }
+        await subscribeRoom(); await refreshRoomState(); showOnly('roomLobby');
+    }catch(e){ showError('multiMenuError','Beitritt nicht möglich: '+friendlyError(e)); }
+}
+
+async function subscribeRoom(){
+    if(mp.channel) await sb.removeChannel(mp.channel);
+    mp.channel=sb.channel('room-'+mp.room.id)
+      .on('postgres_changes',{event:'*',schema:'public',table:'rooms',filter:`id=eq.${mp.room.id}`},refreshRoomState)
+      .on('postgres_changes',{event:'*',schema:'public',table:'players',filter:`room_id=eq.${mp.room.id}`},refreshRoomState)
+      .on('postgres_changes',{event:'*',schema:'public',table:'characters',filter:`room_id=eq.${mp.room.id}`},refreshRoomState)
+      .on('postgres_changes',{event:'*',schema:'public',table:'answers',filter:`room_id=eq.${mp.room.id}`},refreshRoomState)
+      .subscribe();
+}
+
+async function refreshRoomState(){
+    if(!mp.room?.id)return;
+    const [{data:room},{data:players},{data:characters}]=await Promise.all([
+        sb.from('rooms').select('*').eq('id',mp.room.id).single(),
+        sb.from('players').select('*').eq('room_id',mp.room.id).order('joined_at'),
+        sb.from('characters').select('*').eq('room_id',mp.room.id).order('play_order',{ascending:true,nullsFirst:false})
+    ]);
+    if(!room)return;
+    mp.room=room; mp.players=players||[]; mp.characters=characters||[];
+    const own=mp.players.find(p=>p.id===mp.player?.id); if(own) mp.player=own;
+    if(!mp.player || !mp.players.some(p=>p.id===mp.player.id)) return;
+    await ensureHost();
+    renderLobby();
+    if(room.status==='waiting'){ showOnly('roomLobby'); return; }
+    if(room.status==='creating'){ await enterCharacterCreation(); return; }
+    if(room.status==='playing'){ await enterCurrentRound(); return; }
+    if(room.status==='results'){ await showMultiplayerResults(); return; }
+    if(room.status==='finished') await showFinalRanking();
+}
+
+async function ensureHost(){
+    if(!mp.players.length)return;
+    const currentHost=mp.players.find(p=>p.is_host);
+    if(currentHost)return;
+    const next=mp.players[0];
+    await sb.from('players').update({is_host:true}).eq('id',next.id);
+    if(mp.player?.id===next.id) mp.player.is_host=true;
+}
+
+function renderLobby(){
+    if(!mp.room)return;
+    document.getElementById('lobbyRoomTitle').textContent=`Raum ${mp.room.fixed_slot}`;
+    document.getElementById('lobbyCount').textContent=mp.players.length;
+    const rows=[];
+    for(let i=0;i<6;i++){
+        const p=mp.players[i];
+        rows.push(p?`<div class="player-row"><div class="player-main"><span class="player-emoji">${escapeHtml(p.emoji||'🙂')}</span><span><strong>${escapeHtml(p.name)}</strong> ${p.is_host?'<span class="multi-badge">Spielleitung</span>':''}</span></div><span class="muted">${escapeHtml(p.class_name)}</span></div>`:`<div class="player-row"><span class="muted">Freier Platz</span><span>○</span></div>`);
+    }
+    document.getElementById('lobbyPlayers').innerHTML=rows.join('');
+    const host=!!mp.player?.is_host;
+    document.getElementById('hostControls').style.display=host?'block':'none';
+    document.getElementById('guestWaitText').style.display=host?'none':'block';
+    document.getElementById('btnStartRoom').disabled=mp.players.length<2;
+}
+
+async function hostStartCharacterCreation(){
+    if(!mp.player?.is_host||mp.players.length<2)return;
+    const timerEnabled=document.querySelector('input[name="timerMode"]:checked')?.value==='on';
+    const deadline=timerEnabled?new Date(Date.now()+120000).toISOString():null;
+    await sb.from('rooms').update({status:'creating',current_round:0,current_character_id:null,timer_enabled:timerEnabled,creation_deadline:deadline,answer_deadline:null}).eq('id',mp.room.id);
+}
+
+async function enterCharacterCreation(){
+    const ownCharacter=mp.characters.find(c=>c.player_id===mp.player.id&&c.is_submitted);
+    if(ownCharacter){
+        showOnly('multiWaiting');
+        document.getElementById('multiWaitingTitle').textContent='Charakter abgegeben';
+        document.getElementById('multiWaitingText').textContent='Warten, bis alle Personen ihren Charakter abgegeben haben.';
+        document.getElementById('multiWaitingIcon').textContent='✅';
+        document.getElementById('multiWaitingCount').textContent=`${mp.characters.filter(c=>c.is_submitted).length} / ${mp.players.length} bereit`;
+        if(mp.player.is_host&&mp.characters.filter(c=>c.is_submitted).length===mp.players.length) await hostPrepareGame();
+        return;
+    }
+    state.gameMode='multi-create'; state.points=mp.player.score||0; state.round=0;
+    showOnly('gameUI');
+    document.querySelector('.status-bar').children[0].style.display='none';
+    document.getElementById('modeDisplay').textContent='Onlinemodus';
+    document.getElementById('roundDisplay').textContent='Erstellen';
+    document.getElementById('pointsDisplay').textContent=mp.player.score||0;
+    document.getElementById('quizSection').style.display='none'; document.getElementById('resultSection').style.display='none'; document.getElementById('gameOverSection').style.display='none'; document.getElementById('randomizerSection').style.display='none'; document.getElementById('builderSection').style.display='block'; document.getElementById('charSummary').style.display='none';
+    const btn=document.getElementById('btnBuilderAction'); btn.textContent='Charakter abgeben'; btn.onclick=()=>submitMultiplayerCharacter(false);
+    startDeadlineTimer(mp.room.creation_deadline,()=>submitMultiplayerCharacter(true));
+}
+
+async function submitMultiplayerCharacter(forced=false){
+    if(mp.characters.some(c=>c.player_id===mp.player.id&&c.is_submitted))return;
+    stopTimer();
+    const payload={room_id:mp.room.id,player_id:mp.player.id,name:state.char.name||'Namenlos',age:state.char.age,gender:state.char.gender,hair:state.char.hair,hair_color:state.char.hairColor,klar:state.char.klar,alkohol:state.char.alkohol,geistig:state.char.geistig,is_submitted:true};
+    const {error}=await sb.from('characters').insert(payload);
+    if(error){ if(!forced) alert('Charakter konnte nicht abgegeben werden: '+friendlyError(error)); return; }
+    showOnly('multiWaiting'); await refreshRoomState();
+}
+
+async function hostPrepareGame(){
+    if(!mp.player?.is_host||mp.advancing)return;
+    mp.advancing=true;
+    try{
+        const {data:freshChars}=await sb.from('characters').select('*').eq('room_id',mp.room.id).eq('is_submitted',true);
+        const chars=[...(freshChars||[])];
+        for(let i=chars.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[chars[i],chars[j]]=[chars[j],chars[i]];}
+        for(let i=0;i<chars.length;i++) await sb.from('characters').update({play_order:i+1}).eq('id',chars[i].id);
+        const deadline=mp.room.timer_enabled?new Date(Date.now()+60000).toISOString():null;
+        await sb.from('rooms').update({status:'playing',current_round:1,current_character_id:chars[0].id,answer_deadline:deadline}).eq('id',mp.room.id);
+    }finally{mp.advancing=false;}
+}
+
+async function enterCurrentRound(){
+    if(!mp.room.current_character_id)return;
+    const {data:character}=await sb.from('characters').select('*').eq('id',mp.room.current_character_id).single(); if(!character)return;
+    mp.currentCharacter=character;
+    const {data:existing}=await sb.from('answers').select('*').eq('player_id',mp.player.id).eq('character_id',character.id).maybeSingle();
+    if(existing){mp.submittedAnswer=existing;await showAnswerWaiting();return;}
+    state.gameMode='multiplayer'; state.round=mp.room.current_round; state.points=mp.player.score||0;
+    state.char={name:character.name,age:character.age,gender:character.gender,hair:character.hair,hairColor:character.hair_color,klar:character.klar,alkohol:character.alkohol,geistig:character.geistig};
+    updateAvatar(); showOnly('gameUI');
+    document.querySelector('.status-bar').children[0].style.display='none'; document.getElementById('modeDisplay').textContent='Onlinemodus'; document.getElementById('roundDisplay').textContent=mp.room.current_round; document.getElementById('pointsDisplay').textContent=mp.player.score||0;
+    document.getElementById('builderSection').style.display='none'; document.getElementById('randomizerSection').style.display='none'; document.getElementById('resultSection').style.display='none'; document.getElementById('gameOverSection').style.display='none'; document.getElementById('charSummary').style.display='block';
+    startQuiz();
+    const checkBtn=document.getElementById('btnCheckAnswers'); checkBtn.textContent='Antworten abgeben'; checkBtn.onclick=()=>submitMultiplayerAnswers(false);
+    startDeadlineTimer(mp.room.answer_deadline,()=>submitMultiplayerAnswers(true));
+}
+
+async function submitMultiplayerAnswers(forced=false){
+    if(!forced && !Object.values(state.quizAnswers).every(v=>v!==null)) return;
+    stopTimer();
+    const correct=calculateCorrectAnswers(); let correctCount=0;
+    for(const q of questionsData) if(state.quizAnswers[q.id]!==null && state.quizAnswers[q.id]===correct[q.id]) correctCount++;
+    const roundScore=correctCount;
+    const payload={room_id:mp.room.id,player_id:mp.player.id,character_id:mp.currentCharacter.id,round_number:mp.room.current_round,rechtsfaehig:state.quizAnswers.rechtsfaehig,urteilsfaehig:state.quizAnswers.urteilsfaehig,volljaehrig:state.quizAnswers.volljaehrig,handlungsfaehig:state.quizAnswers.handlungsfaehig,beschraenkt:state.quizAnswers.beschraenkt,score:roundScore};
+    const {data:ans,error}=await sb.from('answers').insert(payload).select().single();
+    if(error){ if(!forced) alert('Antworten konnten nicht gespeichert werden: '+friendlyError(error)); return; }
+    mp.submittedAnswer=ans;
+    const newScore=(mp.player.score||0)+roundScore; await sb.from('players').update({score:newScore}).eq('id',mp.player.id); mp.player.score=newScore;
+    await showAnswerWaiting(); await refreshRoomState();
+}
+
+async function showAnswerWaiting(){
+    showOnly('multiWaiting');
+    document.getElementById('multiWaitingTitle').textContent='Antworten abgegeben'; document.getElementById('multiWaitingText').textContent='Warten, bis alle Personen diese Runde abgeschlossen haben.'; document.getElementById('multiWaitingIcon').textContent='✅';
+    const {count}=await sb.from('answers').select('*',{count:'exact',head:true}).eq('room_id',mp.room.id).eq('character_id',mp.room.current_character_id);
+    document.getElementById('multiWaitingCount').textContent=`${count||0} / ${mp.players.length} fertig`;
+    if(mp.player.is_host && count===mp.players.length && mp.room.status==='playing') await sb.from('rooms').update({status:'results',answer_deadline:null}).eq('id',mp.room.id).eq('status','playing');
+}
+
+async function showMultiplayerResults(){
+    stopTimer();
+    if(!mp.currentCharacter||mp.currentCharacter.id!==mp.room.current_character_id){ const {data:character}=await sb.from('characters').select('*').eq('id',mp.room.current_character_id).single(); if(!character)return; mp.currentCharacter=character; state.char={name:character.name,age:character.age,gender:character.gender,hair:character.hair,hairColor:character.hair_color,klar:character.klar,alkohol:character.alkohol,geistig:character.geistig}; }
+    const {data:ans}=await sb.from('answers').select('*').eq('player_id',mp.player.id).eq('character_id',mp.room.current_character_id).single(); if(!ans)return;
+    state.quizAnswers={rechtsfaehig:ans.rechtsfaehig,urteilsfaehig:ans.urteilsfaehig,volljaehrig:ans.volljaehrig,handlungsfaehig:ans.handlungsfaehig,beschraenkt:ans.beschraenkt};
+    const {data:allAnswers}=await sb.from('answers').select('*').eq('room_id',mp.room.id).eq('character_id',mp.room.current_character_id);
+    const {data:ranking}=await sb.from('players').select('*').eq('room_id',mp.room.id).order('score',{ascending:false}).order('joined_at');
+    mp.players=ranking||mp.players;
+    state.points=mp.player.score||0; showOnly('gameUI'); document.querySelector('.status-bar').children[0].style.display='none'; document.getElementById('modeDisplay').textContent='Onlinemodus'; document.getElementById('roundDisplay').textContent=mp.room.current_round; document.getElementById('pointsDisplay').textContent=mp.player.score||0; updateAvatar();
+    document.getElementById('builderSection').style.display='none';document.getElementById('randomizerSection').style.display='none';document.getElementById('quizSection').style.display='none';document.getElementById('gameOverSection').style.display='none';document.getElementById('charSummary').style.display='block';
+    const correctAnswers=calculateCorrectAnswers(), resultContainer=document.getElementById('resultContent'); resultContainer.innerHTML=''; let correctCount=0;
+    const fieldMap={rechtsfaehig:'rechtsfaehig',urteilsfaehig:'urteilsfaehig',volljaehrig:'volljaehrig',handlungsfaehig:'handlungsfaehig',beschraenkt:'beschraenkt'};
+    questionsData.forEach(q=>{
+        const userAns=state.quizAnswers[q.id],correctAns=correctAnswers[q.id],ok=userAns!==null&&userAns===correctAns; if(ok)correctCount++;
+        const total=(allAnswers||[]).length; const right=(allAnswers||[]).filter(a=>a[fieldMap[q.id]]!==null&&a[fieldMap[q.id]]===correctAns).length;
+        const item=document.createElement('div'); item.className=`result-item ${ok?'result-correct':'result-incorrect'}`;
+        item.innerHTML=`<div class="result-title"><span>${q.label}</span><span>${ok?'✅':'❌'}</span></div><div class="result-explanation">Richtig: ${correctAns?'Ja':'Nein'}. ${getExplanation(q.id,correctAns,state.char)}</div><div class="muted" style="margin-top:6px;">${right}/${total} im Raum richtig</div>`; resultContainer.appendChild(item);
+    });
+    const creator=mp.players.find(p=>p.id===mp.currentCharacter.player_id);
+    const summary=document.createElement('div');summary.className='learning-goal';summary.innerHTML=`<strong>${correctCount}/5 richtig, ${correctCount} Punkte</strong><br><span class="muted">Charakter erstellt von ${escapeHtml(creator?.emoji||'🙂')} ${escapeHtml(creator?.name||'unbekannt')}</span>`;resultContainer.prepend(summary);
+    const board=document.createElement('div'); board.className='intermediate-ranking'; board.innerHTML=`<h3>Zwischenrangliste nach Runde ${mp.room.current_round}</h3><div style="margin-top:10px;">${renderRankingRows(mp.players)}</div>`; resultContainer.appendChild(board);
+    const btn=document.getElementById('btnNextRound');
+    if(mp.player.is_host){ btn.style.display='block'; btn.textContent=mp.room.current_round>=mp.characters.filter(c=>c.is_submitted).length?'Endrangliste anzeigen':'Nächste Runde starten'; btn.onclick=hostAdvanceRound; }
+    else { btn.style.display='none'; const wait=document.createElement('p');wait.className='muted';wait.style.marginTop='18px';wait.textContent='Warten, bis die Spielleitung die nächste Runde startet...';resultContainer.appendChild(wait); }
+    document.getElementById('resultSection').style.display='block';
+}
+
+function renderRankingRows(players){
+    let rank=0,lastScore=null,position=0;
+    return (players||[]).map((p,i)=>{position++;if(lastScore===null||p.score!==lastScore)rank=position;lastScore=p.score;return `<div class="rank-row ${i===0?'top-rank':''}"><strong>${rank}.</strong><span>${escapeHtml(p.emoji||'🙂')} <strong>${escapeHtml(p.name)}</strong> <span class="muted">${escapeHtml(p.class_name)}</span></span><strong>${p.score} P.</strong></div>`;}).join('');
+}
+
+async function hostAdvanceRound(){
+    if(!mp.player?.is_host||mp.advancing)return; mp.advancing=true;
+    try{
+        const {data:freshChars}=await sb.from('characters').select('*').eq('room_id',mp.room.id).eq('is_submitted',true).order('play_order');
+        const chars=freshChars||[], nextIndex=mp.room.current_round;
+        if(nextIndex>=chars.length) await sb.from('rooms').update({status:'finished',answer_deadline:null}).eq('id',mp.room.id);
+        else { const deadline=mp.room.timer_enabled?new Date(Date.now()+60000).toISOString():null; await sb.from('rooms').update({status:'playing',current_round:mp.room.current_round+1,current_character_id:chars[nextIndex].id,answer_deadline:deadline}).eq('id',mp.room.id); }
+    }finally{mp.advancing=false;}
+}
+
+async function showFinalRanking(){
+    stopTimer(); const {data:players}=await sb.from('players').select('*').eq('room_id',mp.room.id).order('score',{ascending:false}).order('joined_at'); mp.players=players||[];
+    showOnly('multiRanking'); document.getElementById('rankingList').innerHTML=renderRankingRows(mp.players);
+}
+
+function startDeadlineTimer(deadline,onExpire){
+    stopTimer(); if(!deadline)return;
+    timerTimeoutHandled=false; const wrap=document.getElementById('multiTimerWrap'), text=document.getElementById('multiTimer'); wrap.style.display='block';
+    const tick=()=>{ const left=Math.max(0,new Date(deadline).getTime()-Date.now()), sec=Math.ceil(left/1000), m=Math.floor(sec/60), s=sec%60; text.textContent=`${m}:${String(s).padStart(2,'0')}`; wrap.classList.toggle('danger',sec<=15); if(left<=0&&!timerTimeoutHandled){timerTimeoutHandled=true;stopTimer(false);onExpire();} };
+    tick(); timerInterval=setInterval(tick,250);
+}
+function stopTimer(hide=true){ if(timerInterval){clearInterval(timerInterval);timerInterval=null;} if(hide)hideTimer(); }
+function hideTimer(){ const w=document.getElementById('multiTimerWrap'); if(w){w.style.display='none';w.classList.remove('danger');} }
+
+async function leaveRoom(toMenu=false){
+    stopTimer();
+    const oldRoom=mp.room,oldPlayer=mp.player;
+    if(oldPlayer?.id) await sb.from('players').delete().eq('id',oldPlayer.id);
+    if(mp.channel) await sb.removeChannel(mp.channel);
+    localStorage.removeItem('personenrecht_active_room');
+    if(oldRoom?.id){
+        const {data:remaining}=await sb.from('players').select('*').eq('room_id',oldRoom.id).order('joined_at');
+        if(!(remaining||[]).length){
+            await sb.from('answers').delete().eq('room_id',oldRoom.id);
+            await sb.from('characters').delete().eq('room_id',oldRoom.id);
+            await sb.from('rooms').update({status:'waiting',current_round:0,current_character_id:null,timer_enabled:false,creation_deadline:null,answer_deadline:null}).eq('id',oldRoom.id);
+        } else if(oldPlayer?.is_host){
+            await sb.from('players').update({is_host:true}).eq('id',remaining[0].id);
+        }
+    }
+    resetMultiplayerState();
+    if(toMenu){showOnly('startScreen');}else{showOnly('multiplayerMenu');await loadRoomOverview();await subscribeRoomBrowser();}
+}
+
+function resetMultiplayerState(){
+    mp=freshMp(); stopTimer();
+    const status=document.querySelector('.status-bar'); if(status?.children[0])status.children[0].style.display='block';
+    const btn=document.getElementById('btnBuilderAction');if(btn){btn.textContent='Beurteilung beginnen';btn.onclick=startQuiz;}
+    const next=document.getElementById('btnNextRound');if(next){next.style.display='block';next.onclick=nextRound;}
+}
+
+const originalStartMode=window.startMode;
+window.startMode=function(mode){resetMultiplayerState();document.getElementById('profileScreen').style.display='none';document.getElementById('multiplayerMenu').style.display='none';originalStartMode(mode);};
+
+window.returnToStart=function(){
+    stopTimer();
+    if(mp.room){ if(mp.channel)sb.removeChannel(mp.channel); resetMultiplayerState(); }
+    showOnly('startScreen'); document.getElementById('btnHome').style.display='none';
+};
+
+document.addEventListener('DOMContentLoaded',()=>{ loadSavedProfile(); showOnly('profileScreen'); });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,481 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  TrendingUp, 
+  Trophy, 
+  ChevronRight, 
+  CheckCircle2, 
+  XCircle, 
+  Home, 
+  Building2, 
+  Store, 
+  Factory,
+  Award, 
+  Zap,
+  Users,
+  LogOut,
+  Lock,
+  Search,
+  User
+} from 'lucide-react';
+
+// --- KONFIGURATION & DATEN ---
+
+const EMOJI_AVATARS = [
+  "👨‍💼", "👩‍💼", "🚀", "📈", "💎", 
+  "💰", "🤖", "🌟", "🌍", "📊"
+];
+
+const LEADERBOARD_BOTS = [
+  { name: "Dr. Finance", points: 2800, avatar: "👨‍🏫" },
+  { name: "EcoWiz", points: 2150, avatar: "🧠" },
+  { name: "StockMaster", points: 1700, avatar: "🐂" },
+  { name: "BIP_Pro", points: 1250, avatar: "⚡" },
+  { name: "MarketMaker", points: 800, avatar: "🏗️" }
+];
+
+const LEVELS = [
+  {
+    id: 1,
+    title: "BIP Grundlagen",
+    desc: "Inland vs. Ausland & Freizeit.",
+    tasks: [
+      { q: "Ein Unternehmen produziert in der Schweiz Fahrräder.", options: ["Zählt zum BIP", "Zählt nicht zum BIP"], correct: 0, exp: "Ja! Produktion im Inland." },
+      { q: "Eine Mutter betreut ihr Kind unbezahlt zuhause.", options: ["Zählt zum BIP", "Zählt nicht zum BIP"], correct: 1, exp: "Nein. Unbezahlte Arbeit wird nicht erfasst." },
+      { q: "Neuer Tesla wird in der Schweiz verkauft.", options: ["Zählt zum BIP", "Zählt nicht zum BIP"], correct: 0, exp: "Richtig. Neuproduktion zählt." },
+      { q: "Privater Verkauf eines gebrauchten Sofas.", options: ["Zählt zum BIP", "Zählt nicht zum BIP"], correct: 1, exp: "Nein. Gebrauchtware wurde im Herstellungsjahr gezählt." },
+      { q: "Bezahlter Haarschnitt beim Coiffeur.", options: ["Zählt zum BIP", "Zählt nicht zum BIP"], correct: 0, exp: "Ja. Dienstleistungen zählen." },
+      { q: "Freiwilligenarbeit im Sportverein.", options: ["Zählt zum BIP", "Zählt nicht zum BIP"], correct: 1, exp: "Nein. Ohne Bezahlung kein BIP-Beitrag." }
+    ]
+  },
+  {
+    id: 2,
+    title: "Die 4 Säulen",
+    desc: "Konsum, Investition, Staat & Export.",
+    tasks: [
+      { q: "Kauf eines Kühlschranks durch Haushalt.", options: ["Konsum", "Investitionen", "Staat", "Nettoexporte"], correct: 0, exp: "Typischer privater Konsum." },
+      { q: "Bau einer neuen Fabrikhalle.", options: ["Konsum", "Investitionen", "Staat", "Nettoexporte"], correct: 1, exp: "Investition in Sachkapital." },
+      { q: "Schulmöbel-Kauf durch den Staat.", options: ["Konsum", "Investitionen", "Staat", "Nettoexporte"], correct: 2, exp: "Staatlicher Konsum." },
+      { q: "Export von Uhren nach Japan.", options: ["Konsum", "Investitionen", "Staat", "Nettoexporte"], correct: 3, exp: "Zählt positiv zu Nettoexporten." },
+      { q: "Import von Smartphones.", options: ["Konsum", "Investitionen", "Staat", "Nettoexporte"], correct: 3, exp: "Importe mindern die Nettoexporte." },
+      { q: "Kauf einer Maschine durch Firma.", options: ["Konsum", "Investitionen", "Staat", "Nettoexporte"], correct: 1, exp: "Klassische Investition." }
+    ]
+  },
+  {
+    id: 3,
+    title: "BIP-Berechnung",
+    desc: "BIP = C + I + G + (X - M)",
+    tasks: [
+      { q: "Berechne: C: 500, I: 100, G: 200, X: 50, M: 50", type: "calc", correct: 800, exp: "500+100+200+(50-50) = 800" },
+      { q: "Berechne: C: 800, I: 200, G: 300, X: 150, M: 100", type: "calc", correct: 1350, exp: "800+200+300+50 = 1350" },
+      { q: "Berechne: C: 400, I: 50, G: 100, X: 200, M: 250", type: "calc", correct: 500, exp: "400+50+100-50 = 500" },
+      { q: "Berechne: C: 1000, I: 300, G: 400, X: 500, M: 450", type: "calc", correct: 1750, exp: "1000+300+400+50 = 1750" },
+      { q: "Berechne: C: 600, I: 150, G: 250, X: 120, M: 120", type: "calc", correct: 1000, exp: "600+150+250+0 = 1000" },
+      { q: "Berechne: C: 750, I: 250, G: 300, X: 400, M: 300", type: "calc", correct: 1400, exp: "750+250+300+100 = 1400" }
+    ]
+  },
+  {
+    id: 4,
+    title: "Praxis-Analyse",
+    desc: "Werte aus Ereignissen ziehen.",
+    tasks: [
+      { 
+        q: "Inselstaat Alpha:\nHaushalte kaufen Brot für 200€.\nFirmen bauen Silos für 300€.\nDer Staat kauft Computer für 100€.\nPrivatverkauf gebrauchter PKW: 50€.\nWie hoch ist das BIP?", 
+        type: "calc", 
+        correct: 600, 
+        exp: "Brot (C: 200) + Silos (I: 300) + Computer (G: 100) = 600. Gebrauchtwagen zählen nicht!" 
+      },
+      { 
+        q: "Region Beta:\nExporte von Holz: 400€.\nImporte von Öl: 300€.\nKonsum der Bürger: 1000€.\nWas ist das BIP?", 
+        type: "calc", 
+        correct: 1100, 
+        exp: "Konsum (1000) + Nettoexporte (400 - 300) = 1100." 
+      },
+      { 
+        q: "Stadt Gamma:\nNeubau Spital: 500€.\nLöhne Staatsangestellte: 200€.\nMutter kocht unbezahlt: 100€.\nBIP?", 
+        type: "calc", 
+        correct: 700, 
+        exp: "Spitalbau (I: 500) + Staatsausgaben/Löhne (G: 200) = 700. Unbezahlte Hausarbeit zählt nicht." 
+      },
+      { 
+        q: "Land Delta:\nPrivater Konsum: 800€.\nStaatshilfe für Firmen: 200€ (Transferzahlung).\nMaschinenkauf Firmen: 300€.\nBIP?", 
+        type: "calc", 
+        correct: 1100, 
+        exp: "Konsum (800) + Investition (300) = 1100. Transferzahlungen ohne Gegenleistung zählen nicht zum BIP!" 
+      },
+      { 
+        q: "Insel Epsilon:\nVerkauf Fische ins Ausland: 100€.\nKauf von Netzen im Ausland: 40€.\nInländer kaufen Fisch: 60€.\nBIP?", 
+        type: "calc", 
+        correct: 120, 
+        exp: "Inlandskonsum (60) + Exporte (100) - Importe (40) = 120." 
+      },
+      { 
+        q: "Staat Zeta:\nStaatsinvestition Brücke: 400€.\nKauf von Lebensmitteln: 300€.\nBörsengewinn Bürger: 200€.\nBIP?", 
+        type: "calc", 
+        correct: 700, 
+        exp: "Staat (400) + Konsum (300) = 700. Finanzgewinne ohne reale Produktion zählen nicht." 
+      }
+    ]
+  }
+];
+
+export default function App() {
+  const [gameState, setGameState] = useState('START'); 
+  const [playerName, setPlayerName] = useState('');
+  const [playerAvatar, setPlayerAvatar] = useState('👨‍💼');
+  const [totalPoints, setTotalPoints] = useState(0);
+  const [streak, setStreak] = useState(0);
+  
+  const [levelProgress, setLevelProgress] = useState({ 1: 0, 2: 0, 3: 0, 4: 0 });
+  const [completedLevels, setCompletedLevels] = useState([]);
+  
+  const [currentLevelIdx, setCurrentLevelIdx] = useState(0);
+  const [currentTaskIdx, setCurrentTaskIdx] = useState(0);
+  const [taskFeedback, setTaskFeedback] = useState(null);
+  const [calcInput, setCalcInput] = useState('');
+  const [levelStats, setLevelStats] = useState({ correct: 0, earned: 0 });
+
+  const processFeedback = (isCorrect, message) => {
+    let earned = 0;
+    let bonusAmount = 0;
+    let newStreak = isCorrect ? streak + 1 : 0;
+    
+    if (isCorrect) {
+      earned = 50;
+      if (newStreak >= 2) {
+        bonusAmount = (newStreak - 1) * 10;
+        earned += bonusAmount;
+      }
+      setLevelStats(s => ({ ...s, correct: s.correct + 1, earned: s.earned + earned }));
+      setTotalPoints(p => p + earned);
+    }
+    
+    setStreak(newStreak);
+    setTaskFeedback({ 
+      isCorrect, 
+      message, 
+      earned, 
+      bonusAmount, 
+      streakBonus: isCorrect && newStreak >= 2 
+    });
+  };
+
+  const nextTask = () => {
+    setTaskFeedback(null);
+    setCalcInput('');
+    const currentLevelId = LEVELS[currentLevelIdx].id;
+    const isLastTask = currentTaskIdx === LEVELS[currentLevelIdx].tasks.length - 1;
+
+    if (!isLastTask) {
+      const nextIdx = currentTaskIdx + 1;
+      setCurrentTaskIdx(nextIdx);
+      setLevelProgress(prev => ({ ...prev, [currentLevelId]: nextIdx }));
+    } else {
+      const completionBonus = 150; 
+      setTotalPoints(p => p + completionBonus);
+      setLevelStats(s => ({ ...s, earned: s.earned + completionBonus }));
+      
+      if (!completedLevels.includes(currentLevelId)) {
+        setCompletedLevels(prev => [...prev, currentLevelId]);
+      }
+      setLevelProgress(prev => ({ ...prev, [currentLevelId]: 6 }));
+      setGameState('LEVEL_END');
+    }
+  };
+
+  const quitLevel = () => {
+    setTaskFeedback(null);
+    setGameState('MENU');
+  };
+
+  const startLevel = (idx) => {
+    if (completedLevels.includes(LEVELS[idx].id)) return; 
+    setCurrentLevelIdx(idx);
+    setCurrentTaskIdx(levelProgress[LEVELS[idx].id] || 0);
+    setLevelStats({ correct: 0, earned: 0 });
+    setGameState('PLAYING');
+  };
+
+  const getLeaderboard = () => {
+    const user = { name: playerName || "Du", points: totalPoints, avatar: playerAvatar, isUser: true };
+    const all = [...LEADERBOARD_BOTS, user];
+    return all.sort((a, b) => b.points - a.points);
+  };
+
+  const Header = () => (
+    <div className="flex items-center justify-between p-4 bg-white border-b shadow-sm sticky top-0 z-20">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 flex items-center justify-center text-3xl bg-slate-50 rounded-full border border-slate-100">
+          {playerAvatar}
+        </div>
+        <div>
+          <p className="text-[10px] text-slate-400 font-bold uppercase leading-none mb-1">Spieler</p>
+          <p className="text-sm font-black text-indigo-950">{playerName || "Investor"}</p>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <div className="bg-indigo-50 px-4 py-2 rounded-xl border border-indigo-100 flex items-center gap-2">
+          <Trophy className="w-4 h-4 text-indigo-600" />
+          <span className="font-black text-indigo-700">{totalPoints}</span>
+        </div>
+        {gameState === 'MENU' && (
+          <button onClick={() => setGameState('LEADERBOARD')} className="p-2 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+            <Users className="w-5 h-5 text-slate-600" />
+          </button>
+        )}
+        {(gameState === 'PLAYING' || gameState === 'LEADERBOARD') && (
+           <button onClick={() => setGameState('MENU')} className="p-2 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+            <Home className="w-5 h-5 text-slate-600" />
+          </button>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+      {gameState === 'START' && (
+        <div className="max-w-xl mx-auto pt-24 text-center px-6">
+          <div className="w-20 h-20 bg-indigo-600 rounded-2xl mx-auto flex items-center justify-center mb-8 shadow-xl rotate-3">
+            <TrendingUp className="w-10 h-10 text-white" />
+          </div>
+          <h1 className="text-5xl font-black mb-4 tracking-tighter text-indigo-950">BIP QUEST</h1>
+          <p className="text-slate-500 mb-10 font-medium">Lerne die Makroökonomie spielerisch und knacke den Highscore.</p>
+          <button onClick={() => setGameState('CHAR_SETUP')} className="w-full py-5 bg-indigo-600 text-white font-black text-xl rounded-2xl hover:bg-indigo-700 shadow-lg transition-all active:scale-95">
+            SPIEL STARTEN
+          </button>
+        </div>
+      )}
+
+      {gameState === 'CHAR_SETUP' && (
+        <div className="max-w-2xl mx-auto py-12 px-6">
+          <div className="bg-white rounded-[32px] p-8 shadow-xl border-2 border-slate-50">
+            <h2 className="text-3xl font-black text-center mb-8">Dein Profil</h2>
+            
+            <div className="space-y-8">
+              {/* Namenseingabe */}
+              <div className="space-y-3">
+                <label className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-2">
+                  <User className="w-3 h-3"/> Dein Name
+                </label>
+                <input 
+                  type="text" 
+                  value={playerName} 
+                  onChange={(e) => setPlayerName(e.target.value)}
+                  placeholder="Wie heißt du?"
+                  className="w-full p-4 bg-slate-50 rounded-2xl border-2 border-slate-100 focus:border-indigo-500 focus:bg-white outline-none font-bold text-lg transition-all"
+                />
+              </div>
+
+              {/* Emoji Auswahl */}
+              <div className="space-y-3">
+                <label className="text-xs font-black uppercase text-slate-400 tracking-wider">Wähle dein Charakter-Emoji</label>
+                <div className="grid grid-cols-5 gap-3">
+                  {EMOJI_AVATARS.map((emoji) => (
+                    <button 
+                      key={emoji} 
+                      onClick={() => setPlayerAvatar(emoji)}
+                      className={`h-16 flex items-center justify-center text-3xl rounded-2xl border-2 transition-all ${playerAvatar === emoji ? 'bg-indigo-50 border-indigo-500 scale-105 shadow-sm' : 'bg-slate-50 border-transparent hover:border-slate-200'}`}
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button 
+                disabled={!playerName.trim()}
+                onClick={() => setGameState('MENU')} 
+                className="w-full py-5 bg-indigo-600 text-white font-black text-xl rounded-2xl hover:bg-indigo-700 shadow-lg disabled:opacity-30 transition-all active:scale-95 mt-4"
+              >
+                LEVEL-ÜBERSICHT
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {(['MENU', 'PLAYING', 'LEVEL_END', 'LEADERBOARD'].includes(gameState)) && <Header />}
+
+      {gameState === 'MENU' && (
+        <div className="max-w-5xl mx-auto py-8 px-6">
+          <h2 className="text-2xl font-black mb-6 flex items-center gap-2">
+            <Award className="text-indigo-600"/> Wirtschafts-Training
+          </h2>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {LEVELS.map((lvl, idx) => {
+              const done = completedLevels.includes(lvl.id);
+              const progress = levelProgress[lvl.id] || 0;
+              return (
+                <div key={lvl.id} className={`bg-white rounded-3xl p-6 border-2 shadow-sm flex flex-col transition-all ${done ? 'border-green-100 opacity-90' : 'border-slate-100'}`}>
+                  <div className="mb-4 flex justify-between items-start">
+                    <div className={`p-3 rounded-xl ${done ? 'bg-green-50' : 'bg-indigo-50'}`}>
+                      {idx === 0 ? <Store className={`w-6 h-6 ${done ? 'text-green-600' : 'text-indigo-600'}`}/> : 
+                       idx === 1 ? <Building2 className={`w-6 h-6 ${done ? 'text-green-600' : 'text-indigo-600'}`}/> : 
+                       idx === 2 ? <Factory className={`w-6 h-6 ${done ? 'text-green-600' : 'text-indigo-600'}`}/> :
+                       <Search className={`w-6 h-6 ${done ? 'text-green-600' : 'text-indigo-600'}`}/>}
+                    </div>
+                    {done && <CheckCircle2 className="text-green-500 w-6 h-6" />}
+                  </div>
+                  <h3 className="font-black text-lg mb-1 leading-tight">{lvl.title}</h3>
+                  <p className="text-xs text-slate-400 mb-6 flex-grow leading-relaxed">{lvl.desc}</p>
+                  
+                  {progress > 0 && !done && (
+                    <div className="mb-4">
+                      <div className="flex justify-between text-[10px] font-bold mb-1 uppercase text-indigo-600">
+                        <span>Fortschritt</span>
+                        <span>{progress}/6</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                        <div className="bg-indigo-600 h-full" style={{width: `${(progress/6)*100}%`}}></div>
+                      </div>
+                    </div>
+                  )}
+
+                  {done ? (
+                    <div className="w-full py-3 bg-slate-50 text-slate-400 rounded-xl font-bold flex items-center justify-center gap-2 cursor-not-allowed text-sm">
+                      <Lock className="w-4 h-4"/> Abgeschlossen
+                    </div>
+                  ) : (
+                    <button onClick={() => startLevel(idx)} className={`w-full py-3 rounded-xl font-bold transition-all text-sm ${progress > 0 ? 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>
+                      {progress > 0 ? 'Fortsetzen' : 'Level Starten'}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {gameState === 'LEADERBOARD' && (
+        <div className="max-w-xl mx-auto py-8 px-6">
+          <h2 className="text-3xl font-black mb-8 text-center">Rangliste</h2>
+          <div className="bg-white rounded-3xl border-2 border-slate-100 overflow-hidden shadow-sm">
+            {getLeaderboard().map((entry, i) => (
+              <div key={i} className={`flex items-center justify-between p-4 border-b last:border-0 ${entry.isUser ? 'bg-indigo-50' : ''}`}>
+                <div className="flex items-center gap-4">
+                  <span className="w-6 font-black text-slate-400">{i + 1}.</span>
+                  <div className="w-10 h-10 flex items-center justify-center text-2xl">{entry.avatar}</div>
+                  <span className={`font-bold ${entry.isUser ? 'text-indigo-900' : 'text-slate-700'}`}>{entry.name} {entry.isUser && "(Du)"}</span>
+                </div>
+                <div className="font-black text-indigo-600">{entry.points} Pkt.</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {gameState === 'PLAYING' && (
+        <div className="max-w-2xl mx-auto py-8 px-6">
+          <div className="mb-6 flex items-center justify-between">
+            <button onClick={quitLevel} className="flex items-center gap-1 text-slate-400 hover:text-slate-600 font-bold text-sm">
+              <LogOut className="w-4 h-4"/> Mission unterbrechen
+            </button>
+            <div className="flex items-center gap-2">
+              {streak >= 1 && (
+                <div className="flex items-center gap-1 bg-orange-100 text-orange-600 px-3 py-1 rounded-full font-black text-xs animate-pulse border border-orange-200 shadow-sm">
+                  <Zap className="w-3 h-3 fill-current"/> {streak}er Streak
+                  <span className="ml-1 text-orange-400 text-[10px]">Bonus: +{streak * 10}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-[32px] p-8 shadow-xl border-2 border-slate-50 relative overflow-hidden">
+             <div className="absolute top-0 left-0 w-full h-1.5 bg-slate-100">
+                <div className="bg-indigo-600 h-full transition-all duration-500" style={{width: `${(currentTaskIdx/6)*100}%`}}></div>
+             </div>
+
+            <div className="mt-4 mb-8 whitespace-pre-wrap font-bold text-lg leading-relaxed text-slate-800">
+              {LEVELS[currentLevelIdx].tasks[currentTaskIdx].q}
+            </div>
+            
+            {!taskFeedback ? (
+              <div className="space-y-3">
+                {LEVELS[currentLevelIdx].tasks[currentTaskIdx].type === 'calc' ? (
+                  <div className="flex flex-col gap-4">
+                    <div className="relative">
+                       <input 
+                        type="number" 
+                        value={calcInput} 
+                        onChange={e => setCalcInput(e.target.value)} 
+                        onKeyDown={(e) => e.key === 'Enter' && calcInput && processFeedback(parseInt(calcInput) === LEVELS[currentLevelIdx].tasks[currentTaskIdx].correct, LEVELS[currentLevelIdx].tasks[currentTaskIdx].exp)}
+                        placeholder="Ergebnis hier eintippen..." 
+                        className="w-full p-5 bg-slate-50 rounded-2xl border-2 border-slate-100 focus:border-indigo-500 focus:bg-white outline-none font-black text-2xl transition-all text-center"
+                      />
+                    </div>
+                    <button 
+                      disabled={!calcInput}
+                      onClick={() => processFeedback(parseInt(calcInput) === LEVELS[currentLevelIdx].tasks[currentTaskIdx].correct, LEVELS[currentLevelIdx].tasks[currentTaskIdx].exp)} 
+                      className="w-full py-5 bg-indigo-600 text-white font-black rounded-2xl disabled:opacity-30 hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"
+                    >
+                      Antwort bestätigen
+                    </button>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3">
+                    {LEVELS[currentLevelIdx].tasks[currentTaskIdx].options.map((opt, i) => (
+                      <button key={i} onClick={() => processFeedback(i === LEVELS[currentLevelIdx].tasks[currentTaskIdx].correct, LEVELS[currentLevelIdx].tasks[currentTaskIdx].exp)} className="p-5 text-left bg-slate-50 rounded-2xl font-bold hover:bg-indigo-50 border-2 border-transparent hover:border-indigo-200 transition-all shadow-sm">
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="text-center">
+                <div className={`mb-8 p-6 rounded-3xl ${taskFeedback.isCorrect ? 'bg-green-50 text-green-900 border border-green-200' : 'bg-red-50 text-red-900 border border-red-200'}`}>
+                  <div className="flex items-center justify-center gap-2 mb-3 font-black text-2xl uppercase italic">
+                    {taskFeedback.isCorrect ? <CheckCircle2 className="w-7 h-7 text-green-600"/> : <XCircle className="w-7 h-7 text-red-600"/>}
+                    {taskFeedback.isCorrect ? 'Perfekt!' : 'Nicht ganz!'}
+                  </div>
+                  <div className="font-semibold text-sm leading-relaxed mb-6 bg-white/50 p-4 rounded-xl">
+                    {taskFeedback.message}
+                  </div>
+                  {taskFeedback.isCorrect && (
+                    <div className="flex flex-col gap-2">
+                      <div className="flex justify-center gap-6 text-xs font-black uppercase tracking-wider">
+                        <span className="bg-green-100 text-green-700 px-3 py-1 rounded-lg">+50 Basis</span>
+                        {taskFeedback.streakBonus && <span className="bg-orange-100 text-orange-700 px-3 py-1 rounded-lg">+{taskFeedback.bonusAmount} Streak</span>}
+                      </div>
+                      <p className="text-[10px] font-bold text-slate-400 mt-2 uppercase tracking-widest">Gewonnene Punkte: {taskFeedback.earned}</p>
+                    </div>
+                  )}
+                  {!taskFeedback.isCorrect && (
+                    <div className="text-xs font-black uppercase text-red-500 tracking-widest">Streak unterbrochen (0 Pkt)</div>
+                  )}
+                </div>
+                <button onClick={nextTask} className="w-full py-5 bg-slate-900 text-white font-black rounded-2xl hover:bg-slate-800 flex items-center justify-center gap-3 shadow-xl transition-transform active:scale-95">
+                  Nächste Aufgabe <ChevronRight className="w-5 h-5"/>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {gameState === 'LEVEL_END' && (
+        <div className="max-w-md mx-auto py-16 text-center px-6">
+          <div className="w-24 h-24 bg-green-100 rounded-full mx-auto flex items-center justify-center mb-6 shadow-inner">
+            <Trophy className="w-12 h-12 text-green-600 animate-bounce" />
+          </div>
+          <h2 className="text-4xl font-black mb-2 text-indigo-950">Mission Erfolg!</h2>
+          <p className="text-slate-500 mb-10 font-medium">Du hast dieses Level gemeistert und wertvolle Punkte gesammelt.</p>
+          <div className="bg-white p-8 rounded-3xl border-2 border-slate-100 mb-10 grid grid-cols-2 gap-4 shadow-sm">
+             <div className="border-r border-slate-100 pr-4">
+               <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-widest">Richtig</p>
+               <p className="text-3xl font-black text-indigo-600">{levelStats.correct}/6</p>
+             </div>
+             <div className="pl-4">
+               <p className="text-[10px] font-bold text-slate-400 uppercase mb-2 tracking-widest">Level-Bonus</p>
+               <p className="text-3xl font-black text-orange-500">+{levelStats.earned}</p>
+             </div>
+          </div>
+          <button onClick={() => setGameState('MENU')} className="w-full py-5 bg-indigo-600 text-white font-black rounded-2xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-all">
+            Zum Hauptmenü
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Markt-Schieber – Lehrerdashboard</title>
+<style>
+:root{
+  --ink:#0f172a;--muted:#64748b;--border:#e2e8f0;--bg:#f8fafc;
+  --blue:#2563eb;--green:#16a34a;--orange:#f59e0b;--red:#dc2626;--gray:#64748b;
+  --green2:#dcfce7;--orange2:#fef3c7;--red2:#fee2e2;--blue2:#dbeafe;--gray2:#f1f5f9;
+  --shadow:0 14px 34px rgba(15,23,42,.10);--radius:20px;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:linear-gradient(135deg,#eef6ff,#f8fafc 50%,#fff7ed);
+  color:var(--ink);
+}
+header{
+  position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--border);
+}
+.topbar{
+  max-width:1400px;margin:auto;padding:14px 18px;
+  display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.brand{display:flex;gap:12px;align-items:center;font-weight:950}
+.logo{
+  width:44px;height:44px;border-radius:15px;background:linear-gradient(135deg,#2563eb,#22c55e);
+  color:white;display:grid;place-items:center;box-shadow:var(--shadow)
+}
+.meta{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.pill{padding:8px 12px;border-radius:999px;background:#eef2ff;color:#1e3a8a;font-weight:850;font-size:14px}
+main{max-width:1400px;margin:auto;padding:22px 18px 70px}
+.card{
+  background:white;border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:20px;margin-bottom:18px;
+}
+h1,h2,h3{margin:0 0 12px}
+h1{font-size:clamp(28px,4vw,42px)}
+h2{font-size:26px}
+h3{font-size:20px}
+.small{font-size:13px;color:var(--muted)}
+.lead{font-size:17px;color:var(--muted)}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:16px}
+label{font-weight:850;font-size:13px;color:#334155}
+input,select{
+  width:100%;padding:11px 12px;border:1px solid #cbd5e1;border-radius:13px;
+  font-size:15px;background:white;margin-top:5px;
+}
+button{
+  border:0;border-radius:14px;padding:11px 14px;font-size:14px;font-weight:900;cursor:pointer;
+  transition:.15s transform,.15s opacity;
+}
+button:hover{transform:translateY(-1px)}
+button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.primary{background:var(--blue);color:white}
+.secondary{background:#eef2ff;color:#1e3a8a}
+.soft{background:#f1f5f9;color:#0f172a}
+.danger{background:#fee2e2;color:#991b1b}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.tab{background:#f1f5f9;color:#334155}
+.tab.active{background:#2563eb;color:white}
+.statGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.stat{
+  background:#f8fafc;border:1px solid var(--border);border-radius:18px;padding:16px;
+}
+.stat .num{font-size:28px;font-weight:950;margin-top:4px}
+.tableWrap{overflow:auto;border:1px solid var(--border);border-radius:18px;background:white}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:900px}
+th,td{padding:10px 11px;border-bottom:1px solid #e5e7eb;text-align:left;vertical-align:top}
+th{background:#f8fafc;position:sticky;top:0;z-index:2;font-size:13px;color:#334155}
+tr:hover td{background:#f8fafc}
+.badge{
+  display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:4px 8px;
+  font-size:12px;font-weight:950;white-space:nowrap;
+}
+.good{background:var(--green2);color:#166534}
+.mid{background:var(--orange2);color:#92400e}
+.bad{background:var(--red2);color:#991b1b}
+.neutral{background:var(--gray2);color:#475569}
+.blue{background:var(--blue2);color:#1d4ed8}
+.rowBad td{background:#fff7ed}
+.rowVeryBad td{background:#fef2f2}
+.status-richtig{color:#166534;font-weight:950}
+.status-teilweise{color:#92400e;font-weight:950}
+.status-falsch{color:#991b1b;font-weight:950}
+.status-übersprungen{color:#64748b;font-weight:950}
+.percent{font-weight:950}
+.percent.goodText{color:#166534}
+.percent.midText{color:#92400e}
+.percent.badText{color:#991b1b}
+.percent.noneText{color:#64748b}
+.modalBackdrop{
+  display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);
+  z-index:100;padding:20px;overflow:auto;
+}
+.modal{
+  max-width:1250px;margin:30px auto;background:white;border-radius:24px;
+  padding:24px;box-shadow:0 24px 70px rgba(15,23,42,.25);
+}
+.detailHeader{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:14px 0;
+}
+.detailBox{background:#f8fafc;border:1px solid var(--border);border-radius:16px;padding:13px}
+.detailBox strong{display:block;font-size:20px;margin-top:4px}
+.loading{padding:18px;border-radius:16px;background:#f8fafc;color:#475569;font-weight:800}
+.warn{padding:12px 14px;border-radius:16px;background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;font-weight:750}
+@media print{
+  header,.controls,.tabs,.actions button,.modalBackdrop{display:none!important}
+  body{background:white}
+  .card{box-shadow:none;border:1px solid #ddd}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo">LD</div>
+      <div>
+        <div>Markt-Schieber – Lehrerdashboard</div>
+        <div class="small">Live-Auswertung Angebot und Nachfrage</div>
+      </div>
+    </div>
+    <div class="meta">
+      <span class="pill" id="lastUpdate">Noch nicht geladen</span>
+      <span class="pill" id="autoInfo">Auto-Refresh: 5s</span>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="card">
+    <h1>Lehrerdashboard</h1>
+    <p class="lead">Die Übersicht liest die Supabase-Views live aus. In der Lernenden-Tabelle kannst du einzelne Personen über „Details“ öffnen.</p>
+    <div class="warn">
+      Diese Dashboard-Datei ist für die Lehrperson gedacht. Nicht an Lernende weitergeben.
+    </div>
+
+    <div class="controls">
+      <div>
+        <label>Klasse</label>
+        <select id="classFilter" onchange="renderAll()">
+          <option value="">Alle Klassen</option>
+        </select>
+      </div>
+      <div>
+        <label>Name suchen</label>
+        <input id="nameFilter" placeholder="Name..." oninput="renderAll()">
+      </div>
+      <div>
+        <label>Level</label>
+        <select id="levelFilter" onchange="renderAll()">
+          <option value="">Alle Level</option>
+          <option value="1">Level 1</option>
+          <option value="2">Level 2</option>
+          <option value="3">Level 3</option>
+          <option value="4">Level 4</option>
+          <option value="5">Level 5</option>
+          <option value="W">Wiederholung</option>
+        </select>
+      </div>
+      <div>
+        <label>Problemfilter</label>
+        <select id="problemFilter" onchange="renderAll()">
+          <option value="">Alle anzeigen</option>
+          <option value="problem">Nur problematisch</option>
+          <option value="openErrors">Nur offene Fehler</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="primary" onclick="loadAll()">Jetzt aktualisieren</button>
+      <button class="secondary" onclick="exportCurrentTab()">CSV aktueller Tab</button>
+      <button class="soft" onclick="window.print()">Drucken</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="statGrid" id="stats"></div>
+  </section>
+
+  <section class="card">
+    <div class="tabs">
+      <button class="tab active" data-tab="lernende" onclick="setTab('lernende')">Lernende</button>
+      <button class="tab" data-tab="level" onclick="setTab('level')">Levelübersicht</button>
+      <button class="tab" data-tab="aufgaben" onclick="setTab('aufgaben')">Aufgabenanalyse</button>
+      <button class="tab" data-tab="wiederholung" onclick="setTab('wiederholung')">Wiederholung</button>
+      <button class="tab" data-tab="rohdaten" onclick="setTab('rohdaten')">Rohdaten</button>
+    </div>
+    <div id="tabContent"></div>
+  </section>
+</main>
+
+<div class="modalBackdrop" id="detailModal">
+  <div class="modal">
+    <div class="actions" style="justify-content:space-between;margin-top:0">
+      <h2 id="detailTitle">Details</h2>
+      <button class="danger" onclick="closeDetail()">Schliessen</button>
+    </div>
+    <div id="detailContent" class="loading">Lade Details...</div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://xvgbisxwptnfupibcbpg.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_WF742ZbvUE8BzCTT2MZw2w_K2wFvYyt";
+
+const TABLE_RAW = "markt_rohdaten";
+const VIEW_LERNENDE = "v_markt_lernende";
+const VIEW_LEVEL = "v_markt_leveluebersicht";
+const VIEW_AUFGABEN = "v_markt_aufgaben";
+const VIEW_WIEDERHOLUNG = "v_markt_wiederholung";
+
+let currentTab = "lernende";
+let data = {
+  lernende: [],
+  level: [],
+  aufgaben: [],
+  wiederholung: [],
+  rohdaten: []
+};
+
+async function supabaseGet(path){
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`
+    }
+  });
+  if(!res.ok){
+    const txt = await res.text().catch(()=>"");
+    throw new Error(`HTTP ${res.status}: ${txt}`);
+  }
+  return await res.json();
+}
+
+async function loadAll(){
+  document.getElementById("tabContent").innerHTML = `<div class="loading">Lade Daten aus Supabase...</div>`;
+  try{
+    const [lernende, level, aufgaben, wiederholung, rohdaten] = await Promise.all([
+      supabaseGet(`${VIEW_LERNENDE}?select=*&order=klasse.asc,name.asc`),
+      supabaseGet(`${VIEW_LEVEL}?select=*`),
+      supabaseGet(`${VIEW_AUFGABEN}?select=*`),
+      supabaseGet(`${VIEW_WIEDERHOLUNG}?select=*`),
+      supabaseGet(`${TABLE_RAW}?select=*&order=created_at.desc&limit=500`)
+    ]);
+
+    data.lernende = lernende || [];
+    data.level = level || [];
+    data.aufgaben = (aufgaben || []).sort((a,b)=>compareTaskIds(a.task_id,b.task_id));
+    data.wiederholung = (wiederholung || []).sort((a,b)=>compareTaskIds(a.ursprungs_aufgabe,b.ursprungs_aufgabe));
+    data.rohdaten = rohdaten || [];
+
+    updateClassFilter();
+    renderAll();
+    document.getElementById("lastUpdate").textContent = "Aktualisiert: " + new Date().toLocaleTimeString("de-CH");
+  }catch(err){
+    document.getElementById("tabContent").innerHTML = `
+      <div class="warn">
+        Daten konnten nicht geladen werden.<br>
+        ${escapeHtml(err.message)}<br><br>
+        Prüfe Supabase URL, Publishable Key, Query 3 und Query 5.
+      </div>`;
+  }
+}
+
+function updateClassFilter(){
+  const sel = document.getElementById("classFilter");
+  const current = sel.value;
+  const classes = [...new Set([
+    ...data.lernende.map(x=>x.klasse),
+    ...data.level.map(x=>x.klasse),
+    ...data.aufgaben.map(x=>x.klasse),
+    ...data.wiederholung.map(x=>x.klasse),
+    ...data.rohdaten.map(x=>x.class_name)
+  ].filter(Boolean))].sort();
+
+  sel.innerHTML = `<option value="">Alle Klassen</option>` + classes.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  sel.value = classes.includes(current) ? current : "";
+}
+
+function renderAll(){
+  renderStats();
+  renderTab();
+}
+
+function setTab(tab){
+  currentTab = tab;
+  document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active", b.dataset.tab === tab));
+  renderTab();
+}
+
+function filters(){
+  return {
+    klasse: document.getElementById("classFilter").value,
+    name: document.getElementById("nameFilter").value.trim().toLowerCase(),
+    level: document.getElementById("levelFilter").value,
+    problem: document.getElementById("problemFilter").value
+  };
+}
+
+function renderStats(){
+  const f = filters();
+  const lernende = filterLernende(data.lernende, f);
+  const raw = filterRaw(data.rohdaten, f);
+  const answers = raw.length;
+  const right = raw.filter(x=>x.status==="richtig").length;
+  const partial = raw.filter(x=>x.status==="teilweise").length;
+  const wrong = raw.filter(x=>x.status==="falsch").length;
+  const avg = lernende.length
+    ? avgNum(lernende.map(x=>x.erfolgsquote).filter(x=>x!==null && x!==undefined)) * 100
+    : null;
+
+  document.getElementById("stats").innerHTML = `
+    <div class="stat"><div class="small">Lernende / Sessions</div><div class="num">${lernende.length}</div></div>
+    <div class="stat"><div class="small">Antworten in Rohdaten</div><div class="num">${answers}</div></div>
+    <div class="stat"><div class="small">Ø Erfolgsquote</div><div class="num">${avg===null ? "–" : Math.round(avg)+"%"}</div></div>
+    <div class="stat"><div class="small">Richtig / Teilweise / Falsch</div><div class="num">${right} / ${partial} / ${wrong}</div></div>
+  `;
+}
+
+function renderTab(){
+  if(currentTab === "lernende") return renderLernende();
+  if(currentTab === "level") return renderLevel();
+  if(currentTab === "aufgaben") return renderAufgaben();
+  if(currentTab === "wiederholung") return renderWiederholung();
+  if(currentTab === "rohdaten") return renderRohdaten();
+}
+
+function renderLernende(){
+  const f = filters();
+  const rows = filterLernende(data.lernende, f)
+    .sort((a,b)=>String(a.klasse||"").localeCompare(String(b.klasse||"")) || String(a.name||"").localeCompare(String(b.name||"")))
+    .map(x=>{
+      const quote = toPercent(x.erfolgsquote);
+      const rowClass = (quote !== null && quote < 50) || Number(x.offene_fehlerverbesserungen||0) > 0 ? "rowBad" : "";
+      return `
+        <tr class="${rowClass}">
+          <td>${escapeHtml(x.klasse)}</td>
+          <td><strong>${escapeHtml(x.name)}</strong></td>
+          <td>${formatDate(x.startzeit)}</td>
+          <td>${formatDate(x.letzte_aktivitaet)}</td>
+          <td>${escapeHtml(x.absolvierte_level || "")}</td>
+          <td>${num(x.gesamtpunkte)} / ${num(x.maximal_moeglich)}</td>
+          <td>${percentBadge(x.erfolgsquote)}</td>
+          <td>${num(x.richtig)} / ${num(x.teilweise)} / ${num(x.falsch)}</td>
+          <td>${num(x.beste_streak)}</td>
+          <td>${num(x.fortschritt_prozent)}%</td>
+          <td>${errorBadge(x.offene_fehlerverbesserungen)}</td>
+          <td><button class="primary" onclick='openDetail(${JSON.stringify(x.session_id)})'>Details</button></td>
+        </tr>`;
+    }).join("");
+
+  document.getElementById("tabContent").innerHTML = `
+    <h2>Lernende</h2>
+    <p class="small">Klicke auf „Details“, um alle Teilantworten einer einzelnen Session zu sehen.</p>
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Klasse</th><th>Name</th><th>Start</th><th>Letzte Aktivität</th><th>Level</th>
+            <th>Punkte</th><th>Erfolgsquote</th><th>R/T/F</th><th>Beste Streak</th><th>Fortschritt</th><th>Offene Fehler</th><th>Details</th>
+          </tr>
+        </thead>
+        <tbody>${rows || emptyRow(12)}</tbody>
+      </table>
+    </div>`;
+}
+
+function renderLevel(){
+  const f = filters();
+  const rows = filterLevel(data.level, f)
+    .sort((a,b)=>String(a.klasse||"").localeCompare(String(b.klasse||"")) || compareTaskIds(a.level_id,b.level_id))
+    .map(x=>{
+      const quote = x.durchschnittliche_erfolgsquote;
+      const rowClass = toPercent(quote) !== null && toPercent(quote) < 50 ? "rowBad" : "";
+      return `
+        <tr class="${rowClass}">
+          <td>${escapeHtml(x.klasse)}</td>
+          <td>${escapeHtml(x.level_id)}</td>
+          <td>${escapeHtml(x.level_name)}</td>
+          <td>${num(x.anzahl_teilaufgaben_bearbeitet)}</td>
+          <td>${num(x.anzahl_antworten)}</td>
+          <td>${num(x.durchschnittspunkte)} / ${num(x.durchschnitt_maxpunkte)}</td>
+          <td>${percentBadge(quote)}</td>
+          <td>${num(x.richtig)} / ${num(x.teilweise)} / ${num(x.falsch)} / ${num(x.uebersprungen)}</td>
+          <td>${escapeHtml(x.haeufigste_falsche_antwort || "")}</td>
+        </tr>`;
+    }).join("");
+
+  document.getElementById("tabContent").innerHTML = `
+    <h2>Levelübersicht</h2>
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr><th>Klasse</th><th>Level</th><th>Levelname</th><th>Teilaufgaben</th><th>Antworten</th><th>Ø Punkte</th><th>Ø Quote</th><th>R/T/F/Ü</th><th>Häufigste falsche Antwort</th></tr>
+        </thead>
+        <tbody>${rows || emptyRow(9)}</tbody>
+      </table>
+    </div>`;
+}
+
+function renderAufgaben(){
+  const f = filters();
+  const rows = filterAufgaben(data.aufgaben, f)
+    .sort((a,b)=>String(a.klasse||"").localeCompare(String(b.klasse||"")) || compareTaskIds(a.task_id,b.task_id))
+    .map(x=>{
+      const quote = x.durchschnittliche_erfolgsquote;
+      const rowClass = toPercent(quote) !== null && toPercent(quote) < 50 ? "rowVeryBad" : toPercent(quote) !== null && toPercent(quote) < 80 ? "rowBad" : "";
+      return `
+        <tr class="${rowClass}">
+          <td>${escapeHtml(x.klasse)}</td>
+          <td>${escapeHtml(x.level_id)}</td>
+          <td>${escapeHtml(x.task_id)}</td>
+          <td>${escapeHtml(x.task_title || "")}</td>
+          <td>${num(x.anzahl_antworten)}</td>
+          <td>${num(x.durchschnittspunkte)} / ${num(x.durchschnitt_maxpunkte)}</td>
+          <td>${percentBadge(quote)}</td>
+          <td>${num(x.richtig)} / ${num(x.teilweise)} / ${num(x.falsch)} / ${num(x.uebersprungen)}</td>
+          <td>${escapeHtml(x.haeufigste_falsche_antwort || "")}</td>
+        </tr>`;
+    }).join("");
+
+  document.getElementById("tabContent").innerHTML = `
+    <h2>Aufgabenanalyse</h2>
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr><th>Klasse</th><th>Level</th><th>Aufgabe</th><th>Titel / Fall</th><th>Antworten</th><th>Ø Punkte</th><th>Ø Quote</th><th>R/T/F/Ü</th><th>Häufigste falsche Antwort</th></tr>
+        </thead>
+        <tbody>${rows || emptyRow(9)}</tbody>
+      </table>
+    </div>`;
+}
+
+function renderWiederholung(){
+  const f = filters();
+  const rows = filterWiederholung(data.wiederholung, f)
+    .sort((a,b)=>String(a.klasse||"").localeCompare(String(b.klasse||"")) || String(a.name||"").localeCompare(String(b.name||"")) || compareTaskIds(a.ursprungs_aufgabe,b.ursprungs_aufgabe))
+    .map(x=>`
+      <tr>
+        <td>${escapeHtml(x.klasse)}</td>
+        <td>${escapeHtml(x.name)}</td>
+        <td>${escapeHtml(x.ursprungs_aufgabe)}</td>
+        <td>${escapeHtml(x.question || "")}</td>
+        <td>${num(x.anzahl_wiederholungen)}</td>
+        <td>${formatDate(x.letzte_wiederholung)}</td>
+        <td>${num(x.richtig)} / ${num(x.teilweise)} / ${num(x.falsch)} / ${num(x.uebersprungen)}</td>
+        <td>${num(x.punkte)} / ${num(x.maximalpunkte)}</td>
+        <td>${percentBadge(x.erfolgsquote)}</td>
+        <td><button class="primary" onclick='openDetail(${JSON.stringify(x.session_id)})'>Details</button></td>
+      </tr>`).join("");
+
+  document.getElementById("tabContent").innerHTML = `
+    <h2>Wiederholung</h2>
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr><th>Klasse</th><th>Name</th><th>Ursprungsaufgabe</th><th>Frage</th><th>Anzahl</th><th>Letzte Wiederholung</th><th>R/T/F/Ü</th><th>Punkte</th><th>Quote</th><th>Details</th></tr>
+        </thead>
+        <tbody>${rows || emptyRow(10)}</tbody>
+      </table>
+    </div>`;
+}
+
+function renderRohdaten(){
+  const f = filters();
+  const rows = filterRaw(data.rohdaten, f)
+    .sort((a,b)=>new Date(b.created_at)-new Date(a.created_at))
+    .map(x=>`
+      <tr>
+        <td>${formatDate(x.created_at)}</td>
+        <td>${escapeHtml(x.class_name)}</td>
+        <td>${escapeHtml(x.name)}</td>
+        <td>${escapeHtml(x.level_id)}</td>
+        <td>${escapeHtml(x.task_id)}</td>
+        <td>${escapeHtml(x.task_title || "")}</td>
+        <td>${escapeHtml(x.chosen_answer || "")}</td>
+        <td>${escapeHtml(x.correct_solution || "")}</td>
+        <td class="status-${escapeHtml(x.status)}">${escapeHtml(x.status)}</td>
+        <td>${num(x.points)} / ${num(x.max_points)}</td>
+        <td>${x.is_repeat ? `<span class="badge blue">ja</span>` : `<span class="badge neutral">nein</span>`}</td>
+      </tr>`).join("");
+
+  document.getElementById("tabContent").innerHTML = `
+    <h2>Rohdaten</h2>
+    <p class="small">Die Rohdaten-Tabelle zeigt die letzten 500 Teilantworten.</p>
+    <div class="tableWrap">
+      <table>
+        <thead>
+          <tr><th>Zeit</th><th>Klasse</th><th>Name</th><th>Level</th><th>Aufgabe</th><th>Titel</th><th>Antwort</th><th>Lösung</th><th>Status</th><th>Punkte</th><th>Wdh.</th></tr>
+        </thead>
+        <tbody>${rows || emptyRow(11)}</tbody>
+      </table>
+    </div>`;
+}
+
+async function openDetail(sessionId){
+  document.getElementById("detailModal").style.display = "block";
+  document.getElementById("detailTitle").textContent = "Details laden...";
+  document.getElementById("detailContent").innerHTML = `<div class="loading">Lade alle Teilantworten dieser Session direkt aus Supabase...</div>`;
+
+  try{
+    const rows = await supabaseGet(`${TABLE_RAW}?select=*&session_id=eq.${encodeURIComponent(sessionId)}&order=created_at.asc`);
+    rows.sort((a,b)=>{
+      const repA = a.is_repeat ? 1 : 0;
+      const repB = b.is_repeat ? 1 : 0;
+      if(repA !== repB) return repA - repB;
+      const c = compareTaskIds(a.task_id,b.task_id);
+      if(c !== 0) return c;
+      return new Date(a.created_at) - new Date(b.created_at);
+    });
+
+    renderDetail(sessionId, rows);
+  }catch(err){
+    document.getElementById("detailContent").innerHTML = `<div class="warn">Details konnten nicht geladen werden.<br>${escapeHtml(err.message)}</div>`;
+  }
+}
+
+function renderDetail(sessionId, rows){
+  const first = rows[0] || {};
+  const points = sum(rows.map(x=>Number(x.points||0)));
+  const max = sum(rows.map(x=>Number(x.max_points||0)));
+  const right = rows.filter(x=>x.status==="richtig").length;
+  const partial = rows.filter(x=>x.status==="teilweise").length;
+  const wrong = rows.filter(x=>x.status==="falsch").length;
+  const skipped = rows.filter(x=>x.status==="übersprungen").length;
+  const repeats = rows.filter(x=>x.is_repeat).length;
+  const quote = max ? points / max : null;
+
+  document.getElementById("detailTitle").textContent = `Details: ${first.name || "Unbekannt"} (${first.class_name || ""})`;
+
+  const tableRows = rows.map(x=>{
+    const rowClass = x.status === "falsch" ? "rowVeryBad" : x.status === "teilweise" ? "rowBad" : "";
+    return `
+      <tr class="${rowClass}">
+        <td>${formatDate(x.created_at)}</td>
+        <td>${escapeHtml(x.level_id)}</td>
+        <td>${escapeHtml(x.level_name || "")}</td>
+        <td>${escapeHtml(x.task_id)}</td>
+        <td>${escapeHtml(x.task_title || x.question || "")}</td>
+        <td>${escapeHtml(x.chosen_answer || "")}</td>
+        <td>${escapeHtml(x.correct_solution || "")}</td>
+        <td class="status-${escapeHtml(x.status)}">${escapeHtml(x.status)}</td>
+        <td>${num(x.points)} / ${num(x.max_points)}</td>
+        <td>${x.is_repeat ? `<span class="badge blue">ja</span>` : `<span class="badge neutral">nein</span>`}</td>
+        <td>${escapeHtml(x.explanation || "")}</td>
+        <td>${escapeHtml(x.memo || "")}</td>
+      </tr>`;
+  }).join("");
+
+  document.getElementById("detailContent").innerHTML = `
+    <div class="detailHeader">
+      <div class="detailBox"><span class="small">Name</span><strong>${escapeHtml(first.name || "")}</strong></div>
+      <div class="detailBox"><span class="small">Klasse</span><strong>${escapeHtml(first.class_name || "")}</strong></div>
+      <div class="detailBox"><span class="small">Antworten</span><strong>${rows.length}</strong></div>
+      <div class="detailBox"><span class="small">Punkte</span><strong>${num(points)} / ${num(max)}</strong></div>
+      <div class="detailBox"><span class="small">Erfolgsquote</span><strong>${quote===null ? "–" : Math.round(quote*100)+"%"}</strong></div>
+      <div class="detailBox"><span class="small">R/T/F/Ü</span><strong>${right} / ${partial} / ${wrong} / ${skipped}</strong></div>
+      <div class="detailBox"><span class="small">Wiederholungen</span><strong>${repeats}</strong></div>
+      <div class="detailBox"><span class="small">Session-ID</span><strong style="font-size:12px;word-break:break-all">${escapeHtml(sessionId)}</strong></div>
+    </div>
+
+    <div class="actions">
+      <button class="secondary" onclick='exportRows(${JSON.stringify(rows)}, "markt_detail_${safeFile(first.class_name)}_${safeFile(first.name)}.csv")'>CSV dieser Person</button>
+    </div>
+
+    <div class="tableWrap" style="margin-top:14px">
+      <table>
+        <thead>
+          <tr>
+            <th>Zeit</th><th>Level</th><th>Levelname</th><th>Aufgabe</th><th>Frage / Fall</th>
+            <th>Antwort</th><th>Lösung</th><th>Status</th><th>Punkte</th><th>Wdh.</th><th>Erklärung</th><th>Merksatz</th>
+          </tr>
+        </thead>
+        <tbody>${tableRows || emptyRow(12)}</tbody>
+      </table>
+    </div>
+  `;
+}
+
+function closeDetail(){
+  document.getElementById("detailModal").style.display = "none";
+}
+
+function filterLernende(rows, f){
+  return rows.filter(x=>{
+    if(f.klasse && x.klasse !== f.klasse) return false;
+    if(f.name && !String(x.name||"").toLowerCase().includes(f.name)) return false;
+    if(f.problem === "problem" && !(toPercent(x.erfolgsquote) < 80 || Number(x.offene_fehlerverbesserungen||0) > 0)) return false;
+    if(f.problem === "openErrors" && !(Number(x.offene_fehlerverbesserungen||0) > 0)) return false;
+    return true;
+  });
+}
+function filterLevel(rows, f){
+  return rows.filter(x=>{
+    if(f.klasse && x.klasse !== f.klasse) return false;
+    if(f.level && x.level_id !== f.level) return false;
+    if(f.problem === "problem" && !(toPercent(x.durchschnittliche_erfolgsquote) < 80 || Number(x.falsch||0) > 0 || Number(x.teilweise||0) > 0)) return false;
+    return true;
+  });
+}
+function filterAufgaben(rows, f){
+  return rows.filter(x=>{
+    if(f.klasse && x.klasse !== f.klasse) return false;
+    if(f.level && x.level_id !== f.level) return false;
+    if(f.problem === "problem" && !(toPercent(x.durchschnittliche_erfolgsquote) < 80 || Number(x.falsch||0) > 0 || Number(x.teilweise||0) > 0)) return false;
+    return true;
+  });
+}
+function filterWiederholung(rows, f){
+  return rows.filter(x=>{
+    if(f.klasse && x.klasse !== f.klasse) return false;
+    if(f.name && !String(x.name||"").toLowerCase().includes(f.name)) return false;
+    if(f.level && !String(x.ursprungs_aufgabe||"").startsWith(f.level+".")) return false;
+    return true;
+  });
+}
+function filterRaw(rows, f){
+  return rows.filter(x=>{
+    if(f.klasse && x.class_name !== f.klasse) return false;
+    if(f.name && !String(x.name||"").toLowerCase().includes(f.name)) return false;
+    if(f.level && x.level_id !== f.level) return false;
+    if(f.problem === "problem" && !(x.status === "falsch" || x.status === "teilweise")) return false;
+    return true;
+  });
+}
+
+function exportCurrentTab(){
+  let rows = [];
+  const f = filters();
+  if(currentTab === "lernende") rows = filterLernende(data.lernende,f);
+  if(currentTab === "level") rows = filterLevel(data.level,f);
+  if(currentTab === "aufgaben") rows = filterAufgaben(data.aufgaben,f);
+  if(currentTab === "wiederholung") rows = filterWiederholung(data.wiederholung,f);
+  if(currentTab === "rohdaten") rows = filterRaw(data.rohdaten,f);
+  exportRows(rows, `markt_${currentTab}_${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+function exportRows(rows, filename){
+  if(!rows || rows.length === 0){
+    alert("Keine Daten zum Exportieren.");
+    return;
+  }
+  const cols = [...new Set(rows.flatMap(r=>Object.keys(r)))];
+  const csv = [
+    cols.join(";"),
+    ...rows.map(r=>cols.map(c=>csvCell(r[c])).join(";"))
+  ].join("\n");
+
+  const blob = new Blob(["\ufeff"+csv], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+function csvCell(v){
+  if(v === null || v === undefined) return "";
+  if(typeof v === "object") v = JSON.stringify(v);
+  return `"${String(v).replaceAll('"','""')}"`;
+}
+
+function percentBadge(v){
+  const p = toPercent(v);
+  if(p === null) return `<span class="badge neutral">–</span>`;
+  const cls = p >= 80 ? "good" : p >= 50 ? "mid" : "bad";
+  return `<span class="badge ${cls}">${Math.round(p)}%</span>`;
+}
+function errorBadge(v){
+  const n = Number(v || 0);
+  if(n <= 0) return `<span class="badge good">0</span>`;
+  return `<span class="badge bad">${n}</span>`;
+}
+function toPercent(v){
+  if(v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  if(Number.isNaN(n)) return null;
+  return n <= 1 ? n * 100 : n;
+}
+function num(v){
+  if(v === null || v === undefined || v === "") return "0";
+  const n = Number(v);
+  if(Number.isNaN(n)) return escapeHtml(v);
+  return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+function avgNum(arr){
+  if(!arr.length) return null;
+  return arr.reduce((a,b)=>a+Number(b||0),0) / arr.length;
+}
+function sum(arr){
+  return arr.reduce((a,b)=>a+Number(b||0),0);
+}
+function formatDate(v){
+  if(!v) return "";
+  try{
+    return new Date(v).toLocaleString("de-CH", {dateStyle:"short", timeStyle:"short"});
+  }catch(e){return String(v)}
+}
+function compareTaskIds(a,b){
+  const pa = String(a||"").split(".").map(x=>Number(x));
+  const pb = String(b||"").split(".").map(x=>Number(x));
+  for(let i=0;i<Math.max(pa.length,pb.length);i++){
+    const na = Number.isFinite(pa[i]) ? pa[i] : 0;
+    const nb = Number.isFinite(pb[i]) ? pb[i] : 0;
+    if(na !== nb) return na - nb;
+  }
+  return String(a||"").localeCompare(String(b||""));
+}
+function emptyRow(cols){
+  return `<tr><td colspan="${cols}">Keine Daten vorhanden.</td></tr>`;
+}
+function escapeHtml(s){
+  return String(s??"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+function safeFile(s){
+  return String(s||"").replace(/[^a-z0-9äöü_-]+/gi,"_").slice(0,40);
+}
+
+loadAll();
+setInterval(loadAll, 5000);
+</script>
+</body>
+</html>

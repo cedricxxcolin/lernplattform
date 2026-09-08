@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Lehrer-Dashboard – Externe Effekte Challenge</title>
+<style>
+:root{--primary:#4f46e5;--bg:#f8fafc;--card:#fff;--text:#0f172a;--muted:#64748b;--green:#dcfce7;--greenText:#166534;--orange:#fef3c7;--orangeText:#92400e;--red:#fee2e2;--redText:#991b1b;--gray:#e2e8f0;--grayText:#475569;--border:#e2e8f0;--shadow:0 10px 25px -8px rgba(15,23,42,.15)}
+*{box-sizing:border-box;margin:0;padding:0;font-family:Segoe UI,Roboto,Arial,sans-serif}
+body{background:var(--bg);color:var(--text);padding:1.2rem}
+header{background:linear-gradient(135deg,#eef2ff,#ecfeff);border:1px solid var(--border);box-shadow:var(--shadow);border-radius:1.2rem;padding:1.2rem;margin-bottom:1rem}
+h1{font-size:1.8rem;color:var(--primary);margin-bottom:.35rem}.hint{color:var(--muted);line-height:1.4}
+.toolbar,.tabs{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);border-radius:1.2rem;padding:1rem;margin-bottom:1rem;display:flex;gap:.7rem;flex-wrap:wrap;align-items:center}
+input,select{padding:.7rem .85rem;border:1px solid var(--border);border-radius:.75rem;background:#fff;font-size:.95rem}
+button{border:none;background:var(--primary);color:#fff;padding:.7rem .95rem;border-radius:.75rem;font-weight:800;cursor:pointer}
+button.secondary{background:#fff;color:var(--primary);border:1px solid var(--primary)}button.tab{background:#fff;color:#334155;border:1px solid var(--border)}button.tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.card{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);border-radius:1.2rem;padding:1rem;overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{border-bottom:1px solid var(--border);padding:.65rem;text-align:left;vertical-align:top;white-space:nowrap}th{background:#f1f5f9;position:sticky;top:0;z-index:1}
+tr.problem{background:#fff7ed}.pill{display:inline-block;padding:.25rem .55rem;border-radius:999px;font-weight:800;font-size:.78rem}.green{background:var(--green);color:var(--greenText)}.orange{background:var(--orange);color:var(--orangeText)}.red{background:var(--red);color:var(--redText)}.gray{background:var(--gray);color:var(--grayText)}
+.status{font-weight:800}.status.richtig{color:var(--greenText)}.status.teilweise{color:var(--orangeText)}.status.falsch{color:var(--redText)}.status.übersprungen{color:var(--grayText)}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:.8rem;margin-bottom:1rem}.metric{background:#fff;border:1px solid var(--border);border-radius:1rem;padding:1rem;box-shadow:var(--shadow)}.metric span{display:block;color:var(--muted);font-size:.78rem;font-weight:800;text-transform:uppercase}.metric strong{font-size:1.45rem;color:var(--primary)}
+.error{background:var(--red);color:var(--redText);padding:1rem;border-radius:1rem;margin-bottom:1rem;display:none}
+@media print{.toolbar,.tabs,button{display:none!important}body{padding:0}.card,header{box-shadow:none;border:none}}
+</style>
+</head>
+<body>
+<header>
+<h1>Lehrer-Dashboard – Externe Effekte Challenge</h1>
+<p class="hint">Live-Auswertung aus Supabase. Diese Datei nicht an Lernende weitergeben.</p>
+</header>
+
+<div class="toolbar">
+<button onclick="loadAll()">Jetzt aktualisieren</button>
+<button class="secondary" onclick="exportCSV()">CSV Export aktueller Tab</button>
+<button class="secondary" onclick="window.print()">Drucken</button>
+<select id="classFilter" onchange="render()"><option value="">Alle Klassen</option></select>
+<input id="nameSearch" placeholder="Name suchen" oninput="render()">
+<select id="levelFilter" onchange="render()">
+<option value="">Alle Level</option>
+<option value="1">Level 1</option>
+<option value="2">Level 2</option>
+<option value="W1">Wiederholung Level 1</option>
+<option value="W2">Wiederholung Level 2</option>
+</select>
+<label style="display:flex;align-items:center;gap:.4rem;color:#334155"><input type="checkbox" id="problemFilter" onchange="render()"> nur problematisch</label>
+<span class="hint" id="lastUpdate">Noch nicht geladen</span>
+</div>
+
+<div class="tabs">
+<button class="tab active" data-tab="lernende" onclick="setTab('lernende')">Lernende</button>
+<button class="tab" data-tab="level" onclick="setTab('level')">Levelübersicht</button>
+<button class="tab" data-tab="aufgaben" onclick="setTab('aufgaben')">Aufgabenanalyse</button>
+<button class="tab" data-tab="wiederholung" onclick="setTab('wiederholung')">Wiederholung</button>
+<button class="tab" data-tab="rohdaten" onclick="setTab('rohdaten')">Rohdaten</button>
+</div>
+
+<div id="errorBox" class="error"></div>
+<div class="summary" id="summary"></div>
+<div class="card" id="tableBox">Lade Daten...</div>
+
+<script>
+const SUPABASE_URL_RAW="https://hfkivkncayqtwjycmjwt.supabase.co/rest/v1/";
+const SUPABASE_ANON_KEY="sb_publishable_8zpO4GUPvwPCluXy6BxKeg_CEkqE2oi";
+const SUPABASE_URL=String(SUPABASE_URL_RAW).replace(/\/rest\/v1\/?$/,"").replace(/\/$/,"");
+const ENDPOINTS={lernende:"v_ext_effekte_lernende",level:"v_ext_effekte_leveluebersicht",aufgaben:"v_ext_effekte_aufgaben",wiederholung:"v_ext_effekte_wiederholung",rohdaten:"externe_effekte_rohdaten"};
+let currentTab="lernende";
+let data={lernende:[],level:[],aufgaben:[],wiederholung:[],rohdaten:[]};
+
+async function fetchTable(name,extra=""){
+  const url=`${SUPABASE_URL}/rest/v1/${name}?select=*${extra}`;
+  const res=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:`Bearer ${SUPABASE_ANON_KEY}`}});
+  if(!res.ok)throw new Error(`${name}: HTTP ${res.status} – ${await res.text()}`);
+  return await res.json();
+}
+
+async function loadAll(){
+  hideError();
+  try{
+    const [lernende,level,aufgaben,wiederholung,rohdaten]=await Promise.all([
+      fetchTable(ENDPOINTS.lernende),
+      fetchTable(ENDPOINTS.level),
+      fetchTable(ENDPOINTS.aufgaben),
+      fetchTable(ENDPOINTS.wiederholung),
+      fetchTable(ENDPOINTS.rohdaten,"&order=created_at.desc&limit=3000")
+    ]);
+    data={lernende,level,aufgaben,wiederholung,rohdaten};
+    updateClassFilter();
+    document.getElementById("lastUpdate").innerText="Aktualisiert: "+new Date().toLocaleTimeString("de-CH");
+    render();
+  }catch(e){showError(e.message)}
+}
+
+function showError(msg){const box=document.getElementById("errorBox");box.style.display="block";box.textContent="Fehler beim Laden: "+msg}
+function hideError(){const box=document.getElementById("errorBox");box.style.display="none";box.textContent=""}
+function setTab(tab){currentTab=tab;document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));render()}
+
+function updateClassFilter(){
+  const sel=document.getElementById("classFilter"),old=sel.value;
+  const classes=[...new Set(data.rohdaten.map(r=>r.class_name||r.klasse).filter(Boolean))].sort();
+  sel.innerHTML='<option value="">Alle Klassen</option>'+classes.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join("");
+  sel.value=classes.includes(old)?old:"";
+}
+
+function compareTaskIds(a,b){
+  const parse=s=>String(s||"").replace(/^W/,"99.").split(".").flatMap(x=>{const m=String(x).match(/\d+|[a-z]/gi)||["0"];return m.map(y=>isNaN(Number(y))?y.charCodeAt(0):Number(y))});
+  const pa=parse(a),pb=parse(b);
+  for(let i=0;i<Math.max(pa.length,pb.length);i++){if((pa[i]||0)!==(pb[i]||0))return(pa[i]||0)-(pb[i]||0)}
+  return String(a||"").localeCompare(String(b||""));
+}
+
+function filteredRows(){
+  const classF=document.getElementById("classFilter").value;
+  const nameF=document.getElementById("nameSearch").value.toLowerCase().trim();
+  const levelF=document.getElementById("levelFilter").value;
+  const problem=document.getElementById("problemFilter").checked;
+  let rows=[...(data[currentTab]||[])];
+
+  rows=rows.filter(r=>{
+    const klasse=r.klasse||r.class_name||"";
+    const name=r.name||"";
+    const level=r.level_id||"";
+    let ok=true;
+    if(classF)ok=ok&&klasse===classF;
+    if(nameF)ok=ok&&String(name).toLowerCase().includes(nameF);
+    if(levelF&&currentTab!=="lernende")ok=ok&&String(level)===levelF;
+    if(problem){
+      if(currentTab==="lernende")ok=ok&&(Number(r.erfolgsquote||1)<.5||Number(r.offene_fehlerverbesserungen||0)>0);
+      else if(currentTab==="wiederholung")ok=ok&&(Number(r.erfolgsquote||1)<.8||Number(r.level1_ganze_aufgabe_verbessert||0)===0);
+      else ok=ok&&(Number(r.durchschnittliche_erfolgsquote||1)<.5||Number(r.falsch||0)>0||String(r.status||"")==="falsch");
+    }
+    return ok;
+  });
+
+  if(currentTab==="aufgaben"||currentTab==="rohdaten")rows.sort((a,b)=>compareTaskIds(a.task_id,b.task_id));
+  if(currentTab==="wiederholung")rows.sort((a,b)=>compareTaskIds(a.ursprungs_aufgabe,b.ursprungs_aufgabe));
+  return rows;
+}
+
+function render(){
+  const rows=filteredRows();
+  renderSummary(rows);
+
+  if(currentTab==="lernende")renderTable(rows,[
+    ["klasse","Klasse"],["name","Name"],["startzeit","Start"],["letzte_aktivitaet","Letzte Aktivität"],
+    ["absolvierte_level","Level"],["gesamtpunkte","Punkte"],["maximal_moeglich","Max."],
+    ["erfolgsquote","Quote","percent"],["richtig","R"],["teilweise","T"],["falsch","F"],["beste_streak","Beste Streak"],
+    ["beantwortete_teilaufgaben","Teilaufgaben"],["fortschritt_prozent","Fortschritt","percent100"],
+    ["offene_fehlerverbesserungen","Offene Fehler"],["wiederholung_punkte","Wdh. Punkte"],["wiederholung_max","Wdh. Max."],["wiederholung_erfolgsquote","Wdh. Quote","percent"]
+  ],r=>Number(r.erfolgsquote||1)<.5||Number(r.offene_fehlerverbesserungen||0)>0);
+
+  else if(currentTab==="level")renderTable(rows,[
+    ["klasse","Klasse"],["level_id","Level"],["level_name","Levelname"],["anzahl_teilaufgaben_bearbeitet","Teilaufgaben"],
+    ["anzahl_antworten","Antworten"],["durchschnittspunkte","Ø Punkte"],["durchschnitt_maxpunkte","Ø Max."],
+    ["durchschnittliche_erfolgsquote","Quote","percent"],["richtig","R"],["teilweise","T"],["falsch","F"],["uebersprungen","Ü"],["haeufigste_falsche_antwort","Häufig falsch"]
+  ],r=>Number(r.durchschnittliche_erfolgsquote||1)<.5||Number(r.falsch||0)>0);
+
+  else if(currentTab==="aufgaben")renderTable(rows,[
+    ["klasse","Klasse"],["level_id","Level"],["level_name","Levelname"],["task_id","Aufgabe"],["task_title","Titel"],
+    ["anzahl_antworten","Antworten"],["durchschnittspunkte","Ø Punkte"],["durchschnitt_maxpunkte","Ø Max."],
+    ["durchschnittliche_erfolgsquote","Quote","percent"],["richtig","R"],["teilweise","T"],["falsch","F"],["uebersprungen","Ü"],["haeufigste_falsche_antwort","Häufig falsch"]
+  ],r=>Number(r.durchschnittliche_erfolgsquote||1)<.5||Number(r.falsch||0)>0);
+
+  else if(currentTab==="wiederholung")renderTable(rows,[
+    ["klasse","Klasse"],["name","Name"],["level_id","Wdh.-Level"],["ursprungs_aufgabe","Ursprungsaufgabe"],["question","Frage"],
+    ["anzahl_wiederholungen","Anzahl"],["letzte_wiederholung","Letzte"],["richtig","R"],["teilweise","T"],["falsch","F"],
+    ["punkte","Punkte"],["maximalpunkte","Max."],["erfolgsquote","Quote","percent"],["level1_ganze_aufgabe_verbessert","L1 ganz verbessert","bool"]
+  ],r=>Number(r.erfolgsquote||1)<.8);
+
+  else renderTable(rows,[
+    ["created_at","Zeit"],["class_name","Klasse"],["name","Name"],["level_id","Level"],["task_id","Aufgabe"],["task_title","Titel"],
+    ["subtask_title","Teilaufgabe"],["chosen_answer","Antwort"],["correct_solution","Lösung"],["status","Status","status"],
+    ["points","Punkte"],["max_points","Max."],["success_rate","Quote","percent"],["score_now","Score"],["streak","Streak"],["details","Details"]
+  ],r=>String(r.status||"")!=="richtig");
+}
+
+function renderSummary(rows){
+  const all=data.rohdaten||[];
+  const learners=new Set(all.map(r=>(r.session_id||"")+"|"+(r.name||""))).size;
+  const answers=all.length;
+  const normal=all.filter(r=>!r.is_repeat).length;
+  const repeats=all.filter(r=>r.is_repeat).length;
+  const right=all.filter(r=>r.status==="richtig").length;
+  const partial=all.filter(r=>r.status==="teilweise").length;
+  const wrong=all.filter(r=>r.status==="falsch").length;
+  document.getElementById("summary").innerHTML=`
+    <div class="metric"><span>Lernende</span><strong>${learners}</strong></div>
+    <div class="metric"><span>Antworten total</span><strong>${answers}</strong></div>
+    <div class="metric"><span>Normale Antworten</span><strong>${normal}</strong></div>
+    <div class="metric"><span>Wiederholungen</span><strong>${repeats}</strong></div>
+    <div class="metric"><span>Richtig</span><strong>${right}</strong></div>
+    <div class="metric"><span>Teilweise</span><strong>${partial}</strong></div>
+    <div class="metric"><span>Falsch</span><strong>${wrong}</strong></div>
+    <div class="metric"><span>Aktueller Tab</span><strong>${rows.length}</strong></div>`;
+}
+
+function renderTable(rows,cols,problemFn){
+  if(!rows.length){document.getElementById("tableBox").innerHTML="<p class='hint'>Keine Daten für diese Filter.</p>";return}
+  const head=cols.map(c=>`<th>${esc(c[1])}</th>`).join("");
+  const body=rows.map(r=>`<tr${problemFn&&problemFn(r)?" class='problem'":""}>${cols.map(c=>`<td>${formatCell(r[c[0]],c[2])}</td>`).join("")}</tr>`).join("");
+  document.getElementById("tableBox").innerHTML=`<table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+}
+
+function formatCell(v,type){
+  if(v===null||v===undefined||v==="")return"<span class='pill gray'>–</span>";
+  if(type==="percent"){const n=Number(v),p=n<=1?Math.round(n*100):Math.round(n);const cls=p>=80?"green":p>=50?"orange":"red";return`<span class="pill ${cls}">${p}%</span>`}
+  if(type==="percent100"){const p=Math.round(Number(v));const cls=p>=80?"green":p>=50?"orange":"red";return`<span class="pill ${cls}">${p}%</span>`}
+  if(type==="status"){const s=String(v);const cls=s==="richtig"?"richtig":s==="teilweise"?"teilweise":s==="falsch"?"falsch":"übersprungen";return`<span class="status ${cls}">${esc(s)}</span>`}
+  if(type==="bool"){return String(v)==="true"||v===true?`<span class="pill green">ja</span>`:`<span class="pill gray">nein</span>`}
+  if(String(v).match(/^\d{4}-\d{2}-\d{2}T/)){try{return esc(new Date(v).toLocaleString("de-CH"))}catch(e){}}
+  if(typeof v==="number")return esc(Math.round(v*100)/100);
+  if(typeof v==="object")return esc(JSON.stringify(v));
+  return esc(v);
+}
+
+function exportCSV(){
+  const rows=filteredRows();
+  if(!rows.length){alert("Keine Daten zum Exportieren.");return}
+  const keys=Object.keys(rows[0]);
+  const csv=[keys.join(";")].concat(rows.map(r=>keys.map(k=>csvVal(r[k])).join(";"))).join("\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`externe-effekte-${currentTab}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function csvVal(v){if(v===null||v===undefined)return"";const s=typeof v==="object"?JSON.stringify(v):String(v);return`"${s.replaceAll('"','""')}"`}
+function esc(v){return String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+loadAll();
+setInterval(loadAll,5000);
+</script>
+</body>
+</html>

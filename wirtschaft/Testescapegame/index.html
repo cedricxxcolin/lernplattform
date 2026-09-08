@@ -1,0 +1,1043 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Archiv der Güterordnung</title>
+    <style>
+        :root {
+            --bg-color: #0b0c10;
+            --panel-bg: #1f2833;
+            --text-main: #c5c6c7;
+            --accent-gold: #cda434;
+            --accent-cyan: #66fcf1;
+            --accent-dark: #45a29e;
+            --border-radius: 4px;
+            --font-title: 'Georgia', 'Times New Roman', serif;
+            --font-ui: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- UI Overlays & Transitions --- */
+        #transition-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #050505;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 2rem;
+            opacity: 1;
+            transition: opacity 1.5s ease-in-out;
+        }
+        #transition-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #transition-title {
+            font-family: var(--font-title);
+            font-size: 3rem;
+            color: var(--accent-gold);
+            margin-bottom: 1rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        #transition-text {
+            font-size: 1.2rem;
+            max-width: 600px;
+            line-height: 1.6;
+            color: var(--text-main);
+        }
+        .continue-btn {
+            margin-top: 2rem;
+            padding: 10px 30px;
+            background: transparent;
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+            font-family: var(--font-title);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .continue-btn:hover {
+            background: var(--accent-gold);
+            color: var(--bg-color);
+        }
+
+        /* --- Game Layout --- */
+        #game-container {
+            flex-grow: 1;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .room {
+            width: 100%;
+            max-width: 1000px;
+            height: 80vh;
+            background: var(--panel-bg);
+            border: 1px solid #333;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 1s;
+            display: flex;
+            flex-direction: column;
+            padding: 2rem;
+        }
+        .room.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .room-header {
+            font-family: var(--font-title);
+            font-size: 1.8rem;
+            color: var(--accent-cyan);
+            border-bottom: 1px solid var(--accent-dark);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+
+        /* --- Inventory --- */
+        #inventory-bar {
+            height: 100px;
+            background: #111;
+            border-top: 1px solid #333;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 15px;
+            z-index: 100;
+        }
+        .inv-label {
+            font-family: var(--font-title);
+            color: var(--accent-gold);
+            margin-right: 20px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+        .inv-slot {
+            width: 60px;
+            height: 60px;
+            border: 1px dashed #444;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .inv-slot.has-item {
+            border: 1px solid var(--accent-cyan);
+            background: rgba(102, 252, 241, 0.05);
+        }
+        .inv-slot.selected {
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 10px rgba(205, 164, 52, 0.5);
+            transform: translateY(-2px);
+        }
+        .item-icon {
+            font-size: 24px;
+        }
+        #item-desc {
+            margin-left: auto;
+            color: #888;
+            font-style: italic;
+            font-size: 0.9rem;
+            max-width: 300px;
+            text-align: right;
+        }
+
+        /* --- Top Bar (Hints) --- */
+        #top-bar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 150;
+        }
+        #hint-btn {
+            background: transparent;
+            border: 1px solid #555;
+            color: #888;
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            font-family: var(--font-title);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        #hint-btn:hover {
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+        }
+        #hint-modal {
+            position: absolute;
+            top: 70px;
+            right: 0;
+            width: 300px;
+            background: rgba(10, 11, 16, 0.95);
+            border: 1px solid var(--accent-dark);
+            padding: 15px;
+            display: none;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+        }
+        #hint-modal.active { display: block; }
+        .hint-text { margin-bottom: 10px; font-size: 0.9rem; line-height: 1.4; display: none; }
+        .hint-text.visible { display: block; }
+        .next-hint-btn {
+            background: var(--accent-dark);
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        /* --- Inputs & Buttons --- */
+        input[type="text"] {
+            background: #111;
+            border: 1px solid #555;
+            color: var(--accent-gold);
+            padding: 10px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            text-align: center;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            width: 150px;
+        }
+        input[type="text"]:focus { outline: none; border-color: var(--accent-gold); }
+        
+        .action-btn {
+            background: #111;
+            border: 1px solid var(--accent-dark);
+            color: var(--accent-cyan);
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: var(--font-title);
+            text-transform: uppercase;
+            transition: all 0.3s;
+        }
+        .action-btn:hover { background: var(--accent-dark); color: #fff; }
+
+        /* ================= ROOM 1: ARCHIV ================= */
+        .r1-layout {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            gap: 20px;
+        }
+        .r1-folders {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            flex-grow: 1;
+        }
+        .folder {
+            border: 1px solid #444;
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .folder-title {
+            color: var(--accent-gold);
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: center;
+            font-family: var(--font-title);
+        }
+        .folder-slots {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            flex-grow: 1;
+            min-height: 60px;
+            border: 1px dashed #333;
+        }
+        .folder.solved { border-color: var(--accent-cyan); }
+        .folder-secret {
+            position: absolute;
+            bottom: 5px; right: 10px;
+            font-family: monospace;
+            color: var(--accent-gold);
+            font-size: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .folder.solved .folder-secret { opacity: 1; }
+        
+        .r1-cards {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            min-height: 60px;
+            padding: 15px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #222;
+        }
+        .r1-card {
+            background: #d4d4d8;
+            color: #111;
+            padding: 8px 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+            border-left: 3px solid var(--accent-dark);
+        }
+        .r1-card.selected {
+            transform: scale(1.1);
+            border-color: var(--accent-gold);
+            box-shadow: 0 0 10px var(--accent-gold);
+        }
+        .r1-console {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            align-items: center;
+            padding: 10px;
+        }
+
+        /* ================= ROOM 2: SYMBOLKAMMER ================= */
+        .r2-layout { display: flex; flex-direction: column; height: 100%; gap: 20px; align-items: center; justify-content: center; }
+        
+        .r2-document {
+            width: 100%; max-width: 600px; padding: 30px;
+            background: #0a0a0a; border: 2px solid #333;
+            cursor: pointer; position: relative; min-height: 200px;
+            display: flex; flex-direction: column; justify-content: center;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+            transition: border-color 0.5s;
+        }
+        .r2-document:hover { border-color: #555; }
+        
+        .r2-noise { 
+            color: #555; font-family: monospace; font-size: 1.2rem; 
+            word-break: break-all; line-height: 1.5; text-align: center;
+        }
+        .r2-legend-hidden { 
+            display: none; flex-direction: column; gap: 20px; 
+            font-size: 1rem; color: #888;
+        }
+        .r2-legend-item { display: flex; align-items: center; gap: 15px; font-family: var(--font-ui); }
+        
+        .r2-document.lochkarte-active { border-color: var(--accent-cyan); box-shadow: 0 0 15px rgba(102, 252, 241, 0.2); cursor: default; }
+        .r2-document.lochkarte-active .r2-noise { display: none; }
+        .r2-document.lochkarte-active .r2-legend-hidden { display: flex; }
+        
+        .r2-mechanic {
+            display: flex; gap: 30px; align-items: center; background: #111; padding: 20px; border: 1px solid #444;
+            border-radius: 5px; margin-top: 20px;
+        }
+        .r2-dial {
+            width: 60px; height: 60px;
+            background: #222; border: 2px solid #555;
+            cursor: pointer; display: flex; justify-content: center; align-items: center;
+            transition: all 0.3s;
+        }
+        .r2-dial:hover { border-color: var(--accent-cyan); }
+        .shape-triangle { width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-bottom: 26px solid var(--text-main); }
+        .shape-square { width: 26px; height: 26px; background: var(--text-main); }
+        .shape-circle { width: 30px; height: 30px; background: var(--text-main); border-radius: 50%; }
+        .shape-hexagon { width: 30px; height: 17.32px; background: var(--text-main); position: relative; margin: 8.66px 0;}
+        .shape-hexagon::before, .shape-hexagon::after { content: ""; position: absolute; width: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; }
+        .shape-hexagon::before { bottom: 100%; border-bottom: 8.66px solid var(--text-main); }
+        .shape-hexagon::after { top: 100%; width: 0; border-top: 8.66px solid var(--text-main); }
+        
+        .dial-label { font-size: 0.7rem; color: #666; text-align: center; margin-top: 5px; text-transform: uppercase; }
+
+        /* ================= ROOM 3: VERDUNKELTES PROTOKOLL ================= */
+        .r3-layout { position: relative; width: 100%; height: 100%; background: #000; overflow: hidden; border: 1px solid #222; cursor: crosshair; }
+        #flashlight-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.98);
+            pointer-events: none; z-index: 10;
+            transition: opacity 0.5s;
+        }
+        #flashlight-overlay.active {
+            background: radial-gradient(circle 120px at var(--mouse-x, 50%) var(--mouse-y, 50%), transparent 0%, rgba(0,0,0,0.98) 150px);
+        }
+        
+        .r3-content { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 40px; z-index: 5;
+            transform: scaleX(-1); /* Initially mirrored */
+            transition: transform 0.8s ease-in-out;
+        }
+        .r3-content.flipped {
+            transform: scaleX(1);
+        }
+        
+        .r3-text-hidden {
+            position: absolute; top: 45%; left: 30%;
+            font-family: var(--font-title); font-size: 1.5rem; color: rgba(205, 164, 52, 0.5);
+            text-align: center;
+        }
+        
+        /* Scattered clues in the dark */
+        .r3-clue {
+            position: absolute;
+            font-family: monospace;
+            font-size: 1.2rem;
+            color: #fff;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(102, 252, 241, 0.4);
+            background: rgba(0,0,0,0.5);
+            padding: 5px 10px;
+            border: 1px solid rgba(102, 252, 241, 0.2);
+            pointer-events: none;
+        }
+        .r3-fake {
+            color: #888;
+            text-shadow: none;
+            border-color: #333;
+            font-size: 1rem;
+        }
+
+        .r3-item-pickup {
+            position: absolute; bottom: 40px; right: 40px;
+            width: 70px; height: 70px; background: rgba(200, 200, 255, 0.1); 
+            border: 2px solid rgba(255,255,255,0.6); border-radius: 50%;
+            cursor: pointer; display: flex; justify-content: center; align-items: center;
+            font-size: 2.5rem; box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+            pointer-events: auto; z-index: 20;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 10px rgba(255,255,255,0.2); }
+            50% { box-shadow: 0 0 30px rgba(255,255,255,0.8); border-color: #fff; }
+            100% { box-shadow: 0 0 10px rgba(255,255,255,0.2); }
+        }
+        
+        .r3-console {
+            position: absolute; bottom: 30px; left: 30px; z-index: 15;
+            display: flex; gap: 10px; align-items: center;
+        }
+
+        /* ================= ROOM 4: LETZTE VERRIEGELUNG ================= */
+        .r4-layout { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; text-align: center; }
+        .r4-terminal {
+            background: #050608; border: 2px solid #222; padding: 40px;
+            border-radius: 10px; box-shadow: inset 0 0 50px rgba(0,0,0,0.8), 0 0 20px rgba(0,0,0,0.5);
+            transition: border-color 1s, box-shadow 1s;
+        }
+        .r4-terminal.powered {
+            border-color: var(--accent-gold);
+            box-shadow: inset 0 0 50px rgba(205, 164, 52, 0.1), 0 0 30px rgba(205, 164, 52, 0.3);
+        }
+        .r4-insert-slot {
+            width: 80px; height: 80px; margin: 0 auto 30px auto;
+            border: 2px dashed #444; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            cursor: pointer; color: #555; font-size: 2rem;
+            transition: all 0.3s;
+        }
+        .r4-insert-slot:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        .r4-insert-slot.filled { border: 2px solid var(--accent-gold); color: var(--accent-gold); cursor: default; }
+        
+        .r4-dials { display: none; gap: 20px; justify-content: center; margin-bottom: 30px; }
+        .r4-terminal.powered .r4-dials { display: flex; }
+        
+        .r4-column { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 140px; }
+        .r4-hint { font-size: 0.75rem; color: #888; height: 40px; display: flex; align-items: center; }
+        .r4-word-dial {
+            background: #111; border: 1px solid var(--accent-dark); color: var(--text-main);
+            padding: 10px; width: 100%; cursor: pointer; text-align: center;
+            font-weight: bold; text-transform: uppercase; font-size: 0.85rem;
+        }
+        .r4-word-dial:hover { background: #1a2430; }
+
+        /* Effects */
+        .glitch { animation: glitch 0.2s linear infinite; }
+        @keyframes glitch {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 1px) }
+            40% { transform: translate(-1px, -1px) }
+            60% { transform: translate(2px, 1px) }
+            80% { transform: translate(1px, -1px) }
+            100% { transform: translate(0) }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- STORY TRANSITION OVERLAY -->
+    <div id="transition-overlay">
+        <h1 id="transition-title">SYSTEMSTART</h1>
+        <p id="transition-text">Zugriff auf das Archiv der Güterordnung.<br><br>Die Wahrheit der Märkte liegt im Verborgenen. Nur wer den wahren Wert und die Eigenschaften der Dinge erkennt, darf passieren.</p>
+        <button class="continue-btn" onclick="startGame()">Initialisieren</button>
+    </div>
+
+    <!-- HINT SYSTEM -->
+    <div id="top-bar">
+        <button id="hint-btn">?</button>
+        <div id="hint-modal">
+            <h3 style="color: var(--accent-gold); margin-bottom: 10px; font-family: var(--font-title);">Archiv-Assistenz</h3>
+            <div id="hint-content"></div>
+            <button class="next-hint-btn" onclick="nextHint()">Weiterer Hinweis</button>
+        </div>
+    </div>
+
+    <!-- MAIN GAME AREA -->
+    <div id="game-container">
+        
+        <!-- ROOM 1 -->
+        <div id="room-1" class="room">
+            <div class="room-header">Ebene 1: Das fragmentierte Archiv</div>
+            <div class="r1-layout">
+                <div class="r1-folders">
+                    <div class="folder" data-target="freies_gut">
+                        <div class="folder-title">Freie Güter</div>
+                        <div class="folder-slots" onclick="placeCard(this)"></div>
+                        <div class="folder-secret">W</div>
+                    </div>
+                    <div class="folder" data-target="gebrauchsgut">
+                        <div class="folder-title">Gebrauchsgüter</div>
+                        <div class="folder-slots" onclick="placeCard(this)"></div>
+                        <div class="folder-secret">E</div>
+                    </div>
+                    <div class="folder" data-target="verbrauchsgut">
+                        <div class="folder-title">Verbrauchsgüter</div>
+                        <div class="folder-slots" onclick="placeCard(this)"></div>
+                        <div class="folder-secret">R</div>
+                    </div>
+                    <div class="folder" data-target="dienstleistung">
+                        <div class="folder-title">Dienstleistungen</div>
+                        <div class="folder-slots" onclick="placeCard(this)"></div>
+                        <div class="folder-secret">T</div>
+                    </div>
+                </div>
+                <div class="r1-cards" id="r1-card-pool">
+                    <div class="r1-card" onclick="selectCard(this, event)" data-type="verbrauchsgut">Apfel</div>
+                    <div class="r1-card" onclick="selectCard(this, event)" data-type="gebrauchsgut">Auto</div>
+                    <div class="r1-card" onclick="selectCard(this, event)" data-type="freies_gut">Atemluft</div>
+                    <div class="r1-card" onclick="selectCard(this, event)" data-type="dienstleistung">Unterricht</div>
+                    <div class="r1-card" onclick="selectCard(this, event)" data-type="verbrauchsgut">Mineralwasser</div>
+                    <div class="r1-card" onclick="selectCard(this, event)" data-type="freies_gut">Sonnenlicht</div>
+                    <div class="r1-card" onclick="selectCard(this, event)" data-type="dienstleistung">Netflix Abo</div>
+                    <div class="r1-card" onclick="selectCard(this, event)" data-type="gebrauchsgut">Zahnbürste</div>
+                </div>
+                <div class="r1-console">
+                    <input type="text" id="r1-input" placeholder="CODE" maxlength="4">
+                    <button class="action-btn" onclick="checkRoom1()">Extrahieren</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROOM 2 -->
+        <div id="room-2" class="room hidden">
+            <div class="room-header">Ebene 2: Die Symbolkammer</div>
+            <div class="r2-layout">
+                
+                <div class="r2-document" id="r2-doc" onclick="useLochkarte()">
+                    <div class="r2-noise">
+                        &#x25A0;&#x25B2;FEHLER_IM_PROTOKOLL&#x25BC;&#x25CF;<br>
+                        1011001_KORRUPTED_DATA_011010<br>
+                        //BITTE FILTER ANWENDEN//<br>
+                        &#x25C4;X_Y_Z_&#x25BA;
+                    </div>
+                    <div class="r2-legend-hidden">
+                        <div class="r2-legend-item">
+                            <div class="shape-hexagon"></div><span>= Schützt die Allgemeinheit (Öffentliches Gut)</span>
+                        </div>
+                        <div class="r2-legend-item">
+                            <div class="shape-square"></div><span>= Erschafft neue Güter (Investitionsgut)</span>
+                        </div>
+                        <div class="r2-legend-item">
+                            <div class="shape-triangle"></div><span>= Nur für mich, Tag für Tag (Privates Gebrauchsgut)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="r2-mechanic">
+                    <div>
+                        <div class="dial-label">Feuerwehr</div>
+                        <div class="r2-dial" onclick="cycleDial(this)" data-val="0">
+                            <div class="shape-circle"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="dial-label">Produktionsmaschine</div>
+                        <div class="r2-dial" onclick="cycleDial(this)" data-val="0">
+                            <div class="shape-circle"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="dial-label">Zahnbürste</div>
+                        <div class="r2-dial" onclick="cycleDial(this)" data-val="0">
+                            <div class="shape-circle"></div>
+                        </div>
+                    </div>
+                    
+                    <button class="action-btn" onclick="checkRoom2()" style="margin-left: 20px;">Synchronisieren</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ROOM 3 -->
+        <div id="room-3" class="room hidden" style="padding:0;">
+            <div class="r3-layout" id="r3-container">
+                <div class="r3-content" onclick="applyMirror(event)">
+                    <div class="room-header" style="position:relative; z-index: 20; transform: scaleX(-1);">Ebene 3: Das verdunkelte Protokoll</div>
+                    
+                    <!-- Hidden Key (Mirror needed) -->
+                    <div class="r3-text-hidden" style="top: 15%; left: 35%; width: 300px; line-height: 1.8;">
+                        <span style="color:var(--accent-gold); font-size:1.2rem;">ZUORDNUNGSSCHLÜSSEL:</span><br>
+                        Dienstleistung &#10142; <b>[ M ]</b><br>
+                        Freies Gut &#10142; <b>[ A ]</b><br>
+                        Investitionsgut &#10142; <b>[ R ]</b><br>
+                        Öffentliches Gut &#10142; <b>[ K ]</b><br>
+                        Verbrauchsgut &#10142; <b>[ T ]</b>
+                    </div>
+                    
+                    <!-- Scattered clues to form MARKT -->
+                    <div class="r3-clue" style="top: 15%; left: 8%;">I. Netflix Abo</div>
+                    <div class="r3-clue" style="top: 80%; left: 15%;">II. Atemluft</div>
+                    <div class="r3-clue" style="top: 20%; left: 75%;">III. Produktionsmaschine</div>
+                    <div class="r3-clue" style="top: 85%; left: 55%;">IV. Strassenbeleuchtung</div>
+                    <div class="r3-clue" style="top: 45%; left: 85%;">V. Apfel</div>
+
+                    <div class="r3-item-pickup" id="pickup-mirror" onclick="takeMirror(event)">
+                        🪞
+                    </div>
+                </div>
+                
+                <div class="r3-console">
+                    <input type="text" id="r3-input" placeholder="WORT" maxlength="5">
+                    <button class="action-btn" onclick="checkRoom3()">Bestätigen</button>
+                </div>
+
+                <div id="flashlight-overlay"></div>
+            </div>
+        </div>
+
+        <!-- ROOM 4 -->
+        <div id="room-4" class="room hidden">
+            <div class="room-header">Finale Ebene: Die letzte Verriegelung</div>
+            <div class="r4-layout">
+                <div class="r4-terminal" id="r4-terminal">
+                    <div class="r4-insert-slot" id="r4-slot" onclick="insertPlakette()">
+                        ⬡
+                    </div>
+                    <div style="margin-bottom: 20px; color: #888; font-size: 0.9rem;">Ordne die Essenz der Wirtschaft, um das Archiv zu öffnen.</div>
+                    
+                    <div class="r4-dials">
+                        <div class="r4-column">
+                            <div class="r4-hint">"Der Ursprung ohne Preis"</div>
+                            <div class="r4-word-dial" onclick="cycleWordDial(this)" data-index="0">Konsum</div>
+                        </div>
+                        <div class="r4-column">
+                            <div class="r4-hint">"Es dient allen gleichermaßen"</div>
+                            <div class="r4-word-dial" onclick="cycleWordDial(this)" data-index="0">Knapp</div>
+                        </div>
+                        <div class="r4-column">
+                            <div class="r4-hint">"Die Maschine der Maschine"</div>
+                            <div class="r4-word-dial" onclick="cycleWordDial(this)" data-index="0">Verbrauch</div>
+                        </div>
+                        <div class="r4-column">
+                            <div class="r4-hint">"Der einmalige Genuss"</div>
+                            <div class="r4-word-dial" onclick="cycleWordDial(this)" data-index="0">Dienstleistung</div>
+                        </div>
+                    </div>
+
+                    <button class="action-btn" onclick="checkRoom4()" id="btn-final" style="display:none; margin: 0 auto;">Protokoll Entsperren</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- INVENTORY -->
+    <div id="inventory-bar">
+        <div class="inv-label">Inventar</div>
+        <div class="inv-slot" id="inv-slot-1" onclick="selectInventoryItem(1)"></div>
+        <div class="inv-slot" id="inv-slot-2" onclick="selectInventoryItem(2)"></div>
+        <div class="inv-slot" id="inv-slot-3" onclick="selectInventoryItem(3)"></div>
+        <div class="inv-slot" id="inv-slot-4" onclick="selectInventoryItem(4)"></div>
+        <div id="item-desc">...</div>
+    </div>
+
+    <script>
+        // --- GAME STATE ---
+        let currentRoom = 1;
+        let inventory = [null, null, null, null]; // Max 4 items
+        let activeItemIndex = -1;
+        let hintLevel = 0;
+
+        const hints = {
+            1: [
+                "Die Güter müssen in die passenden Kategorien eingeordnet werden. Klicke ein Gut an und dann auf das graue Feld einer Kategorie.",
+                "Sonnenlicht und Atemluft sind freie Güter. Ein Apfel ist ein Verbrauchsgut, ein Auto ein Gebrauchsgut.",
+                "Wenn alle richtig liegen, erscheinen Buchstaben. Setze sie zusammen."
+            ],
+            2: [
+                "Das Dokument in der Mitte ist beschädigt. Wähle die Lochkarte aus dem Inventar aus und wende sie auf das Textfeld an.",
+                "Nun kannst du die Legende lesen. Sie zeigt dir, welches Symbol zu welcher Eigenschaft gehört.",
+                "Feuerwehr = Öffentlich (Hexagon). Produktionsmaschine = Investition (Quadrat). Zahnbürste = Privat (Dreieck)."
+            ],
+            3: [
+                "Es ist dunkel. Wähle die Taschenlampe im Inventar aus und suche nach einem pulsierenden Objekt in der rechten unteren Ecke des Raumes.",
+                "Sammle den Spiegel ein. Die verborgenen Texte sind spiegelverkehrt. Wähle den Spiegel im Inventar aus und klicke in den Raum, um alles umzukehren.",
+                "Ordne nun die fünf verstreuten Beispiele den Güterarten im Schlüssel zu (z.B. Netflix = Dienstleistung -> M). Die römischen Ziffern (I bis V) zeigen dir die Reihenfolge der Buchstaben."
+            ],
+            4: [
+                "Setze zuerst die Symbolplakette in die Konsole ein (auswählen und klicken).",
+                "Du musst die passenden Güterarten für die 4 Beschreibungen finden, indem du auf die Felder klickst.",
+                "1. Frei, 2. Öffentlich, 3. Investition, 4. Verbrauch."
+            ]
+        };
+
+        // --- CORE FUNCTIONS ---
+        function startGame() {
+            document.getElementById('transition-overlay').classList.add('hidden');
+            document.getElementById('room-1').classList.add('active');
+        }
+
+        function showTransition(title, text, nextRoomNum) {
+            const overlay = document.getElementById('transition-overlay');
+            const titleEl = document.getElementById('transition-title');
+            const textEl = document.getElementById('transition-text');
+            const btn = overlay.querySelector('.continue-btn');
+            
+            titleEl.innerText = title;
+            textEl.innerHTML = text;
+            overlay.classList.remove('hidden');
+            
+            document.querySelectorAll('.room').forEach(r => r.classList.remove('active'));
+            hintLevel = 0; // reset hints
+            
+            btn.onclick = () => {
+                overlay.classList.add('hidden');
+                currentRoom = nextRoomNum;
+                document.getElementById('room-' + nextRoomNum).classList.add('active');
+                if(nextRoomNum === 2) initRoom2();
+                if(nextRoomNum === 3) initRoom3();
+                if(nextRoomNum === 4) initRoom4();
+            };
+        }
+
+        function winGame() {
+            const overlay = document.getElementById('transition-overlay');
+            const titleEl = document.getElementById('transition-title');
+            const textEl = document.getElementById('transition-text');
+            const btn = overlay.querySelector('.continue-btn');
+            
+            titleEl.innerText = "ZUGRIFF GEWÄHRT";
+            titleEl.style.color = "#66fcf1";
+            textEl.innerHTML = "Das Archiv der Güterordnung ist nun vollständig geöffnet.<br><br>Du hast die Strukturen durchschaut, die unsichtbaren Verbindungen erkannt und den wahren Wert der Dinge verstanden.<br><br><b>Das System steht dir zur Verfügung.</b>";
+            btn.style.display = "none";
+            overlay.classList.remove('hidden');
+        }
+
+        // --- INVENTORY ---
+        const itemDatabase = {
+            'lochkarte': { icon: '🎛️', name: 'Lochkarte', desc: 'Eine Karte mit präzisen Ausstanzungen. Filtert Rauschen heraus.' },
+            'plakette': { icon: '⬡', name: 'Symbolplakette', desc: 'Ein schweres Metallstück. Scheint ein Schlüssel zu sein.' },
+            'taschenlampe': { icon: '🔦', name: 'UV-Lampe', desc: 'Macht Unsichtbares sichtbar. Klicke, um sie zu aktivieren.' },
+            'spiegel': { icon: '🪞', name: 'Spiegelscherbe', desc: 'Dreht die Perspektive um. Klicke in den Raum zur Anwendung.' }
+        };
+
+        function addItem(itemId) {
+            for(let i=0; i<4; i++) {
+                if(inventory[i] === null) {
+                    inventory[i] = itemId;
+                    const slot = document.getElementById(`inv-slot-${i+1}`);
+                    slot.innerHTML = `<span class="item-icon">${itemDatabase[itemId].icon}</span>`;
+                    slot.classList.add('has-item');
+                    return;
+                }
+            }
+        }
+
+        function selectInventoryItem(slotNum) {
+            const idx = slotNum - 1;
+            if(inventory[idx] === null) return;
+            
+            // Toggle selection
+            if(activeItemIndex === idx) {
+                activeItemIndex = -1;
+                document.querySelectorAll('.inv-slot').forEach(s => s.classList.remove('selected'));
+                document.getElementById('item-desc').innerText = '...';
+                handleItemDeactivation(inventory[idx]);
+            } else {
+                activeItemIndex = idx;
+                document.querySelectorAll('.inv-slot').forEach(s => s.classList.remove('selected'));
+                document.getElementById(`inv-slot-${slotNum}`).classList.add('selected');
+                document.getElementById('item-desc').innerText = itemDatabase[inventory[idx]].desc;
+                handleItemActivation(inventory[idx]);
+            }
+        }
+
+        function getActiveItem() {
+            if(activeItemIndex === -1) return null;
+            return inventory[activeItemIndex];
+        }
+
+        // --- HINTS ---
+        document.getElementById('hint-btn').onclick = () => {
+            document.getElementById('hint-modal').classList.toggle('active');
+            updateHintDisplay();
+        };
+
+        function updateHintDisplay() {
+            const container = document.getElementById('hint-content');
+            const roomHints = hints[currentRoom];
+            let html = '';
+            for(let i=0; i<=hintLevel && i<roomHints.length; i++) {
+                html += `<div class="hint-text visible">Hinweis ${i+1}: ${roomHints[i]}</div>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function nextHint() {
+            if(hintLevel < 2) {
+                hintLevel++;
+                updateHintDisplay();
+            }
+        }
+
+        // --- ROOM 1 LOGIC ---
+        let r1SelectedCard = null;
+
+        function selectCard(card, event) {
+            // Verhindert, dass der Klick auf die Karte auch einen Klick auf das darunterliegende Fach auslöst
+            if (event) event.stopPropagation();
+
+            // Wenn die Karte bereits einsortiert wurde, lege sie zurück in den Pool
+            if (card.parentElement.classList.contains('folder-slots')) {
+                document.getElementById('r1-card-pool').appendChild(card);
+                card.classList.remove('selected');
+                if (r1SelectedCard === card) r1SelectedCard = null;
+                checkR1Folders(); // Fächer neu bewerten (falls es vorher richtig war, nun wieder deaktivieren)
+                return;
+            }
+
+            // Nur Karten aus dem Pool können für die Fächer ausgewählt werden
+            if(card.parentElement.id !== 'r1-card-pool') return;
+
+            document.querySelectorAll('.r1-card').forEach(c => c.classList.remove('selected'));
+            r1SelectedCard = card;
+            card.classList.add('selected');
+        }
+
+        function placeCard(slot) {
+            if(r1SelectedCard) {
+                if(slot.children.length < 2) {
+                    slot.appendChild(r1SelectedCard);
+                    r1SelectedCard.classList.remove('selected');
+                    r1SelectedCard = null;
+                    checkR1Folders();
+                } else {
+                    r1SelectedCard.classList.remove('selected');
+                    r1SelectedCard = null;
+                }
+            }
+        }
+
+        function checkR1Folders() {
+            const folders = document.querySelectorAll('.folder');
+            folders.forEach(folder => {
+                const targetType = folder.getAttribute('data-target');
+                const cards = folder.querySelectorAll('.r1-card');
+                let correct = 0;
+                cards.forEach(c => {
+                    if(c.getAttribute('data-type') === targetType) correct++;
+                });
+                if(correct === 2 && cards.length === 2) {
+                    folder.classList.add('solved');
+                } else {
+                    folder.classList.remove('solved');
+                }
+            });
+        }
+
+        function checkRoom1() {
+            const val = document.getElementById('r1-input').value.toUpperCase();
+            if(val === 'WERT') {
+                addItem('lochkarte');
+                showTransition("ARCHIV ENTSPERRT", "Ebene 2: Die Symbolkammer.<br><br>Nicht jedes Gut ist greifbar. Manche dienen allen, manche erschaffen Neues. Nutze das gefundene Werkzeug, um das Rauschen zu filtern.", 2);
+            } else {
+                document.getElementById('r1-input').classList.add('glitch');
+                setTimeout(() => document.getElementById('r1-input').classList.remove('glitch'), 200);
+            }
+        }
+
+        // --- ROOM 2 LOGIC ---
+        function initRoom2() {
+            // No dynamic setup needed anymore
+        }
+
+        function useLochkarte() {
+            if(getActiveItem() === 'lochkarte') {
+                const doc = document.getElementById('r2-doc');
+                doc.classList.add('lochkarte-active');
+            }
+        }
+
+        const shapes = ['shape-circle', 'shape-square', 'shape-triangle', 'shape-hexagon'];
+        function cycleDial(dial) {
+            let val = parseInt(dial.getAttribute('data-val'));
+            val = (val + 1) % shapes.length;
+            dial.setAttribute('data-val', val);
+            dial.innerHTML = `<div class="${shapes[val]}"></div>`;
+        }
+
+        function checkRoom2() {
+            const docActive = document.getElementById('r2-doc').classList.contains('lochkarte-active');
+            if(!docActive) return; // Must have used tool
+
+            const dials = document.querySelectorAll('.r2-dial');
+            // Expected: Feuerwehr -> Hexagon (3), Prod.maschine -> Square (1), Zahnbürste -> Triangle (2)
+            if(dials[0].getAttribute('data-val') == '3' && 
+               dials[1].getAttribute('data-val') == '1' && 
+               dials[2].getAttribute('data-val') == '2') {
+                
+                addItem('plakette');
+                addItem('taschenlampe');
+                showTransition("KAMMER PASSIERT", "Ebene 3: Das verdunkelte Protokoll.<br><br>Werte sind oft unsichtbar. Was auf den ersten Blick unleserlich erscheint, offenbart seine Bedeutung erst durch die richtige Perspektive.", 3);
+            } else {
+                document.querySelector('.r2-mechanic').classList.add('glitch');
+                setTimeout(() => document.querySelector('.r2-mechanic').classList.remove('glitch'), 200);
+            }
+        }
+
+        // --- ROOM 3 LOGIC ---
+        function initRoom3() {
+            document.addEventListener('mousemove', updateFlashlight);
+        }
+
+        function handleItemActivation(item) {
+            if(item === 'taschenlampe' && currentRoom === 3) {
+                document.getElementById('flashlight-overlay').classList.add('active');
+            }
+        }
+        function handleItemDeactivation(item) {
+            if(item === 'taschenlampe') {
+                document.getElementById('flashlight-overlay').classList.remove('active');
+            }
+        }
+
+        function updateFlashlight(e) {
+            if(currentRoom === 3 && getActiveItem() === 'taschenlampe') {
+                const rect = document.getElementById('r3-container').getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                document.documentElement.style.setProperty('--mouse-x', x + 'px');
+                document.documentElement.style.setProperty('--mouse-y', y + 'px');
+            }
+        }
+
+        function takeMirror(event) {
+            if(event) event.stopPropagation();
+            addItem('spiegel');
+            document.getElementById('pickup-mirror').style.display = 'none';
+        }
+
+        function applyMirror(event) {
+            if(getActiveItem() === 'spiegel' && currentRoom === 3) {
+                document.querySelector('.r3-content').classList.toggle('flipped');
+            }
+        }
+
+        function checkRoom3() {
+            const val = document.getElementById('r3-input').value.toUpperCase();
+            if(val === 'MARKT') {
+                document.removeEventListener('mousemove', updateFlashlight); // cleanup
+                showTransition("PROTOKOLL GELESEN", "Finale Ebene: Die letzte Verriegelung.<br><br>Das gesamte System konvergiert. Zeige, dass du die Natur der Güter vollständig verstanden hast.", 4);
+            } else {
+                document.getElementById('r3-input').classList.add('glitch');
+                setTimeout(() => document.getElementById('r3-input').classList.remove('glitch'), 200);
+            }
+        }
+
+        // --- ROOM 4 LOGIC ---
+        const r4Words = ["Konsum", "Frei", "Knapp", "Investition", "Verbrauch", "Dienstleistung", "Privat", "Öffentlich"];
+        
+        function initRoom4() {
+            // Setup
+        }
+
+        function insertPlakette() {
+            if(getActiveItem() === 'plakette') {
+                document.getElementById('r4-slot').classList.add('filled');
+                document.getElementById('r4-terminal').classList.add('powered');
+                document.getElementById('btn-final').style.display = 'block';
+                
+                // Remove from inventory visual
+                inventory[activeItemIndex] = null;
+                const slot = document.getElementById(`inv-slot-${activeItemIndex+1}`);
+                slot.innerHTML = '';
+                slot.classList.remove('has-item', 'selected');
+                activeItemIndex = -1;
+                document.getElementById('item-desc').innerText = '...';
+            }
+        }
+
+        function cycleWordDial(dial) {
+            let idx = parseInt(dial.getAttribute('data-index'));
+            idx = (idx + 1) % r4Words.length;
+            dial.setAttribute('data-index', idx);
+            dial.innerText = r4Words[idx];
+        }
+
+        function checkRoom4() {
+            if(!document.getElementById('r4-terminal').classList.contains('powered')) return;
+
+            const dials = document.querySelectorAll('.r4-word-dial');
+            // Clues:
+            // 1. "Der Ursprung ohne Preis" -> Frei
+            // 2. "Es dient allen gleichermaßen" -> Öffentlich
+            // 3. "Die Maschine der Maschine" -> Investition
+            // 4. "Der einmalige Genuss" -> Verbrauch
+            
+            if(dials[0].innerText === "FREI" &&
+               dials[1].innerText === "ÖFFENTLICH" &&
+               dials[2].innerText === "INVESTITION" &&
+               dials[3].innerText === "VERBRAUCH") {
+                winGame();
+            } else {
+                document.getElementById('r4-terminal').classList.add('glitch');
+                setTimeout(() => document.getElementById('r4-terminal').classList.remove('glitch'), 200);
+            }
+        }
+
+    </script>
+</body>
+</html>

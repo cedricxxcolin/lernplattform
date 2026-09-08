@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Basler Stadtgeschichte Quiz</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        /* Eigene kleine Animationen für Feedback */
+        @keyframes slideInFromBottom {
+            0% { transform: translateY(10px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+        .animate-fade-in-up {
+            animation: slideInFromBottom 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 font-sans text-slate-800 antialiased min-h-screen flex flex-col items-center">
+
+    <!-- START SCREEN -->
+    <div id="start-screen" class="w-full min-h-screen flex items-center justify-center p-4">
+        <div class="max-w-2xl w-full bg-white rounded-3xl shadow-xl overflow-hidden relative">
+            
+            <!-- Header -->
+            <div class="bg-red-600 p-8 text-center text-white relative overflow-hidden">
+                <i class="ph-fill ph-shield absolute top-4 left-4 text-9xl opacity-20 -translate-x-4 -translate-y-4"></i>
+                <h1 class="text-4xl font-bold mb-2 relative z-10">Basler Stadtgeschichte Quiz</h1>
+                <p class="text-red-100 text-lg relative z-10">Entdecke die Geheimnisse der Stadt am Rheinknie!</p>
+            </div>
+
+            <!-- Content -->
+            <div class="p-8">
+                <div class="mb-8">
+                    <label class="block text-sm font-semibold text-slate-600 mb-2 uppercase tracking-wide">
+                        Dein Name
+                    </label>
+                    <input 
+                        type="text" 
+                        id="player-name"
+                        placeholder="Name eingeben..."
+                        class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-red-500 focus:ring-2 focus:ring-red-200 outline-none transition-all text-lg"
+                    >
+                </div>
+
+                <div class="mb-8">
+                    <label class="block text-sm font-semibold text-slate-600 mb-4 uppercase tracking-wide">
+                        Wähle deinen Charakter
+                    </label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="character-selection">
+                        <!-- Charaktere werden per JS geladen -->
+                    </div>
+                </div>
+
+                <button 
+                    id="start-btn"
+                    disabled
+                    class="w-full bg-red-600 text-white font-bold text-xl py-4 rounded-xl hover:bg-red-700 hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                    Quiz Starten <i class="ph-bold ph-arrow-right text-2xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PLAYING SCREEN -->
+    <div id="playing-screen" class="w-full min-h-screen flex-col items-center py-8 px-4 hidden">
+        
+        <!-- Top Bar -->
+        <div class="max-w-3xl w-full flex items-center justify-between mb-6 bg-white p-4 rounded-2xl shadow-sm border border-slate-200">
+            <div class="flex items-center gap-3">
+                <div class="p-3 bg-slate-100 rounded-full text-2xl" id="active-char-icon"></div>
+                <div>
+                    <div class="font-bold text-lg" id="display-player-name">Name</div>
+                    <div class="text-xs text-red-600 font-bold uppercase" id="display-level">Level</div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <div class="text-center">
+                    <div class="text-xs font-bold text-slate-400 uppercase">Punkte</div>
+                    <div class="text-xl font-black" id="display-score">0</div>
+                </div>
+                <div class="text-center bg-orange-50 px-4 py-1 rounded-xl border border-orange-100">
+                    <div class="text-xs font-bold text-orange-500 uppercase">Streak</div>
+                    <div class="text-xl font-black text-orange-600 flex items-center gap-1">
+                        <span id="display-streak">0</span> 
+                        <i id="streak-icon" class="ph-fill ph-fire text-orange-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="max-w-3xl w-full bg-slate-200 h-2 rounded-full mb-8 overflow-hidden">
+            <div id="progress-bar" class="bg-red-600 h-full transition-all duration-500 ease-out" style="width: 0%"></div>
+        </div>
+
+        <!-- Quiz Container -->
+        <div class="max-w-3xl w-full bg-white rounded-3xl shadow-lg p-6 md:p-10">
+            <div class="mb-8">
+                <div id="question-counter" class="inline-block px-3 py-1 bg-red-100 text-red-700 text-sm font-bold rounded-full mb-4">
+                    Frage 1 von X
+                </div>
+                <h2 id="question-text" class="text-2xl md:text-3xl font-bold leading-tight">
+                    <!-- Frage kommt hier -->
+                </h2>
+            </div>
+
+            <!-- Options -->
+            <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <!-- Optionen per JS -->
+            </div>
+
+            <!-- Feedback Section -->
+            <div id="feedback-container" class="p-6 rounded-2xl mb-8 animate-fade-in-up hidden">
+                <h3 id="feedback-title" class="text-lg font-bold mb-2 flex items-center gap-2"></h3>
+                <p id="feedback-text" class="text-slate-700 leading-relaxed"></p>
+            </div>
+
+            <!-- Next Button -->
+            <div id="next-btn-container" class="flex justify-end hidden">
+                <button id="next-btn" class="bg-red-600 text-white font-bold py-3 px-8 rounded-xl hover:bg-red-700 transition-all flex items-center gap-2 shadow-md hover:-translate-y-1">
+                    Nächste Frage <i class="ph-bold ph-arrow-right text-xl"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- END SCREEN -->
+    <div id="end-screen" class="w-full min-h-screen flex items-center justify-center p-4 hidden">
+        <div class="max-w-2xl w-full bg-white rounded-3xl shadow-xl p-8 text-center">
+            <div class="w-24 h-24 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center mx-auto mb-6 text-5xl">
+                <i class="ph-fill ph-trophy"></i>
+            </div>
+            
+            <h2 class="text-3xl font-bold mb-2" id="end-title">Quiz Beendet!</h2>
+            <p class="text-slate-500 mb-8" id="end-greeting"></p>
+
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <div class="bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                    <div class="text-slate-500 text-sm font-bold uppercase mb-1">Punkte</div>
+                    <div class="text-4xl font-bold text-slate-800" id="final-score">0</div>
+                </div>
+                <div class="bg-orange-50 p-6 rounded-2xl border border-orange-100">
+                    <div class="text-orange-600 text-sm font-bold uppercase mb-1">Beste Streak</div>
+                    <div class="text-4xl font-bold text-orange-600 flex items-center justify-center gap-1">
+                        <span id="final-streak">0</span> <i class="ph-fill ph-fire"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-red-50 p-6 rounded-2xl border border-red-100 mb-8">
+                <div class="text-red-500 text-sm font-bold uppercase mb-1">Erreichter Titel</div>
+                <div class="text-3xl font-black text-red-700 flex items-center justify-center gap-2">
+                    <i class="ph-fill ph-medal text-4xl"></i> <span id="final-level"></span>
+                </div>
+            </div>
+
+            <div class="text-left bg-slate-50 p-6 rounded-2xl mb-8">
+                <h3 class="font-bold text-lg mb-2 flex items-center gap-2">
+                    <i class="ph-fill ph-book-open text-slate-500 text-xl"></i> Was du gelernt hast:
+                </h3>
+                <ul class="text-sm text-slate-600 space-y-2 list-disc pl-5">
+                    <li>Die Bedeutung Roms (Augusta Raurica) und der Kelten für die Frühzeit.</li>
+                    <li>Prägende Ereignisse: Erdbeben (1356), Uni-Gründung (1460), Reformation (1529).</li>
+                    <li>Wirtschaftliche Entwicklung von der Seidenbandweberei zur modernen Pharmaindustrie.</li>
+                    <li>Wahrzeichen wie das Münster, das Spalentor und die Mittlere Brücke.</li>
+                </ul>
+            </div>
+
+            <button id="restart-btn" class="bg-slate-800 text-white font-bold py-3 px-8 rounded-xl hover:bg-slate-900 transition-all flex items-center justify-center gap-2 mx-auto">
+                <i class="ph-bold ph-arrows-clockwise text-xl"></i> Neues Spiel
+            </button>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- DATEN ---
+        const QUIZ_DATA = [
+            { type: "mc", question: "Wie hiess die römische Vorgängersiedlung in der Nähe von Basel?", options: ["Vindonissa", "Aventicum", "Augusta Raurica", "Lousanna"], correct: 2, explanation: "Augusta Raurica wurde um 44 v. Chr. gegründet und liegt etwa 20 km flussaufwärts von Basel." },
+            { type: "mc", question: "In welchem Jahr ereignete sich das verheerende Erdbeben?", options: ["1291", "1356", "1499", "1529"], correct: 1, explanation: "Am 18. Oktober 1356 erschütterte das grosse Basler Erdbeben die Region." },
+            { type: "mc", question: "Wann wurde die Universität Basel gegründet?", options: ["1356", "1460", "1501", "1529"], correct: 1, explanation: "Die Universität Basel wurde am 4. April 1460 eröffnet." },
+            { type: "tf", question: "Wahr oder Falsch: Basel trat der Eidgenossenschaft im Jahr 1501 bei.", options: ["Wahr", "Falsch"], correct: 0, explanation: "Wahr! Basel trat 1501 als 11. Ort der Schweizerischen Eidgenossenschaft bei." },
+            { type: "mc", question: "Welcher Reformator brachte die Reformation massgeblich nach Basel?", options: ["Huldrych Zwingli", "Johannes Calvin", "Martin Luther", "Johannes Oekolampad"], correct: 3, explanation: "Johannes Oekolampad war die treibende Kraft der Reformation in Basel (1529)." },
+            { type: "mc", question: "Welches Ereignis fand zwischen 1431 und 1449 im Münster statt?", options: ["Die Papstwahl", "Das Basler Konzil", "Die Synode von Basel", "Das Trienter Konzil"], correct: 1, explanation: "Das Basler Konzil versuchte, die Kirche zu reformieren." },
+            { type: "mc", question: "Welche Industrie ist heute der wichtigste Wirtschaftszweig in Basel?", options: ["Uhren", "Maschinenbau", "Pharma und Chemie", "Bankenwesen"], correct: 2, explanation: "Basel ist ein globaler Knotenpunkt der Life-Sciences-Industrie (z.B. Novartis, Roche)." },
+            { type: "mc", question: "Was geschah während des 'Basler Bildersturms' 1529?", options: ["Hagelsturm zerstörte Ernte", "Zerstörung von Bildern/Statuen", "Aufstand der Studenten", "Sturm auf das Rathaus"], correct: 1, explanation: "Im Zuge der Reformation wurden in den Kirchen Heiligenstatuen und Gemälde zerstört." },
+            { type: "mc", question: "Wie heisst das berühmte alte Stadttor von Basel?", options: ["St. Johanns-Tor", "St. Alban-Tor", "Spalentor", "Rhein-Tor"], correct: 2, explanation: "Das Spalentor ist eines der schönsten Stadttore der Schweiz." },
+            { type: "mc", question: "Welche Brücke wurde um 1226 eröffnet?", options: ["Wettsteinbrücke", "Dreirosenbrücke", "Johanniterbrücke", "Mittlere Brücke"], correct: 3, explanation: "Die Mittlere Brücke machte Basel zu einem wichtigen Handelszentrum." },
+            { type: "mc", question: "Wer liess hier sein Werk 'Lob der Torheit' drucken?", options: ["Paracelsus", "Erasmus von Rotterdam", "Friedrich Nietzsche", "Hermann Hesse"], correct: 1, explanation: "Der Humanist Erasmus von Rotterdam schätzte Basel sehr." },
+            { type: "mc", question: "Aus welchem Material ist das Basler Münster hauptsächlich erbaut?", options: ["Weisser Marmor", "Grauer Granit", "Roter Sandstein", "Gelber Kalkstein"], correct: 2, explanation: "Das Münster besteht überwiegend aus rotem Sandstein." },
+            { type: "tf", question: "Wahr oder Falsch: Die Basler Fasnacht beginnt am Schmutzigen Donnerstag.", options: ["Wahr", "Falsch"], correct: 1, explanation: "Falsch! Sie beginnt erst am Montag nach Aschermittwoch mit dem Morgenstreich." },
+            { type: "mc", question: "Was war im 19. Jhd. die wichtigste Industrie vor der Chemie?", options: ["Seidenbandweberei", "Schokolade", "Schiffbau", "Bierbrauerei"], correct: 0, explanation: "Die Seidenbandweberei brachte enormen Reichtum nach Basel." },
+            { type: "mc", question: "Wann fand der Erste Zionistenkongress in Basel statt?", options: ["1885", "1897", "1912", "1948"], correct: 1, explanation: "1897 versammelten sich die Zionisten in Basel unter Theodor Herzl." },
+            { type: "mc", question: "Welches Symbol ziert das Wappen von Basel?", options: ["Roter Bär", "Schwarzer Baslerstab", "Weisser Adler", "Goldener Löwe"], correct: 1, explanation: "Das Wappen zeigt den schwarzen Baslerstab." },
+            { type: "mc", question: "Ordne (Früh nach Spät): 1. Erdbeben, 2. Uni, 3. Eidgenossenschaft, 4. Reformation", options: ["1, 2, 3, 4", "2, 1, 4, 3", "3, 1, 2, 4", "1, 3, 2, 4"], correct: 0, explanation: "Erdbeben (1356) -> Uni (1460) -> Beitritt (1501) -> Reformation (1529)." },
+            { type: "tf", question: "Wahr/Falsch: Grossbasel und Kleinbasel werden durch den Rhein getrennt.", options: ["Wahr", "Falsch"], correct: 0, explanation: "Wahr! Der Rhein fliesst mitten durch die Stadt." },
+            { type: "mc", question: "Welche Vereinigungen dominierten lange die Politik Basels?", options: ["Ritterorden", "Die Zünfte", "Klosterbrüder", "Rheinschiffer"], correct: 1, explanation: "Die Zünfte (Handwerker) regierten die Stadt faktisch nach der Reformation." },
+            { type: "mc", question: "Welches Museum beherbergt die älteste öffentliche Kunstsammlung der Schweiz?", options: ["Fondation Beyeler", "Tinguely Museum", "Kunstmuseum Basel", "Antikenmuseum"], correct: 2, explanation: "Das Kunstmuseum Basel besitzt eine Kernsammlung aus dem Jahr 1661." }
+        ];
+
+        const CHARACTERS = [
+            { id: "zunftmeister", name: "Zunftmeister", icon: "ph-shield text-red-600", greeting: "Als Zunftmeister kennen Sie die alten Handwerksgeheimnisse!" },
+            { id: "student", name: "Uni-Student", icon: "ph-graduation-cap text-blue-600", greeting: "Zeig, was du in den historischen Vorlesungen gelernt hast." },
+            { id: "haendler", name: "Rheinhändler", icon: "ph-map-trifold text-emerald-600", greeting: "Hast du auch ein Näschen für die richtigen Antworten?" },
+            { id: "zeitreisender", name: "Zeitreisender", icon: "ph-user text-purple-600", greeting: "Du hast alle Epochen gesehen. Das wird ein Kinderspiel!" }
+        ];
+
+        // --- STATE ---
+        let playerName = "";
+        let selectedCharId = null;
+        let activeQuestions = [];
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let streak = 0;
+        let maxStreak = 0;
+        let hasAnswered = false;
+
+        // --- DOM ELEMENTS ---
+        const screens = {
+            start: document.getElementById('start-screen'),
+            playing: document.getElementById('playing-screen'),
+            end: document.getElementById('end-screen')
+        };
+        
+        const playerNameInput = document.getElementById('player-name');
+        const charSelectionContainer = document.getElementById('character-selection');
+        const startBtn = document.getElementById('start-btn');
+
+        // --- LEVEL SYSTEM ---
+        const getLevel = (s) => {
+            if (s < 5) return "Basel-Neuling";
+            if (s < 10) return "Stadtführer-Lehrling";
+            if (s < 15) return "Ehrenbürger";
+            if (s < 20) return "Zunftmeister";
+            return "Historiker von Basel";
+        };
+
+        // --- INIT START SCREEN ---
+        function initStartScreen() {
+            charSelectionContainer.innerHTML = CHARACTERS.map(char => `
+                <button type="button" data-id="${char.id}" class="char-btn flex items-start gap-4 p-4 rounded-xl border-2 transition-all text-left border-slate-100 bg-white hover:border-slate-300 hover:bg-slate-50">
+                    <div class="p-3 rounded-full bg-slate-100 text-2xl">
+                        <i class="ph-fill ${char.icon}"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-800">${char.name}</h3>
+                        <p class="text-sm text-slate-500 line-clamp-2">${char.greeting}</p>
+                    </div>
+                </button>
+            `).join('');
+
+            // Event Listeners für Charakterauswahl
+            document.querySelectorAll('.char-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    selectedCharId = btn.dataset.id;
+                    updateCharSelectionUI();
+                    validateStart();
+                });
+            });
+
+            playerNameInput.addEventListener('input', (e) => {
+                playerName = e.target.value.trim();
+                validateStart();
+            });
+
+            startBtn.addEventListener('click', startGame);
+        }
+
+        function updateCharSelectionUI() {
+            document.querySelectorAll('.char-btn').forEach(btn => {
+                if (btn.dataset.id === selectedCharId) {
+                    btn.classList.add('border-red-600', 'bg-red-50', 'shadow-md', 'scale-[1.02]');
+                    btn.classList.remove('border-slate-100', 'bg-white', 'hover:border-slate-300');
+                    btn.querySelector('div').classList.replace('bg-slate-100', 'bg-white');
+                } else {
+                    btn.classList.remove('border-red-600', 'bg-red-50', 'shadow-md', 'scale-[1.02]');
+                    btn.classList.add('border-slate-100', 'bg-white', 'hover:border-slate-300');
+                    btn.querySelector('div').classList.replace('bg-white', 'bg-slate-100');
+                }
+            });
+        }
+
+        function validateStart() {
+            if (playerName !== "" && selectedCharId !== null) {
+                startBtn.disabled = false;
+            } else {
+                startBtn.disabled = true;
+            }
+        }
+
+        // --- GAME LOGIC ---
+        function startGame() {
+            // Setup Data
+            activeQuestions = [...QUIZ_DATA].sort(() => 0.5 - Math.random());
+            currentQuestionIndex = 0;
+            score = 0;
+            streak = 0;
+            maxStreak = 0;
+
+            const char = CHARACTERS.find(c => c.id === selectedCharId);
+            
+            // Setup UI
+            document.getElementById('active-char-icon').innerHTML = `<i class="ph-fill ${char.icon}"></i>`;
+            document.getElementById('display-player-name').innerText = playerName;
+            updateStatsUI();
+
+            // Switch Screen
+            screens.start.classList.add('hidden');
+            screens.end.classList.add('hidden');
+            screens.playing.classList.remove('hidden');
+            screens.playing.classList.add('flex');
+
+            renderQuestion();
+        }
+
+        function updateStatsUI() {
+            document.getElementById('display-score').innerText = score;
+            document.getElementById('display-streak').innerText = streak;
+            document.getElementById('display-level').innerText = getLevel(score);
+
+            const streakIcon = document.getElementById('streak-icon');
+            if (streak >= 3) {
+                streakIcon.classList.add('animate-pulse', 'text-orange-500');
+                streakIcon.classList.remove('text-orange-300');
+            } else {
+                streakIcon.classList.remove('animate-pulse', 'text-orange-500');
+                streakIcon.classList.add('text-orange-300');
+            }
+        }
+
+        function renderQuestion() {
+            hasAnswered = false;
+            const q = activeQuestions[currentQuestionIndex];
+            const progress = (currentQuestionIndex / activeQuestions.length) * 100;
+            
+            document.getElementById('progress-bar').style.width = `${progress}%`;
+            document.getElementById('question-counter').innerText = `Frage ${currentQuestionIndex + 1} von ${activeQuestions.length}`;
+            document.getElementById('question-text').innerText = q.question;
+
+            // Hide Feedback & Next Button
+            document.getElementById('feedback-container').classList.add('hidden');
+            document.getElementById('next-btn-container').classList.add('hidden');
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = q.options.map((opt, index) => `
+                <button type="button" onclick="handleAnswer(${index})" id="opt-${index}" class="p-4 rounded-2xl text-left text-lg font-medium transition-all bg-slate-50 border-2 border-slate-200 hover:border-red-400 hover:bg-red-50 text-slate-700 flex justify-between items-center">
+                    <span>${opt}</span>
+                    <span id="icon-${index}"></span>
+                </button>
+            `).join('');
+        }
+
+        window.handleAnswer = function(selectedIndex) {
+            if (hasAnswered) return;
+            hasAnswered = true;
+
+            const q = activeQuestions[currentQuestionIndex];
+            const isCorrect = (selectedIndex === q.correct);
+            let bonusMessage = "";
+
+            if (isCorrect) {
+                let pointsEarned = 1;
+                streak++;
+                if (streak > maxStreak) maxStreak = streak;
+
+                if (streak === 3) { pointsEarned += 1; bonusMessage = "🔥 3er Streak! +1 Bonus!"; }
+                else if (streak === 5) { pointsEarned += 2; bonusMessage = "🔥🔥 5er Streak! +2 Bonus!"; }
+                else if (streak === 10) { pointsEarned += 5; bonusMessage = "🌟 WAHNSINN! 10er Streak! +5 Bonus!"; }
+
+                score += pointsEarned;
+            } else {
+                streak = 0;
+            }
+
+            updateStatsUI();
+
+            // Update Buttons visually
+            for (let i = 0; i < q.options.length; i++) {
+                const btn = document.getElementById(`opt-${i}`);
+                const iconContainer = document.getElementById(`icon-${i}`);
+                
+                // Disable all
+                btn.classList.remove('hover:border-red-400', 'hover:bg-red-50', 'cursor-pointer');
+                btn.style.cursor = 'default';
+
+                if (i === q.correct) {
+                    btn.classList.add('bg-green-50', 'border-green-500', 'text-green-800', 'shadow-md');
+                    btn.classList.remove('bg-slate-50', 'border-slate-200', 'text-slate-700');
+                    iconContainer.innerHTML = '<i class="ph-fill ph-check-circle text-green-500 text-2xl"></i>';
+                } else if (i === selectedIndex && !isCorrect) {
+                    btn.classList.add('bg-red-50', 'border-red-500', 'text-red-800');
+                    btn.classList.remove('bg-slate-50', 'border-slate-200', 'text-slate-700');
+                    iconContainer.innerHTML = '<i class="ph-fill ph-x-circle text-red-500 text-2xl"></i>';
+                } else {
+                    btn.classList.add('opacity-50');
+                }
+            }
+
+            // Show Feedback
+            const feedbackContainer = document.getElementById('feedback-container');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackText = document.getElementById('feedback-text');
+
+            feedbackContainer.classList.remove('hidden', 'bg-green-50', 'border-green-200', 'bg-red-50', 'border-red-200');
+            feedbackTitle.classList.remove('text-green-800', 'text-red-800');
+
+            if (isCorrect) {
+                feedbackContainer.classList.add('bg-green-50', 'border', 'border-green-200');
+                feedbackTitle.classList.add('text-green-800');
+                feedbackTitle.innerHTML = `Richtig! 🎉 ${bonusMessage ? `<span class="ml-auto text-orange-600 bg-orange-100 px-3 py-1 rounded-full text-sm animate-pulse">${bonusMessage}</span>` : ''}`;
+            } else {
+                feedbackContainer.classList.add('bg-red-50', 'border', 'border-red-200');
+                feedbackTitle.classList.add('text-red-800');
+                feedbackTitle.innerHTML = `Leider falsch. 😔`;
+            }
+            feedbackText.innerText = q.explanation;
+
+            // Show Next Button
+            const nextBtnContainer = document.getElementById('next-btn-container');
+            const nextBtn = document.getElementById('next-btn');
+            nextBtnContainer.classList.remove('hidden');
+            
+            if (currentQuestionIndex < activeQuestions.length - 1) {
+                nextBtn.innerHTML = `Nächste Frage <i class="ph-bold ph-arrow-right text-xl"></i>`;
+            } else {
+                nextBtn.innerHTML = `Ergebnisse ansehen <i class="ph-bold ph-arrow-right text-xl"></i>`;
+            }
+        };
+
+        document.getElementById('next-btn').addEventListener('click', () => {
+            if (currentQuestionIndex < activeQuestions.length - 1) {
+                currentQuestionIndex++;
+                renderQuestion();
+            } else {
+                showEndScreen();
+            }
+        });
+
+        // --- END SCREEN ---
+        function showEndScreen() {
+            screens.playing.classList.add('hidden');
+            screens.playing.classList.remove('flex');
+            screens.end.classList.remove('hidden');
+            screens.end.classList.add('flex');
+
+            const char = CHARACTERS.find(c => c.id === selectedCharId);
+            
+            document.getElementById('end-title').innerText = `Quiz Beendet, ${playerName}!`;
+            document.getElementById('end-greeting').innerText = `${char.greeting.split('!')[0]}! Du hast es geschafft.`;
+            
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('final-streak').innerText = maxStreak;
+            document.getElementById('final-level').innerText = getLevel(score);
+        }
+
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            screens.end.classList.add('hidden');
+            screens.end.classList.remove('flex');
+            screens.start.classList.remove('hidden');
+            
+            // Reset Input for pure freshness
+            playerNameInput.value = "";
+            playerName = "";
+            selectedCharId = null;
+            updateCharSelectionUI();
+            validateStart();
+        });
+
+        // App Start
+        initStartScreen();
+
+    </script>
+</body>
+</html>

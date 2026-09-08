@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Schweiz-Geografie-Spiel</title>
+<style>
+body{
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:#eef7ff;
+}
+header{
+  background:white;
+  padding:16px 24px;
+  box-shadow:0 4px 18px #0002;
+  font-size:22px;
+  font-weight:bold;
+}
+#game{
+  display:grid;
+  grid-template-columns:300px 1fr;
+  gap:20px;
+  padding:20px;
+}
+.panel{
+  background:white;
+  border-radius:22px;
+  padding:20px;
+  box-shadow:0 10px 25px #0002;
+}
+#mapBox{
+  background:white;
+  border-radius:24px;
+  padding:16px;
+  overflow:auto;
+  height:calc(100vh - 120px);
+  box-shadow:0 10px 25px #0002;
+}
+#map svg{
+  width:100%;
+  height:auto;
+}
+.canton-clickable{
+  cursor:pointer;
+  transition:.15s;
+}
+.canton-clickable:hover{
+  filter:brightness(1.25);
+  stroke:#2563eb !important;
+  stroke-width:2 !important;
+}
+.selected{
+  fill:#22c55e !important;
+}
+</style>
+</head>
+<body>
+
+<header>🗺️ Schweizer Geografie-Abenteuer</header>
+
+<div id="game">
+  <div class="panel">
+    <h2>Kartentest</h2>
+    <p>Klicke direkt auf einen Kanton.</p>
+    <p id="feedback">Noch nichts ausgewählt.</p>
+  </div>
+
+  <div id="mapBox">
+    <div id="map">Karte wird geladen...</div>
+  </div>
+</div>
+
+<script>
+fetch("Switzerland,_administrative_divisions_-_de_-_colored.svg")
+  .then(response => response.text())
+  .then(svgText => {
+    document.getElementById("map").innerHTML = svgText;
+    setupMap();
+  });
+
+function setupMap(){
+  const svg = document.querySelector("#map svg");
+
+  const groups = svg.querySelectorAll("g");
+  let cantonGroup = null;
+
+  groups.forEach(g => {
+    const id = (g.id || "").toLowerCase();
+    if(id.includes("canton") || id.includes("kanton")){
+      cantonGroup = g;
+    }
+  });
+
+  const paths = cantonGroup
+    ? cantonGroup.querySelectorAll("path")
+    : svg.querySelectorAll("path");
+
+  paths.forEach((path, index) => {
+    path.classList.add("canton-clickable");
+    path.dataset.index = index + 1;
+
+    path.addEventListener("click", event => {
+      event.stopPropagation();
+
+      document.querySelectorAll(".selected").forEach(p => {
+        p.classList.remove("selected");
+      });
+
+      path.classList.add("selected");
+
+      document.getElementById("feedback").textContent =
+        "Du hast Kantonsfläche " + (index + 1) + " angeklickt.";
+    });
+  });
+}
+</script>
+
+</body>
+</html>

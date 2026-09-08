@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Schweizer Geografie-Abenteuer</title>
+<style>
+:root{--blue:#2f80ed;--green:#22c55e;--red:#ef4444;--yellow:#facc15;--bg:#eef7ff}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:#123}
+header{background:white;padding:14px 22px;box-shadow:0 4px 18px #0002;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+header b{font-size:22px}
+button{border:0;border-radius:17px;background:var(--blue);color:white;font-weight:800;padding:12px 18px;font-size:16px;cursor:pointer}
+button.secondary{background:#e2e8f0;color:#123}
+button:disabled{opacity:.45;cursor:not-allowed}
+.card{background:white;border-radius:24px;padding:22px;box-shadow:0 10px 25px #0002}
+#login,#menu{max-width:980px;margin:35px auto}
+input,select{font-size:18px;padding:12px;border-radius:14px;border:2px solid #cbd5e1;margin:5px}
+.avatar{font-size:32px;padding:9px;margin:5px;display:inline-block;background:#eef;border-radius:15px;cursor:pointer}
+.avatar.sel{outline:4px solid var(--blue)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.level{background:#f8fbff;border-radius:20px;padding:18px;border:2px solid #dbeafe}
+#game{display:none;grid-template-columns:340px 1fr;gap:20px;padding:20px;height:calc(100vh - 78px)}
+#mapBox{background:white;border-radius:24px;padding:14px;box-shadow:0 10px 25px #0002;overflow:auto}
+#mapWrap{position:relative}
+#map svg{width:100%;height:auto;display:block}
+#cityLayer{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+.cityDot{fill:#ff006e;stroke:white;stroke-width:3}
+.cityAnswer{fill:#22c55e;stroke:white;stroke-width:4}
+.map-path{cursor:default;transition:.12s}
+.clickable-canton{cursor:pointer}
+.group-hover{filter:brightness(1.18);stroke:#2563eb!important;stroke-width:2.5!important}
+.group-selected{fill:#22c55e!important;stroke:#15803d!important;stroke-width:3!important}
+.wrong{fill:#ef444488!important;stroke:#ef4444!important;stroke-width:3!important}
+.hot1{fill:#22c55e!important}.hot2{fill:#84cc16!important}.hot3{fill:#facc15!important}.hot4{fill:#fb923c!important}.hot5{fill:#ef4444!important}
+#map text,#map tspan{pointer-events:none!important}
+.pet{font-size:32px;background:#f1f5f9;border-radius:14px;padding:8px;margin:4px;display:inline-block}
+.small{font-size:13px;color:#456;line-height:1.4}
+.badge{background:#f1f5f9;border-radius:999px;padding:6px 10px;font-weight:700}
+.success{color:#15803d;font-weight:800}.fail{color:#dc2626;font-weight:800}
+</style>
+</head>
+<body>
+
+<header>
+<b>🗺️ Schweizer Geografie-Abenteuer</b>
+<span id="playerTop"></span>
+<span class="badge">⭐ <span id="starsTop">0</span></span>
+<span class="badge">🪙 <span id="coinsTop">0</span></span>
+<button onclick="showMenu()">Menü</button>
+<button class="secondary" onclick="resetGame()">Reset</button>
+</header>
+
+<section id="login" class="card">
+<h1>Willkommen!</h1>
+<p>Gib deinen Namen ein, wähle deine Klasse und deine Spielfigur.</p>
+<input id="nameInput" placeholder="Dein Name">
+<select id="classInput"><option>3. Klasse</option><option>4. Klasse</option><option>5. Klasse</option><option>6. Klasse</option></select>
+<h3>Spielfigur</h3><div id="avatars"></div><br>
+<button onclick="startGame()">Spiel starten</button>
+</section>
+
+<section id="menu" class="card" style="display:none">
+<h1>Hauptmenü</h1>
+<h2>Kantonslevel</h2>
+<div class="grid">
+<div class="level"><h3>🌍 Kantons-Globle</h3><p>Finde den geheimen Kanton mit Wärmefarben.</p><button onclick="startCantonGloble()">Start</button></div>
+<div class="level"><h3>🕵️ Kantons-Detektiv</h3><p>Errate den Kanton anhand von Hinweisen.</p><button onclick="startCantonDetective()">Start</button></div>
+<div class="level"><h3>🤝 Nachbarn</h3><p>Wähle alle Nachbarkantone auf der Karte.</p><button onclick="startNeighbors()">Start</button></div>
+<div class="level"><h3>⚡ Blitzkarte Kantone</h3><p>Klicke schnell den gesuchten Kanton.</p><button onclick="startCantonBlitz()">Start</button></div>
+<div class="level"><h3>📍 Geheimer Ort</h3><p>Setze ein Fähnchen möglichst nahe.</p><button onclick="startSecretCanton()">Start</button></div>
+</div>
+<h2>Städtelevel</h2>
+<div class="grid">
+<div class="level"><h3>🌍 Städte-Globle</h3><p>Finde die geheime Stadt.</p><button onclick="startCityGloble()">Start</button></div>
+<div class="level"><h3>🕵️ Städte-Detektiv</h3><p>Errate die Stadt anhand von Hinweisen.</p><button onclick="startCityDetective()">Start</button></div>
+<div class="level"><h3>⚡ Blitzkarte Städte</h3><p>Klicke die gesuchte Stadtposition.</p><button onclick="startCityBlitz()">Start</button></div>
+<div class="level"><h3>📍 Geheimer Ort Städte</h3><p>Setze ein Fähnchen nahe bei der Stadt.</p><button onclick="startSecretCity()">Start</button></div>
+</div>
+<h2>🐾 Haustiersammlung</h2>
+<div id="pets"></div>
+<button onclick="buyPet()">Haustier kaufen – 25 Münzen</button>
+</section>
+
+<section id="game">
+<aside class="card">
+<h2 id="modeTitle">Level</h2>
+<p id="taskText">Aufgabe wird geladen...</p>
+<p id="feedback"></p>
+<div id="hints"></div>
+<hr>
+<p class="small">Hinweis: Bei Appenzell Ausserrhoden bitte auf die Buchstaben „AR“ klicken.</p>
+<button class="secondary" onclick="showMenu()">Zurück ins Menü</button>
+</aside>
+
+<section id="mapBox">
+<div id="mapWrap">
+<div id="map">Karte wird geladen...</div>
+<svg id="cityLayer" viewBox="0 0 800 538" preserveAspectRatio="xMidYMid meet"></svg>
+</div>
+</section>
+</section>
+
+<script>
+const CANTONS={
+GE:{name:"Genf",parts:[63,385,386,387,388],paint:[63],x:55,y:640,capital:"Genf",lang:"Französisch",area:"282 km²",pop:"ca. 500'000",neighbors:["VD"]},
+VD:{name:"Waadt",parts:[60,370,371,372,373],paint:[60],x:190,y:575,capital:"Lausanne",lang:"Französisch",area:"3212 km²",pop:"ca. 830'000",neighbors:["GE","VS","FR","NE","BE"]},
+NE:{name:"Neuenburg",parts:[58,377,378,379,380,381,382,383,384],paint:[58],x:255,y:420,capital:"Neuenburg",lang:"Französisch",area:"803 km²",pop:"ca. 177'000",neighbors:["VD","FR","BE","JU"]},
+FR:{name:"Freiburg",parts:[57,59,330,331,332,333,334,335,336],paint:[57,59],x:330,y:500,capital:"Freiburg",lang:"Deutsch/Französisch",area:"1671 km²",pop:"ca. 330'000",neighbors:["VD","NE","BE"]},
+BE:{name:"Bern",parts:[61,308,309,310,311],paint:[61],x:455,y:470,capital:"Bern",lang:"Deutsch/Französisch",area:"5959 km²",pop:"ca. 1 Mio.",neighbors:["JU","SO","AG","LU","OW","NW","UR","VS","VD","FR","NE"]},
+JU:{name:"Jura",parts:[62,389,390,391,392],paint:[62],x:320,y:285,capital:"Delsberg",lang:"Französisch",area:"839 km²",pop:"ca. 74'000",neighbors:["BE","NE","SO","BL"]},
+SO:{name:"Solothurn",parts:[54,55,492,493],paint:[54,55],x:470,y:270,capital:"Solothurn",lang:"Deutsch",area:"791 km²",pop:"ca. 285'000",neighbors:["JU","BE","AG","BL"]},
+BL:{name:"Basel-Landschaft",parts:[51,56,496],paint:[51,56],x:455,y:210,capital:"Liestal",lang:"Deutsch",area:"518 km²",pop:"ca. 295'000",neighbors:["BS","AG","SO","JU"]},
+BS:{name:"Basel-Stadt",parts:[52,494,495],paint:[52],x:375,y:150,capital:"Basel",lang:"Deutsch",area:"37 km²",pop:"ca. 200'000",neighbors:["BL"]},
+AG:{name:"Aargau",parts:[48,353,354,355,356,357,358],paint:[48],x:565,y:245,capital:"Aarau",lang:"Deutsch",area:"1404 km²",pop:"ca. 710'000",neighbors:["BL","SO","BE","LU","ZG","ZH"]},
+LU:{name:"Luzern",parts:[47,312,313,314,315],paint:[47],x:625,y:390,capital:"Luzern",lang:"Deutsch",area:"1493 km²",pop:"ca. 430'000",neighbors:["AG","ZG","SZ","NW","OW","BE"]},
+VS:{name:"Wallis",parts:[45,374,375,376],paint:[45],x:450,y:730,capital:"Sitten",lang:"Deutsch/Französisch",area:"5224 km²",pop:"ca. 360'000",neighbors:["VD","BE","UR","TI"]},
+OW:{name:"Obwalden",parts:[49,50,491],paint:[49,50],x:670,y:480,capital:"Sarnen",lang:"Deutsch",area:"491 km²",pop:"ca. 39'000",neighbors:["BE","LU","NW","UR"]},
+NW:{name:"Nidwalden",parts:[44],paint:[44],x:710,y:430,capital:"Stans",lang:"Deutsch",area:"276 km²",pop:"ca. 44'000",neighbors:["LU","OW","UR","SZ"]},
+UR:{name:"Uri",parts:[43,316,317,318],paint:[43],x:775,y:510,capital:"Altdorf",lang:"Deutsch",area:"1077 km²",pop:"ca. 37'000",neighbors:["BE","OW","NW","SZ","GL","GR","TI","VS"]},
+TI:{name:"Tessin",parts:[37,365,366,367,368,369],paint:[37],x:870,y:710,capital:"Bellinzona",lang:"Italienisch",area:"2812 km²",pop:"ca. 350'000",neighbors:["VS","UR","GR"]},
+SZ:{name:"Schwyz",parts:[46,319,320,321,322],paint:[46],x:815,y:390,capital:"Schwyz",lang:"Deutsch",area:"908 km²",pop:"ca. 165'000",neighbors:["ZG","LU","NW","UR","GL","SG","ZH"]},
+ZG:{name:"Zug",parts:[39,328,329],paint:[39],x:725,y:335,capital:"Zug",lang:"Deutsch",area:"239 km²",pop:"ca. 130'000",neighbors:["ZH","AG","LU","SZ"]},
+ZH:{name:"Zürich",parts:[42,303,304,305,306,307],paint:[42],x:760,y:230,capital:"Zürich",lang:"Deutsch",area:"1729 km²",pop:"ca. 1.6 Mio.",neighbors:["AG","ZG","SZ","SG","TG","SH"]},
+GL:{name:"Glarus",parts:[36,323,324,325,326,327],paint:[36],x:930,y:420,capital:"Glarus",lang:"Deutsch",area:"685 km²",pop:"ca. 41'000",neighbors:["SZ","UR","GR","SG"]},
+SH:{name:"Schaffhausen",parts:[38,40,281],paint:[38,40],x:735,y:95,capital:"Schaffhausen",lang:"Deutsch",area:"298 km²",pop:"ca. 86'000",neighbors:["ZH","TG"]},
+TG:{name:"Thurgau",parts:[41,359,360,361,362,363,364],paint:[41],x:895,y:160,capital:"Frauenfeld",lang:"Deutsch",area:"991 km²",pop:"ca. 290'000",neighbors:["ZH","SH","SG"]},
+SG:{name:"St. Gallen",parts:[35,337,338,339,340,341,342],paint:[35],x:960,y:330,capital:"St. Gallen",lang:"Deutsch",area:"2026 km²",pop:"ca. 525'000",neighbors:["TG","ZH","SZ","GL","GR","AR","AI"]},
+AI:{name:"Appenzell Innerrhoden",parts:[34,500],paint:[34],x:1015,y:285,capital:"Appenzell",lang:"Deutsch",area:"173 km²",pop:"ca. 16'000",neighbors:["AR","SG"]},
+AR:{name:"Appenzell Ausserrhoden",parts:[498,499],paint:[],x:995,y:255,capital:"Herisau",lang:"Deutsch",area:"243 km²",pop:"ca. 55'000",neighbors:["AI","SG"]},
+GR:{name:"Graubünden",parts:[33,343,344,345,346,347,348,349,350,351,352],paint:[33],x:1035,y:555,capital:"Chur",lang:"Deutsch/Rätoromanisch/Italienisch",area:"7105 km²",pop:"ca. 205'000",neighbors:["SG","GL","UR","TI"]}
+};
+const CITIES=[
+{name:"Zürich",x:517,y:172,canton:"ZH",hint:"grösste Stadt der Schweiz"},
+{name:"Genf",x:76,y:423,canton:"GE",hint:"am Genfersee, international bekannt"},
+{name:"Basel",x:363,y:105,canton:"BS",hint:"am Rhein im Dreiländereck"},
+{name:"Bern",x:409,y:286,canton:"BE",hint:"Bundesstadt der Schweiz"},
+{name:"Lausanne",x:147,y:340,canton:"VD",hint:"am Genfersee"},
+{name:"Luzern",x:590,y:275,canton:"LU",hint:"bei Vierwaldstättersee"},
+{name:"St. Gallen",x:685,y:230,canton:"SG",hint:"in der Ostschweiz"},
+{name:"Lugano",x:652,y:480,canton:"TI",hint:"im Tessin"},
+{name:"Chur",x:722,y:300,canton:"GR",hint:"Hauptort Graubündens"},
+{name:"Sion",x:334,y:394,canton:"VS",hint:"Hauptort Wallis"},
+{name:"Neuchâtel",x:239,y:282,canton:"NE",hint:"am Neuenburgersee"},
+{name:"Fribourg",x:313,y:310,canton:"FR",hint:"zweisprachige Stadt"}
+];
+const PETS=["🐶","🐱","🐰","🐹","🦊","🐼","🐸","🐢","🦉","🦄"];
+const AVATARS=["👧🏻","👦🏼","🧒🏽","👩🏾","👨🏻","👩🏿","👴🏼","👵🏽"];
+const PART_TO_CANTON={};Object.entries(CANTONS).forEach(([id,c])=>c.parts.forEach(n=>PART_TO_CANTON[n]=id));
+let state=JSON.parse(localStorage.chGeoGame||"{}"), mode="", target=null, attempts=0, chosenNeighbors=new Set(), pathParts=[];
+AVATARS.forEach(a=>{let s=document.createElement("span");s.className="avatar";s.textContent=a;s.onclick=()=>{state.avatar=a;document.querySelectorAll(".avatar").forEach(x=>x.classList.remove("sel"));s.classList.add("sel")};avatars.appendChild(s)});
+function save(){localStorage.chGeoGame=JSON.stringify(state)}
+function startGame(){state.name=nameInput.value||"Kind";state.grade=classInput.value;state.avatar=state.avatar||"🧒🏽";state.stars??=0;state.coins??=0;state.pets??=[];save();showMenu()}
+function updateTop(){playerTop.textContent=`${state.avatar||""} ${state.name||""} · ${state.grade||""}`;starsTop.textContent=state.stars||0;coinsTop.textContent=state.coins||0}
+function showMenu(){login.style.display="none";game.style.display="none";menu.style.display="block";updateTop();pets.innerHTML=PETS.map(p=>`<span class="pet">${state.pets?.includes(p)?p:"🔒"}</span>`).join("")}
+function reward(st=1,co=5){state.stars=(state.stars||0)+st;state.coins=(state.coins||0)+co;save();updateTop()}
+function buyPet(){state.pets??=[];if((state.coins||0)<25||state.pets.length>=PETS.length)return;state.coins-=25;state.pets.push(PETS[state.pets.length]);save();showMenu()}
+function resetGame(){localStorage.removeItem("chGeoGame");location.reload()}
+fetch("karte.svg").then(r=>r.text()).then(svg=>{map.innerHTML=svg;setupMap();if(state.name)showMenu()});
+function setupMap(){document.querySelectorAll("#map text,#map tspan").forEach(e=>e.style.pointerEvents="none");pathParts=[...document.querySelectorAll("#map svg path")];pathParts.forEach((el,i)=>{let nr=i+1,id=PART_TO_CANTON[nr];el.classList.add("map-path");if(id){el.classList.add("clickable-canton");el.onmouseenter=()=>highlight(id,true);el.onmouseleave=()=>highlight(id,false);el.onclick=e=>{e.stopPropagation();handleCanton(id,nr)}}});}
+function showGame(title,task){menu.style.display="none";login.style.display="none";game.style.display="grid";modeTitle.textContent=title;taskText.textContent=task;feedback.textContent="";hints.innerHTML="";clearAll();clearCities()}
+function clearAll(){document.querySelectorAll(".group-selected,.wrong,.hot1,.hot2,.hot3,.hot4,.hot5").forEach(e=>e.classList.remove("group-selected","wrong","hot1","hot2","hot3","hot4","hot5"))}
+function paintParts(id,cls){(CANTONS[id].paint.length?CANTONS[id].paint:CANTONS[id].parts).forEach(n=>{let el=pathParts[n-1];if(el)el.classList.add(cls)})}
+function highlight(id,on){if(mode.startsWith("city"))return;(CANTONS[id].paint.length?CANTONS[id].paint:CANTONS[id].parts).forEach(n=>{let el=pathParts[n-1];if(el)el.classList.toggle("group-hover",on)})}
+function selectCanton(id){clearAll();paintParts(id,"group-selected")}
+function rand(arr){return arr[Math.floor(Math.random()*arr.length)]}
+function allIds(){return Object.keys(CANTONS)}
+function startCantonBlitz(){mode="cantonBlitz";target=rand(allIds());showGame("⚡ Blitzkarte Kantone","Klicke auf: "+CANTONS[target].name)}
+function startCantonDetective(){mode="cantonDetective";target=rand(allIds());attempts=0;showGame("🕵️ Kantons-Detektiv","Finde den geheimen Kanton auf der Karte.");showHint()}
+function showHint(){let c=CANTONS[target],list=[`Sprache: ${c.lang}`,`Hauptort: ${c.capital}`,`Fläche: ${c.area}`,`Einwohner: ${c.pop}`,`Nachbarn: ${c.neighbors.map(n=>CANTONS[n].name).join(", ")}`];hints.innerHTML=list.slice(0,attempts+1).map(x=>"<p>🔎 "+x+"</p>").join("")}
+function startCantonGloble(){mode="cantonGloble";target=rand(allIds());attempts=0;showGame("🌍 Kantons-Globle","Geheimer Kanton gesucht. Klicke auf einen Kanton.")}
+function startNeighbors(){mode="neighbors";target=rand(allIds());chosenNeighbors=new Set();showGame("🤝 Nachbarn","Wähle alle Nachbarkantone von: "+CANTONS[target].name);selectCanton(target)}
+function startSecretCanton(){mode="secretCanton";target=rand(allIds());showGame("📍 Geheimer Ort","Klicke möglichst nahe auf: "+CANTONS[target].name)}
+function handleCanton(id,nr){
+if(mode==="cantonBlitz"){if(id===target){selectCanton(id);feedback.innerHTML="<span class='success'>Richtig! +1 Stern, +5 Münzen</span>";reward();setTimeout(startCantonBlitz,900)}else{paintParts(id,"wrong");feedback.innerHTML="<span class='fail'>Fast! Das war "+CANTONS[id].name+".</span>"}}
+else if(mode==="cantonDetective"){attempts++;if(id===target){selectCanton(id);let bonus=Math.max(1,6-attempts);feedback.innerHTML="<span class='success'>Gelöst! +"+bonus+" Sterne</span>";reward(bonus,bonus*4)}else{paintParts(id,"wrong");feedback.textContent="Noch nicht. Neuer Hinweis:";showHint()}}
+else if(mode==="cantonGloble"){attempts++;let d=dist(CANTONS[id],CANTONS[target]);let cls=d<80?"hot1":d<160?"hot2":d<260?"hot3":d<380?"hot4":"hot5";paintParts(id,cls);if(id===target){feedback.innerHTML="<span class='success'>Gefunden! +2 Sterne, +10 Münzen</span>";reward(2,10);setTimeout(startCantonGloble,1200)}else feedback.textContent="Versuch "+attempts+": "+CANTONS[id].name+" ist "+Math.round(d)+" Kartenpunkte entfernt."}
+else if(mode==="neighbors"){if(id===target)return;let ok=CANTONS[target].neighbors.includes(id);if(ok){chosenNeighbors.add(id);paintParts(id,"group-selected")}else paintParts(id,"wrong");let need=CANTONS[target].neighbors.length;if(chosenNeighbors.size===need){feedback.innerHTML="<span class='success'>Alle Nachbarn gefunden! +2 Sterne</span>";reward(2,10)}else feedback.textContent="Gefunden: "+chosenNeighbors.size+" von "+need}
+else if(mode==="secretCanton"){let d=dist(CANTONS[id],CANTONS[target]);selectCanton(target);feedback.innerHTML=d<90?"<span class='success'>Sehr nah! +2 Sterne</span>":"Du warst bei "+CANTONS[id].name+". Ziel war "+CANTONS[target].name+".";if(d<90)reward(2,8)}
+}
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y)}
+function clearCities(){cityLayer.innerHTML=""}
+function drawCity(c,cls="cityDot"){let dot=document.createElementNS("http://www.w3.org/2000/svg","circle");dot.setAttribute("cx",c.x);dot.setAttribute("cy",c.y);dot.setAttribute("r",8);dot.setAttribute("class",cls);cityLayer.appendChild(dot)}
+function startCityBlitz(){mode="cityBlitz";target=rand(CITIES);showGame("⚡ Blitzkarte Städte","Klicke auf die Position von: "+target.name);enableCityClick()}
+function startCityDetective(){mode="cityDetective";target=rand(CITIES);attempts=0;showGame("🕵️ Städte-Detektiv","Finde die Stadt auf der Karte.");hints.innerHTML=`<p>🔎 Kanton: ${CANTONS[target.canton].name}</p><p>🔎 Hinweis: ${target.hint}</p>`;enableCityClick()}
+function startCityGloble(){mode="cityGloble";target=rand(CITIES);attempts=0;showGame("🌍 Städte-Globle","Geheime Stadt gesucht. Klicke auf die Karte.");enableCityClick()}
+function startSecretCity(){mode="secretCity";target=rand(CITIES);showGame("📍 Geheimer Ort Städte","Setze ein Fähnchen möglichst nahe bei: "+target.name);enableCityClick()}
+function enableCityClick(){document.querySelector("#map svg").onclick=e=>{if(!mode.startsWith("city")&&mode!=="secretCity")return;let p=getSvgPoint(e);handleCityClick(p.x,p.y)}}
+function getSvgPoint(evt){let svg=document.querySelector("#map svg");let pt=svg.createSVGPoint();pt.x=evt.clientX;pt.y=evt.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse())}
+function nearestCity(x,y){return CITIES.map(c=>({...c,d:Math.hypot(c.x-x,c.y-y)})).sort((a,b)=>a.d-b.d)[0]}
+function handleCityClick(x,y){let near=nearestCity(x,y);clearCities();drawCity({x,y},"cityDot");if(mode==="cityBlitz"||mode==="cityDetective"){if(near.name===target.name&&near.d<35){drawCity(target,"cityAnswer");feedback.innerHTML="<span class='success'>Richtig! +1 Stern</span>";reward(1,5);setTimeout(mode==="cityBlitz"?startCityBlitz:startCityDetective,1000)}else feedback.textContent="Fast! Du hast in die Nähe von "+near.name+" geklickt."}
+else if(mode==="cityGloble"){attempts++;let d=Math.hypot(target.x-x,target.y-y);drawCity(target,"cityAnswer");feedback.textContent=d<35?"Gefunden!":"Entfernung ungefähr: "+Math.round(d)+" Kartenpunkte.";if(d<35)reward(2,10)}
+else if(mode==="secretCity"){let d=Math.hypot(target.x-x,target.y-y);drawCity(target,"cityAnswer");feedback.innerHTML=d<45?"<span class='success'>Sehr nah! +2 Sterne</span>":"Ziel war "+target.name+".";if(d<45)reward(2,8)}}
+</script>
+</body>
+</html>

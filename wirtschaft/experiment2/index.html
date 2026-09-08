@@ -1,0 +1,1695 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marktcheck</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg: #f6f3ee;
+      --card: #ffffff;
+      --text: #1f1f1f;
+      --muted: #666;
+      --accent: #7a3f22;
+      --accent-light: #f0e5dc;
+      --border: #e2d8ce;
+      --green: #2f7d4c;
+      --green-bg: #e7f4ed;
+      --blue: #2463a6;
+      --blue-bg: #e8f0fa;
+      --red: #b8432e;
+      --red-bg: #fae8e5;
+      --yellow-bg: #fff4dd;
+      --yellow-border: #f0c36d;
+      --purple-bg: #f4ecff;
+      --purple-border: #d6bdf5;
+      --purple: #6d3fa0;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    header {
+      background: var(--accent);
+      color: white;
+      padding: 18px 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 18px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.05);
+    }
+
+    h2 {
+      margin-top: 0;
+      color: var(--accent);
+    }
+
+    h3 { margin-bottom: 8px; }
+
+    p, li { line-height: 1.45; }
+
+    .muted { color: var(--muted); }
+
+    .warning {
+      background: var(--yellow-bg);
+      border: 1px solid var(--yellow-border);
+      border-radius: 12px;
+      padding: 14px;
+      margin: 14px 0;
+      font-weight: bold;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 13px 18px;
+      background: var(--accent);
+      color: white;
+      font-weight: bold;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 10px;
+      margin-right: 8px;
+    }
+
+    button:hover { opacity: 0.9; }
+
+    button.danger { background: var(--red); }
+    button.secondary { background: #555; }
+    button.blue { background: var(--blue); }
+    button.green { background: var(--green); }
+
+    button:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    input {
+      width: 100%;
+      max-width: 260px;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #bbb;
+      font-size: 1.1rem;
+      margin-top: 8px;
+    }
+
+    .input-with-suffix {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+    }
+
+    .input-with-suffix input {
+      margin-top: 0;
+    }
+
+    .input-suffix {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--accent);
+    }
+
+
+    .hidden { display: none; }
+
+    .step {
+      font-size: 0.9rem;
+      color: white;
+      background: var(--accent);
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+
+    .product-single {
+      text-align: center;
+    }
+
+    .product-single img {
+      width: 100%;
+      max-height: 480px;
+      object-fit: contain;
+      border-radius: 14px;
+      background: #fafafa;
+      border: 1px solid var(--border);
+      margin: 16px 0;
+    }
+
+    .price {
+      font-size: 2.4rem;
+      font-weight: bold;
+      color: var(--accent);
+      margin: 14px 0;
+    }
+
+    .progress {
+      color: var(--muted);
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+
+    .answer-panel {
+      background: #fbf8f4;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 14px;
+      text-align: left;
+    }
+
+    .teacher-link {
+      text-align: center;
+      margin-top: 30px;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .reaction-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+      margin-bottom: 12px;
+    }
+
+    .reaction-timer {
+      background: #fbf8f4;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 9px 14px;
+      font-weight: bold;
+      color: var(--accent);
+    }
+
+    .reaction-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .reaction-tile {
+      border: 1px solid var(--border);
+      background: white;
+      border-radius: 14px;
+      padding: 18px 8px;
+      min-height: 62px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      text-align: center;
+      color: var(--text);
+    }
+
+    .reaction-tile.covered {
+      background: #ddd5cd;
+      color: transparent;
+      cursor: default;
+    }
+
+    .reaction-tile.covered::after {
+      content: "?";
+      color: #7a6b5e;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+
+    .reaction-tile.correct {
+      background: var(--green-bg);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .reaction-tile.wrong {
+      background: var(--red-bg);
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .choice-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .choice-row button {
+      min-width: 140px;
+    }
+
+    .teacher-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
+      gap: 14px;
+      margin: 16px 0;
+    }
+
+    .metric {
+      border-radius: 14px;
+      padding: 16px;
+      border: 1px solid var(--border);
+      background: white;
+    }
+
+    .metric.low {
+      background: var(--blue-bg);
+      border-color: #b8cdea;
+    }
+
+    .metric.high {
+      background: var(--green-bg);
+      border-color: #add8c0;
+    }
+
+    .metric.diff {
+      background: #fff8e8;
+      border-color: #e8c982;
+    }
+
+    .metric.percent {
+      background: var(--purple-bg);
+      border-color: var(--purple-border);
+    }
+
+    .metric h3 {
+      margin: 0 0 8px 0;
+      font-size: 1rem;
+      color: var(--muted);
+    }
+
+    .metric .big {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: var(--accent);
+    }
+
+    .result-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+      margin-top: 16px;
+    }
+
+    .result-card {
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: white;
+      padding: 16px;
+    }
+
+    .result-card h4 {
+      margin: 0 0 4px 0;
+      color: var(--accent);
+      font-size: 1.05rem;
+    }
+
+    .result-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .result-box {
+      border-radius: 12px;
+      padding: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .result-box.low { background: var(--blue-bg); }
+    .result-box.high { background: var(--green-bg); }
+
+    .result-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .result-value {
+      font-size: 1.15rem;
+      font-weight: bold;
+    }
+
+    .diff-pill {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: bold;
+    }
+
+    .diff-pill.positive {
+      background: var(--green-bg);
+      color: var(--green);
+    }
+
+    .diff-pill.negative {
+      background: var(--red-bg);
+      color: var(--red);
+    }
+
+    .diff-pill.neutral {
+      background: #eee;
+      color: #555;
+    }
+
+    .percent-pill {
+      display: inline-block;
+      margin-top: 8px;
+      margin-left: 6px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: bold;
+      background: var(--purple-bg);
+      color: var(--purple);
+    }
+
+    .bar-wrap {
+      background: #eee;
+      border-radius: 999px;
+      overflow: hidden;
+      height: 12px;
+      width: 100%;
+      margin-top: 5px;
+      margin-bottom: 8px;
+    }
+
+    .bar {
+      height: 12px;
+      border-radius: 999px;
+    }
+
+    .bar.lowbar { background: var(--blue); }
+    .bar.highbar { background: var(--green); }
+
+    .group-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .person-chip {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+      background: white;
+    }
+
+    .person-chip.low { background: var(--blue-bg); }
+    .person-chip.high { background: var(--green-bg); }
+
+    .positive {
+      color: var(--green);
+      font-weight: bold;
+    }
+
+    .negative {
+      color: var(--red);
+      font-weight: bold;
+    }
+
+    .neutral {
+      color: #555;
+      font-weight: bold;
+    }
+
+    .small {
+      font-size: 0.85rem;
+      color: var(--muted);
+    }
+
+    @media (max-width: 760px) {
+      main { padding: 14px; }
+
+      .product-single img { max-height: 340px; }
+
+      .price { font-size: 2rem; }
+
+      .reaction-grid { grid-template-columns: repeat(4, 1fr); }
+
+      .reaction-tile {
+        min-height: 56px;
+        padding: 14px 6px;
+        font-size: 0.9rem;
+      }
+
+      .result-row { grid-template-columns: 1fr; }
+
+      .metric .big { font-size: 1.55rem; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Marktcheck</h1>
+  </header>
+
+  <main>
+    <section id="startView" class="card">
+      <h2>Wichtig vor dem Start</h2>
+
+      <div class="warning">
+        Dieser Marktcheck funktioniert nur, wenn alle verdeckt, alleine und ohne zu sprechen arbeiten.
+      </div>
+
+      <ol>
+        <li>Bearbeiten Sie den Marktcheck komplett alleine.</li>
+        <li>Sprechen Sie währenddessen nicht miteinander.</li>
+        <li>Zeigen Sie Ihre Ansicht niemandem neben Ihnen.</li>
+        <li>Schauen Sie nicht auf die Bildschirme anderer Personen.</li>
+        <li>Geben Sie Ihre Einschätzungen spontan und ehrlich ab.</li>
+        <li>Es gibt keine richtigen oder falschen Antworten.</li>
+      </ol>
+
+      <p class="muted">
+        Heute geht es um spontane Einschätzungen im Marketing. Die genaue Auswertung schauen wir nachher gemeinsam an.
+      </p>
+
+      <button onclick="startExperiment()">Marktcheck starten</button>
+    </section>
+
+    <section id="anchorIntroView" class="card hidden">
+      <span class="step">Teil 1</span>
+      <h2>Marktüberblick</h2>
+
+      <p>Sie sehen jetzt einige Produkte und Angebote.</p>
+      <p>Schauen Sie sich jedes Angebot kurz an.</p>
+      <p class="muted">Sie müssen hier noch nichts eingeben.</p>
+
+      <button onclick="showAnchorItem()">Weiter</button>
+    </section>
+
+    <section id="anchorItemView" class="card hidden">
+      <span class="step">Teil 1</span>
+
+      <div class="product-single">
+        <div id="anchorProgress" class="progress"></div>
+        <h2 id="anchorName"></h2>
+        <p id="anchorInfo" class="muted"></p>
+        <img id="anchorImage" src="" alt="Produkt oder Angebot">
+        <div id="anchorPrice" class="price"></div>
+        <button onclick="nextAnchorItem()">Weiter</button>
+      </div>
+    </section>
+
+    <section id="reactionView" class="card hidden">
+      <span id="reactionStep" class="step">Zwischenaufgabe</span>
+      <h2 id="reactionTitle">Kurze Konzentrationsaufgabe</h2>
+
+      <p id="reactionInstruction"></p>
+      <p class="muted">Die Felder werden erst nach dem Start aufgedeckt. Arbeiten Sie weiterhin alleine und ohne zu sprechen.</p>
+
+      <div class="reaction-top">
+        <button id="reactionStartButton" onclick="startReactionGame()">Start</button>
+        <div id="reactionTimer" class="reaction-timer">Zeit: 0.0 s</div>
+      </div>
+
+      <div id="reactionGrid" class="reaction-grid"></div>
+
+      <p id="reactionFeedback" class="muted"></p>
+
+      <button id="reactionContinueButton" class="hidden" onclick="continueAfterReaction()">Weiter</button>
+    </section>
+
+    <section id="willingnessIntroView" class="card hidden">
+      <span class="step">Teil 2</span>
+      <h2>Ihre Einschätzung</h2>
+
+      <p>Nun sehen Sie weitere Produkte und Angebote.</p>
+      <p>Geben Sie jeweils Ihre persönliche Einschätzung ab.</p>
+
+      <div class="warning">
+        Entscheiden Sie spontan und ehrlich. Es gibt keine richtige oder falsche Antwort.
+      </div>
+
+      <button onclick="showWillingnessItem()">Zur ersten Eingabe</button>
+    </section>
+
+    <section id="willingnessItemView" class="card hidden">
+      <span class="step">Teil 2</span>
+
+      <div class="product-single">
+        <div id="willingnessProgress" class="progress"></div>
+        <h2 id="targetName"></h2>
+        <p id="targetInfo" class="muted"></p>
+        <img id="targetImage" src="" alt="Produkt oder Angebot">
+
+        <div class="answer-panel">
+          <label for="priceInput"><strong>Welcher Betrag passt aus Ihrer Sicht zu diesem Produkt oder Angebot?</strong></label>
+          <br>
+          <input id="priceInput" type="number" min="0" step="0.05" placeholder="CHF" />
+
+          <p class="muted">Geben Sie den Betrag ein, der für Sie persönlich passend wirkt.</p>
+
+          <button onclick="saveWillingness()">Einschätzung speichern</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="extraIntroView" class="card hidden">
+      <span class="step">Teil 3</span>
+      <h2>Kurze Zusatzrunde</h2>
+
+      <p>Zum Schluss folgen noch einige kurze Einschätzungsfragen.</p>
+      <p>Antworten Sie weiterhin spontan und ohne Austausch mit anderen.</p>
+
+      <button onclick="showExtraCompare()">Starten</button>
+    </section>
+
+    <section id="extraCompareView" class="card hidden">
+      <span class="step">Teil 3</span>
+      <div class="progress" id="extraCompareProgress"></div>
+      <h2 id="extraCompareTitle"></h2>
+      <p id="extraCompareQuestion"></p>
+
+      <div class="choice-row">
+        <button class="green" onclick="saveExtraComparison('mehr')">Mehr</button>
+        <button class="blue" onclick="saveExtraComparison('weniger')">Weniger</button>
+      </div>
+    </section>
+
+    <section id="extraEstimateView" class="card hidden">
+      <span class="step">Teil 3</span>
+      <div class="progress" id="extraEstimateProgress"></div>
+      <h2 id="extraEstimateTitle"></h2>
+      <p id="extraEstimateQuestion"></p>
+
+      <div class="answer-panel">
+        <label for="extraInput"><strong id="extraInputLabel"></strong></label>
+        <br>
+        <div class="input-with-suffix">
+          <input id="extraInput" type="number" min="0" step="1" placeholder="" />
+          <span id="extraInputSuffix" class="input-suffix"></span>
+        </div>
+        <p class="muted">Geben Sie eine möglichst passende Schätzung ein.</p>
+        <button onclick="saveExtraEstimate()">Einschätzung speichern</button>
+      </div>
+    </section>
+
+    <section id="doneView" class="card hidden">
+      <h2>Danke</h2>
+      <p>Ihre Antworten wurden gespeichert.</p>
+      <p>Bitte warten Sie ruhig, bis alle fertig sind.</p>
+    </section>
+
+    <section id="teacherLoginView" class="card hidden">
+      <h2>Lehrermodus</h2>
+      <p>Passwort eingeben:</p>
+      <input id="teacherPassword" type="password" placeholder="Passwort" />
+      <br>
+      <button onclick="openTeacherView()">Resultate anzeigen</button>
+      <button class="secondary" onclick="backToStudentMode()">Zurück zum Lernendenmodus</button>
+    </section>
+
+    <section id="teacherView" class="card hidden">
+      <h2>Lehrermodus, Auswertung</h2>
+      <p class="muted">
+        Produktteil und Zusatzfragen werden separat ausgewertet. Der prozentuale Gesamteffekt ist jeweils der Durchschnitt der einzelnen prozentualen Effekte.
+      </p>
+
+      <button onclick="loadResults()">Resultate aktualisieren</button>
+      <button class="secondary" onclick="backToStudentMode()">Zurück zum Lernendenmodus</button>
+      <button class="danger" onclick="resetData()">Daten zurücksetzen</button>
+
+      <div id="resultsSummary"></div>
+      <div id="resultsTable"></div>
+    </section>
+
+    <div class="teacher-link" onclick="showTeacherLogin()">Lehrermodus</div>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://xvgbisxwptnfupibcbpg.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_WF742ZbvUE8BzCTT2MZw2w_K2wFvYyt";
+
+    const client = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const SESSION_ID = "default";
+    const TEACHER_PASSWORD = "1234";
+
+    const products = [
+      {
+        id: 1,
+        anchorName: "Fresh Cola",
+        targetName: "Natura Premium Eistee",
+        info: "500 ml",
+        anchorImage: "1a.png",
+        targetImage: "1n.png",
+        lowPrice: 1.20,
+        highPrice: 2.90
+      },
+      {
+        id: 2,
+        anchorName: "Classic Salzchips",
+        targetName: "Golden Harvest Chips",
+        info: "150 g",
+        anchorImage: "2a.png",
+        targetImage: "2n.png",
+        lowPrice: 2.20,
+        highPrice: 4.20
+      },
+      {
+        id: 3,
+        anchorName: "Pure Drop Flüssigseife",
+        targetName: "Pure Care Duschgel",
+        info: "250 ml",
+        anchorImage: "3a.png",
+        targetImage: "3n.png",
+        lowPrice: 2.20,
+        highPrice: 5.20
+      },
+      {
+        id: 4,
+        anchorName: "PulseZone Lasertag",
+        targetName: "Escape Room, Operation Bankraub",
+        info: "60 Minuten, 1 Person",
+        anchorImage: "4a.png",
+        targetImage: "4n.png",
+        lowPrice: 29,
+        highPrice: 49
+      },
+      {
+        id: 5,
+        anchorName: "Aqua Life Hallenbad-Abo",
+        targetName: "FitLife Fitnessabo",
+        info: "1 Monat, Standardzugang",
+        anchorImage: "5a.png",
+        targetImage: "5n.png",
+        lowPrice: 49,
+        highPrice: 89
+      }
+    ];
+
+    const extraQuestions = [
+      {
+        id: 1,
+        name: "Basel - Sydney",
+        unit: "km",
+        lowAnchor: 10000,
+        highAnchor: 25000,
+        correctValue: 16600,
+        compareTitle: "Distanz",
+        estimateTitle: "Distanz",
+        compareText: "Ist die Distanz von Basel nach Sydney mehr oder weniger als",
+        estimateText: "Wie viele Kilometer beträgt die Distanz von Basel nach Sydney ungefähr?",
+        placeholder: "km"
+      },
+      {
+        id: 2,
+        name: "Grossraum Tokio",
+        unit: "Mio. Einwohner/innen",
+        lowAnchor: 20,
+        highAnchor: 60,
+        correctValue: 37,
+        compareTitle: "Einwohnerzahl",
+        estimateTitle: "Einwohnerzahl",
+        compareText: "Hat der Grossraum Tokio mehr oder weniger als",
+        estimateText: "Wie viele Millionen Einwohnerinnen und Einwohner hat der Grossraum Tokio ungefähr?",
+        placeholder: "Millionen"
+      },
+      {
+        id: 3,
+        name: "Fläche Genfersee",
+        unit: "km²",
+        lowAnchor: 200,
+        highAnchor: 1200,
+        correctValue: 580,
+        compareTitle: "Fläche",
+        estimateTitle: "Fläche",
+        compareText: "Ist die Fläche des Genfersees mehr oder weniger als",
+        estimateText: "Wie gross ist die Fläche des Genfersees ungefähr?",
+        placeholder: "km²"
+      }
+    ];
+
+    const reactionOneWords = [
+      "Produkt", "Marke", "Design", "Zielgruppe", "Farbe", "Werbung",
+      "Verpackung", "Kunde", "Angebot", "Qualität", "Logo", "Marke",
+      "Verkauf", "Marke", "Nutzen", "Material", "Form", "Marke",
+      "Geschmack", "Service", "Trend", "Name", "Bild", "Aktion"
+    ];
+
+    const reactionTwoWords = [
+      "Kunde", "Preis", "Logo", "Werbung", "Nutzen", "Preis",
+      "Design", "Zielgruppe", "Produkt", "Farbe", "Preis", "Service",
+      "Angebot", "Verpackung", "Preis", "Marke", "Name", "Aktion",
+      "Qualität", "Bild", "Trend", "Material", "Form", "Verkauf"
+    ];
+
+    let participant = null;
+    let anchorIndex = 0;
+    let willingnessIndex = 0;
+    let willingnessOrder = [];
+    let reactionWords = [];
+    let reactionTargetWord = "Marke";
+    let nextAfterReaction = "willingness";
+    let foundTargetCount = 0;
+    let totalTargetCount = 0;
+    let reactionStartedAt = null;
+    let reactionTimerInterval = null;
+    let reactionActive = false;
+    let extraIndex = 0;
+    let extraComparisonAnswer = null;
+    let extraOrder = [];
+
+    function hideAllViews() {
+      [
+        "startView",
+        "anchorIntroView",
+        "anchorItemView",
+        "reactionView",
+        "willingnessIntroView",
+        "willingnessItemView",
+        "extraIntroView",
+        "extraCompareView",
+        "extraEstimateView",
+        "doneView",
+        "teacherLoginView",
+        "teacherView"
+      ].forEach(id => document.getElementById(id).classList.add("hidden"));
+    }
+
+    function formatCHF(value) {
+      return "CHF " + Number(value).toFixed(2);
+    }
+
+    function formatNumber(value, decimals = 1) {
+      if (value === null || isNaN(value)) return "-";
+      return Number(value).toFixed(decimals);
+    }
+
+    function formatDiff(value) {
+      if (value === null || isNaN(value)) return "-";
+      if (value > 0) return "+ CHF " + Number(value).toFixed(2);
+      if (value < 0) return "- CHF " + Math.abs(Number(value)).toFixed(2);
+      return "CHF 0.00";
+    }
+
+    function formatGenericDiff(value, unit) {
+      if (value === null || isNaN(value)) return "-";
+      if (value > 0) return "+ " + Number(value).toFixed(1) + " " + unit;
+      if (value < 0) return "- " + Math.abs(Number(value)).toFixed(1) + " " + unit;
+      return "0.0 " + unit;
+    }
+
+    function formatPercent(value) {
+      if (value === null || isNaN(value)) return "-";
+      if (value > 0) return "+ " + Number(value).toFixed(1) + " %";
+      if (value < 0) return "- " + Math.abs(Number(value)).toFixed(1) + " %";
+      return "0.0 %";
+    }
+
+    function percentDiffValue(highValue, lowValue) {
+      if (highValue === null || lowValue === null || isNaN(highValue) || isNaN(lowValue) || lowValue === 0) {
+        return null;
+      }
+
+      return ((highValue - lowValue) / lowValue) * 100;
+    }
+
+    function diffClass(value) {
+      if (value === null || isNaN(value)) return "neutral";
+      if (value > 0) return "positive";
+      if (value < 0) return "negative";
+      return "neutral";
+    }
+
+    function average(values) {
+      if (!values.length) return null;
+      return values.reduce((sum, value) => sum + Number(value), 0) / values.length;
+    }
+
+    function shuffleArray(array) {
+      const copy = [...array];
+
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = copy[i];
+        copy[i] = copy[j];
+        copy[j] = temp;
+      }
+
+      return copy;
+    }
+
+    function getAnchorPrice(product) {
+      return participant.anchor_group === "low" ? product.lowPrice : product.highPrice;
+    }
+
+    function getExtraAnchor(question) {
+      return participant.anchor_group === "low" ? question.lowAnchor : question.highAnchor;
+    }
+
+    function resetSessionForNewRun() {
+      sessionStorage.removeItem("anchor_experiment_participant");
+      sessionStorage.removeItem("anchor_experiment_willingness_order");
+      sessionStorage.removeItem("anchor_experiment_extra_order");
+      participant = null;
+      anchorIndex = 0;
+      willingnessIndex = 0;
+      willingnessOrder = [];
+      extraIndex = 0;
+      extraOrder = [];
+    }
+
+    async function startExperiment() {
+      const existing = sessionStorage.getItem("anchor_experiment_participant");
+
+      if (existing) {
+        participant = JSON.parse(existing);
+      } else {
+        const { data, error } = await client.rpc("start_anchor_experiment", {
+          p_session_id: SESSION_ID
+        });
+
+        if (error) {
+          alert("Fehler beim Starten: " + error.message);
+          return;
+        }
+
+        participant = Array.isArray(data) ? data[0] : data;
+        sessionStorage.setItem("anchor_experiment_participant", JSON.stringify(participant));
+      }
+
+      const existingOrder = sessionStorage.getItem("anchor_experiment_willingness_order");
+
+      if (existingOrder) {
+        const ids = JSON.parse(existingOrder);
+        willingnessOrder = ids
+          .map(id => products.find(product => product.id === id))
+          .filter(Boolean);
+      } else {
+        willingnessOrder = shuffleArray(products);
+        sessionStorage.setItem(
+          "anchor_experiment_willingness_order",
+          JSON.stringify(willingnessOrder.map(product => product.id))
+        );
+      }
+
+      const existingExtraOrder = sessionStorage.getItem("anchor_experiment_extra_order");
+
+      if (existingExtraOrder) {
+        const ids = JSON.parse(existingExtraOrder);
+        extraOrder = ids
+          .map(id => extraQuestions.find(question => question.id === id))
+          .filter(Boolean);
+      } else {
+        extraOrder = shuffleArray(extraQuestions);
+        sessionStorage.setItem(
+          "anchor_experiment_extra_order",
+          JSON.stringify(extraOrder.map(question => question.id))
+        );
+      }
+
+      anchorIndex = 0;
+      willingnessIndex = 0;
+      extraIndex = 0;
+
+      hideAllViews();
+      document.getElementById("anchorIntroView").classList.remove("hidden");
+    }
+
+    function showAnchorItem() {
+      anchorIndex = 0;
+      hideAllViews();
+      document.getElementById("anchorItemView").classList.remove("hidden");
+      renderAnchorItem();
+    }
+
+    function renderAnchorItem() {
+      const product = products[anchorIndex];
+      const price = getAnchorPrice(product);
+
+      document.getElementById("anchorProgress").textContent =
+        "Angebot " + (anchorIndex + 1) + " von " + products.length;
+
+      document.getElementById("anchorName").textContent = product.anchorName;
+      document.getElementById("anchorInfo").textContent = product.info;
+      document.getElementById("anchorImage").src = product.anchorImage;
+      document.getElementById("anchorPrice").textContent = formatCHF(price);
+    }
+
+    function nextAnchorItem() {
+      anchorIndex++;
+
+      if (anchorIndex >= products.length) {
+        showReactionGame(1);
+      } else {
+        renderAnchorItem();
+      }
+    }
+
+    function showReactionGame(number) {
+      stopReactionTimer();
+
+      hideAllViews();
+      document.getElementById("reactionView").classList.remove("hidden");
+
+      if (number === 1) {
+        reactionWords = shuffleArray(reactionOneWords);
+        reactionTargetWord = "Marke";
+        nextAfterReaction = "willingness";
+        document.getElementById("reactionStep").textContent = "Zwischenaufgabe";
+        document.getElementById("reactionTitle").textContent = "Kurze Konzentrationsaufgabe";
+        document.getElementById("reactionInstruction").innerHTML =
+          'Klicken Sie so schnell wie möglich auf alle Felder mit dem Wort <strong>Marke</strong>.';
+      } else {
+        reactionWords = shuffleArray(reactionTwoWords);
+        reactionTargetWord = "Preis";
+        nextAfterReaction = "extra";
+        document.getElementById("reactionStep").textContent = "Zwischenaufgabe";
+        document.getElementById("reactionTitle").textContent = "Kurze Konzentrationsaufgabe";
+        document.getElementById("reactionInstruction").innerHTML =
+          'Klicken Sie so schnell wie möglich auf alle Felder mit dem Wort <strong>Preis</strong>.';
+      }
+
+      foundTargetCount = 0;
+      totalTargetCount = reactionWords.filter(word => word === reactionTargetWord).length;
+      reactionStartedAt = null;
+      reactionActive = false;
+
+      const grid = document.getElementById("reactionGrid");
+      const feedback = document.getElementById("reactionFeedback");
+      const continueButton = document.getElementById("reactionContinueButton");
+      const startButton = document.getElementById("reactionStartButton");
+      const timer = document.getElementById("reactionTimer");
+
+      grid.innerHTML = "";
+      feedback.textContent = "";
+      timer.textContent = "Zeit: 0.0 s";
+      continueButton.classList.add("hidden");
+      startButton.disabled = false;
+
+      reactionWords.forEach((word) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "reaction-tile covered";
+        button.dataset.word = word;
+        button.textContent = word;
+        button.disabled = true;
+
+        button.addEventListener("click", () => {
+          if (!reactionActive) return;
+          if (button.classList.contains("correct") || button.classList.contains("wrong")) return;
+
+          if (word === reactionTargetWord) {
+            button.classList.add("correct");
+            foundTargetCount++;
+
+            if (foundTargetCount === totalTargetCount) {
+              finishReactionGame();
+            }
+          } else {
+            button.classList.add("wrong");
+
+            setTimeout(() => {
+              button.classList.remove("wrong");
+            }, 350);
+          }
+        });
+
+        grid.appendChild(button);
+      });
+    }
+
+    function startReactionGame() {
+      const tiles = document.querySelectorAll(".reaction-tile");
+      const startButton = document.getElementById("reactionStartButton");
+      const feedback = document.getElementById("reactionFeedback");
+
+      foundTargetCount = 0;
+      reactionStartedAt = Date.now();
+      reactionActive = true;
+
+      feedback.textContent = "";
+      startButton.disabled = true;
+
+      tiles.forEach(tile => {
+        tile.classList.remove("covered", "correct", "wrong");
+        tile.disabled = false;
+      });
+
+      stopReactionTimer();
+
+      reactionTimerInterval = setInterval(() => {
+        const seconds = ((Date.now() - reactionStartedAt) / 1000).toFixed(1);
+        document.getElementById("reactionTimer").textContent = "Zeit: " + seconds + " s";
+      }, 100);
+    }
+
+    function stopReactionTimer() {
+      if (reactionTimerInterval) {
+        clearInterval(reactionTimerInterval);
+        reactionTimerInterval = null;
+      }
+    }
+
+    function finishReactionGame() {
+      reactionActive = false;
+      stopReactionTimer();
+
+      const seconds = ((Date.now() - reactionStartedAt) / 1000).toFixed(1);
+      const feedback = document.getElementById("reactionFeedback");
+      const continueButton = document.getElementById("reactionContinueButton");
+      const tiles = document.querySelectorAll(".reaction-tile");
+
+      tiles.forEach(tile => {
+        tile.disabled = true;
+      });
+
+      document.getElementById("reactionTimer").textContent = "Zeit: " + seconds + " s";
+      feedback.textContent = "Geschafft in " + seconds + " Sekunden.";
+      continueButton.classList.remove("hidden");
+    }
+
+    function continueAfterReaction() {
+      if (nextAfterReaction === "willingness") {
+        showWillingnessIntro();
+      } else {
+        showExtraIntro();
+      }
+    }
+
+    function showWillingnessIntro() {
+      hideAllViews();
+      document.getElementById("willingnessIntroView").classList.remove("hidden");
+    }
+
+    function showWillingnessItem() {
+      willingnessIndex = 0;
+      hideAllViews();
+      document.getElementById("willingnessItemView").classList.remove("hidden");
+      renderWillingnessItem();
+    }
+
+    function renderWillingnessItem() {
+      const product = willingnessOrder[willingnessIndex];
+
+      document.getElementById("willingnessProgress").textContent =
+        "Einschätzung " + (willingnessIndex + 1) + " von " + willingnessOrder.length;
+
+      document.getElementById("targetName").textContent = product.targetName;
+      document.getElementById("targetInfo").textContent = product.info;
+      document.getElementById("targetImage").src = product.targetImage;
+      document.getElementById("priceInput").value = "";
+
+      setTimeout(() => {
+        document.getElementById("priceInput").focus();
+      }, 100);
+    }
+
+    async function saveWillingness() {
+      const input = document.getElementById("priceInput");
+      const value = Number(input.value);
+
+      if (!input.value || value < 0) {
+        alert("Bitte einen gültigen Betrag eingeben.");
+        return;
+      }
+
+      const product = willingnessOrder[willingnessIndex];
+      const anchorPrice = getAnchorPrice(product);
+
+      const row = {
+        session_id: SESSION_ID,
+        participant_id: participant.participant_id,
+        participant_number: participant.participant_number,
+        anchor_group: participant.anchor_group,
+        product_id: product.id,
+        product_name: product.targetName,
+        anchor_price: anchorPrice,
+        estimated_price: value
+      };
+
+      const { error } = await client
+        .from("anchor_experiment_answers")
+        .upsert(row, { onConflict: "participant_id,product_id" });
+
+      if (error) {
+        alert("Fehler beim Speichern: " + error.message);
+        return;
+      }
+
+      willingnessIndex++;
+
+      if (willingnessIndex >= willingnessOrder.length) {
+        showReactionGame(2);
+      } else {
+        renderWillingnessItem();
+      }
+    }
+
+    function showExtraIntro() {
+      hideAllViews();
+      document.getElementById("extraIntroView").classList.remove("hidden");
+    }
+
+    function showExtraCompare() {
+      extraComparisonAnswer = null;
+      hideAllViews();
+      document.getElementById("extraCompareView").classList.remove("hidden");
+      renderExtraCompare();
+    }
+
+    function renderExtraCompare() {
+      const question = extraOrder[extraIndex];
+      const anchor = getExtraAnchor(question);
+
+      document.getElementById("extraCompareProgress").textContent =
+        "Zusatzfrage " + (extraIndex + 1) + " von " + extraOrder.length;
+
+      document.getElementById("extraCompareTitle").textContent = question.compareTitle;
+      document.getElementById("extraCompareQuestion").innerHTML =
+        question.compareText + " <strong>" + formatExtraAnchor(anchor, question.unit) + "</strong>?";
+    }
+
+    function formatExtraAnchor(value, unit) {
+      if (unit === "Mio. Einwohner/innen") {
+        return Number(value).toFixed(0) + " Millionen Einwohnerinnen und Einwohner";
+      }
+
+      return Number(value).toLocaleString("de-CH") + " " + unit;
+    }
+
+    function saveExtraComparison(answer) {
+      extraComparisonAnswer = answer;
+      hideAllViews();
+      document.getElementById("extraEstimateView").classList.remove("hidden");
+      renderExtraEstimate();
+    }
+
+    function renderExtraEstimate() {
+      const question = extraOrder[extraIndex];
+
+      document.getElementById("extraEstimateProgress").textContent =
+        "Zusatzfrage " + (extraIndex + 1) + " von " + extraOrder.length;
+
+      document.getElementById("extraEstimateTitle").textContent = question.estimateTitle;
+      document.getElementById("extraEstimateQuestion").textContent = question.estimateText;
+      const extraInput = document.getElementById("extraInput");
+      const extraSuffix = document.getElementById("extraInputSuffix");
+
+      document.getElementById("extraInputLabel").textContent = "Ihre Schätzung:";
+      extraInput.placeholder = question.placeholder;
+      extraInput.value = "";
+
+      if (question.id === 2) {
+        extraInput.max = "999";
+        extraSuffix.textContent = "Mio.";
+      } else {
+        extraInput.removeAttribute("max");
+        extraSuffix.textContent = "";
+      }
+
+      setTimeout(() => {
+        document.getElementById("extraInput").focus();
+      }, 100);
+    }
+
+    async function saveExtraEstimate() {
+      const input = document.getElementById("extraInput");
+      const value = Number(input.value);
+
+      if (!input.value || value < 0) {
+        alert("Bitte eine gültige Schätzung eingeben.");
+        return;
+      }
+
+      const question = extraOrder[extraIndex];
+
+      if (question.id === 2 && value > 999) {
+        alert("Bitte bei Tokio maximal 999 eingeben.");
+        return;
+      }
+      const anchor = getExtraAnchor(question);
+
+      const row = {
+        session_id: SESSION_ID,
+        participant_id: participant.participant_id,
+        participant_number: participant.participant_number,
+        anchor_group: participant.anchor_group,
+        question_id: question.id,
+        question_name: question.name,
+        anchor_value: anchor,
+        comparison_answer: extraComparisonAnswer,
+        estimated_value: value,
+        correct_value: question.correctValue
+      };
+
+      const { error } = await client
+        .from("anchor_experiment_extra_answers")
+        .upsert(row, { onConflict: "participant_id,question_id" });
+
+      if (error) {
+        alert("Fehler beim Speichern der Zusatzfrage: " + error.message);
+        return;
+      }
+
+      extraIndex++;
+
+      if (extraIndex >= extraOrder.length) {
+        hideAllViews();
+        document.getElementById("doneView").classList.remove("hidden");
+      } else {
+        showExtraCompare();
+      }
+    }
+
+    function showTeacherLogin() {
+      hideAllViews();
+      document.getElementById("teacherLoginView").classList.remove("hidden");
+    }
+
+    function openTeacherView() {
+      const password = document.getElementById("teacherPassword").value;
+
+      if (password !== TEACHER_PASSWORD) {
+        alert("Falsches Passwort.");
+        return;
+      }
+
+      hideAllViews();
+      document.getElementById("teacherView").classList.remove("hidden");
+      loadResults();
+    }
+
+    function backToStudentMode() {
+      stopReactionTimer();
+      hideAllViews();
+      document.getElementById("startView").classList.remove("hidden");
+    }
+
+    async function loadResults() {
+      const answersQuery = client
+        .from("anchor_experiment_answers")
+        .select("*")
+        .eq("session_id", SESSION_ID)
+        .order("product_id", { ascending: true });
+
+      const extraAnswersQuery = client
+        .from("anchor_experiment_extra_answers")
+        .select("*")
+        .eq("session_id", SESSION_ID)
+        .order("question_id", { ascending: true });
+
+      const participantsQuery = client
+        .from("anchor_experiment_participants")
+        .select("*")
+        .eq("session_id", SESSION_ID)
+        .order("participant_number", { ascending: true });
+
+      const [answersResult, extraAnswersResult, participantsResult] = await Promise.all([
+        answersQuery,
+        extraAnswersQuery,
+        participantsQuery
+      ]);
+
+      if (answersResult.error) {
+        alert("Fehler beim Laden der Produktantworten: " + answersResult.error.message);
+        return;
+      }
+
+      if (extraAnswersResult.error) {
+        alert("Fehler beim Laden der Zusatzantworten: " + extraAnswersResult.error.message);
+        return;
+      }
+
+      if (participantsResult.error) {
+        alert("Fehler beim Laden der Teilnehmenden: " + participantsResult.error.message);
+        return;
+      }
+
+      renderResults(
+        answersResult.data || [],
+        extraAnswersResult.data || [],
+        participantsResult.data || []
+      );
+    }
+
+    function productStats(rows) {
+      return products.map(product => {
+        const productRows = rows.filter(r => r.product_id === product.id);
+        const lows = productRows.filter(r => r.anchor_group === "low");
+        const highs = productRows.filter(r => r.anchor_group === "high");
+
+        const lowAvg = average(lows.map(r => r.estimated_price));
+        const highAvg = average(highs.map(r => r.estimated_price));
+        const diff = lowAvg !== null && highAvg !== null ? highAvg - lowAvg : null;
+        const percent = percentDiffValue(highAvg, lowAvg);
+
+        return { product, lows, highs, lowAvg, highAvg, diff, percent };
+      });
+    }
+
+    function extraStats(rows) {
+      return extraQuestions.map(question => {
+        const questionRows = rows.filter(r => r.question_id === question.id);
+        const lows = questionRows.filter(r => r.anchor_group === "low");
+        const highs = questionRows.filter(r => r.anchor_group === "high");
+
+        const lowAvg = average(lows.map(r => r.estimated_value));
+        const highAvg = average(highs.map(r => r.estimated_value));
+        const diff = lowAvg !== null && highAvg !== null ? highAvg - lowAvg : null;
+        const percent = percentDiffValue(highAvg, lowAvg);
+
+        return { question, lows, highs, lowAvg, highAvg, diff, percent };
+      });
+    }
+
+    function averagePercentFromItems(statsItems) {
+      const values = statsItems
+        .map(item => item.percent)
+        .filter(value => value !== null && !isNaN(value));
+
+      return average(values);
+    }
+
+    function averageAbsoluteFromItems(statsItems) {
+      const values = statsItems
+        .map(item => item.diff)
+        .filter(value => value !== null && !isNaN(value));
+
+      return average(values);
+    }
+
+    function renderResults(productRows, extraRows, participants) {
+      const summaryDiv = document.getElementById("resultsSummary");
+      const tableDiv = document.getElementById("resultsTable");
+
+      const productItems = productStats(productRows);
+      const extraItems = extraStats(extraRows);
+
+      const productAvgAbs = averageAbsoluteFromItems(productItems);
+      const productAvgPercent = averagePercentFromItems(productItems);
+
+      const extraAvgAbs = averageAbsoluteFromItems(extraItems);
+      const extraAvgPercent = averagePercentFromItems(extraItems);
+
+      const lowParticipants = participants.filter(p => p.anchor_group === "low").length;
+      const highParticipants = participants.filter(p => p.anchor_group === "high").length;
+
+      summaryDiv.innerHTML = `
+        <div class="teacher-grid">
+          <div class="metric">
+            <h3>Teilnehmende</h3>
+            <div class="big">${participants.length}</div>
+            <p class="small">Tief: ${lowParticipants} | Hoch: ${highParticipants}</p>
+          </div>
+
+          <div class="metric">
+            <h3>Produktantworten</h3>
+            <div class="big">${productRows.length}</div>
+            <p class="small">Maximal 5 pro Person</p>
+          </div>
+
+          <div class="metric">
+            <h3>Zusatzantworten</h3>
+            <div class="big">${extraRows.length}</div>
+            <p class="small">Maximal 3 pro Person</p>
+          </div>
+
+          <div class="metric diff">
+            <h3>Produkte absolut</h3>
+            <div class="big ${diffClass(productAvgAbs)}">${formatDiff(productAvgAbs)}</div>
+            <p class="small">Durchschnitt der 5 Einzeleffekte</p>
+          </div>
+
+          <div class="metric percent">
+            <h3>Produkte prozentual</h3>
+            <div class="big ${diffClass(productAvgPercent)}">${formatPercent(productAvgPercent)}</div>
+            <p class="small">Durchschnitt der 5 Prozentwerte</p>
+          </div>
+
+          <div class="metric diff">
+            <h3>Zusatz absolut</h3>
+            <div class="big ${diffClass(extraAvgAbs)}">${extraAvgAbs === null ? "-" : formatGenericDiff(extraAvgAbs, "Einheiten")}</div>
+            <p class="small">Durchschnitt der 3 Einzeleffekte</p>
+          </div>
+
+          <div class="metric percent">
+            <h3>Zusatz prozentual</h3>
+            <div class="big ${diffClass(extraAvgPercent)}">${formatPercent(extraAvgPercent)}</div>
+            <p class="small">Durchschnitt der 3 Prozentwerte</p>
+          </div>
+        </div>
+      `;
+
+      let html = `
+        <div class="card">
+          <h3>Test 1: Produkte und Angebote</h3>
+          <p class="muted">
+            Hier wird nur der Produktteil ausgewertet. Der prozentuale Gesamteffekt ist der Durchschnitt der einzelnen Prozentwerte pro Angebot.
+          </p>
+          <div class="result-card-grid">
+      `;
+
+      productItems.forEach(item => {
+        const maxVal = Math.max(
+          item.product.highPrice,
+          item.lowAvg || 0,
+          item.highAvg || 0,
+          1
+        );
+
+        const lowWidth = item.lowAvg === null ? 0 : Math.min(100, (item.lowAvg / maxVal) * 100);
+        const highWidth = item.highAvg === null ? 0 : Math.min(100, (item.highAvg / maxVal) * 100);
+
+        html += `
+          <div class="result-card">
+            <h4>${item.product.targetName}</h4>
+            <div class="small">${item.product.info}</div>
+
+            <div class="result-row">
+              <div class="result-box low">
+                <div class="result-label">Tiefer Vergleichspreis</div>
+                <div class="result-value">${formatCHF(item.product.lowPrice)}</div>
+                <div class="result-label">Ø Zahlungsbereitschaft</div>
+                <div class="result-value">${item.lowAvg === null ? "-" : formatCHF(item.lowAvg)}</div>
+                <div class="small">n = ${item.lows.length}</div>
+                <div class="bar-wrap"><div class="bar lowbar" style="width:${lowWidth}%"></div></div>
+              </div>
+
+              <div class="result-box high">
+                <div class="result-label">Hoher Vergleichspreis</div>
+                <div class="result-value">${formatCHF(item.product.highPrice)}</div>
+                <div class="result-label">Ø Zahlungsbereitschaft</div>
+                <div class="result-value">${item.highAvg === null ? "-" : formatCHF(item.highAvg)}</div>
+                <div class="small">n = ${item.highs.length}</div>
+                <div class="bar-wrap"><div class="bar highbar" style="width:${highWidth}%"></div></div>
+              </div>
+            </div>
+
+            <div>
+              <span class="diff-pill ${diffClass(item.diff)}">
+                Absolut: ${formatDiff(item.diff)}
+              </span>
+              <span class="percent-pill">
+                Prozentual: ${formatPercent(item.percent)}
+              </span>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+          </div>
+
+          <div class="card">
+            <h3>Zusammenfassung Test 1</h3>
+            <p>
+              Durchschnittlicher absoluter Effekt:
+              <strong class="${diffClass(productAvgAbs)}">${formatDiff(productAvgAbs)}</strong>
+            </p>
+            <p>
+              Durchschnittlicher prozentualer Effekt:
+              <strong class="${diffClass(productAvgPercent)}">${formatPercent(productAvgPercent)}</strong>
+            </p>
+            <p class="muted">
+              Wichtig: Der Prozentwert wird aus den einzelnen Prozentwerten pro Angebot gemittelt, nicht aus allen Antworten zusammen neu berechnet.
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Test 2: Zusatzfragen</h3>
+          <p class="muted">
+            Hier werden nur die drei Wissens-Schätzfragen ausgewertet.
+          </p>
+          <div class="result-card-grid">
+      `;
+
+      extraItems.forEach(item => {
+        const maxVal = Math.max(
+          item.question.highAnchor,
+          item.question.correctValue,
+          item.lowAvg || 0,
+          item.highAvg || 0,
+          1
+        );
+
+        const lowWidth = item.lowAvg === null ? 0 : Math.min(100, (item.lowAvg / maxVal) * 100);
+        const highWidth = item.highAvg === null ? 0 : Math.min(100, (item.highAvg / maxVal) * 100);
+
+        html += `
+          <div class="result-card">
+            <h4>${item.question.name}</h4>
+            <div class="small">Richtige Lösung: ca. ${formatExtraValue(item.question.correctValue, item.question.unit)}</div>
+
+            <div class="result-row">
+              <div class="result-box low">
+                <div class="result-label">Tiefer Startwert</div>
+                <div class="result-value">${formatExtraValue(item.question.lowAnchor, item.question.unit)}</div>
+                <div class="result-label">Ø Schätzung</div>
+                <div class="result-value">${item.lowAvg === null ? "-" : formatExtraValue(item.lowAvg, item.question.unit)}</div>
+                <div class="small">n = ${item.lows.length}</div>
+                <div class="bar-wrap"><div class="bar lowbar" style="width:${lowWidth}%"></div></div>
+              </div>
+
+              <div class="result-box high">
+                <div class="result-label">Hoher Startwert</div>
+                <div class="result-value">${formatExtraValue(item.question.highAnchor, item.question.unit)}</div>
+                <div class="result-label">Ø Schätzung</div>
+                <div class="result-value">${item.highAvg === null ? "-" : formatExtraValue(item.highAvg, item.question.unit)}</div>
+                <div class="small">n = ${item.highs.length}</div>
+                <div class="bar-wrap"><div class="bar highbar" style="width:${highWidth}%"></div></div>
+              </div>
+            </div>
+
+            <div>
+              <span class="diff-pill ${diffClass(item.diff)}">
+                Absolut: ${formatGenericDiff(item.diff, item.question.unit)}
+              </span>
+              <span class="percent-pill">
+                Prozentual: ${formatPercent(item.percent)}
+              </span>
+            </div>
+          </div>
+        `;
+      });
+
+      html += `
+          </div>
+
+          <div class="card">
+            <h3>Zusammenfassung Test 2</h3>
+            <p>
+              Durchschnittlicher absoluter Effekt:
+              <strong class="${diffClass(extraAvgAbs)}">${extraAvgAbs === null ? "-" : formatGenericDiff(extraAvgAbs, "Einheiten")}</strong>
+            </p>
+            <p>
+              Durchschnittlicher prozentualer Effekt:
+              <strong class="${diffClass(extraAvgPercent)}">${formatPercent(extraAvgPercent)}</strong>
+            </p>
+            <p class="muted">
+              Wichtig: Der Prozentwert wird aus den einzelnen Prozentwerten pro Zusatzfrage gemittelt, nicht aus allen Antworten zusammen neu berechnet.
+            </p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Gruppenzuteilung</h3>
+          <p class="muted">Zur Kontrolle: Jede neu startende Person wird abwechselnd zugeteilt.</p>
+          <div class="group-list">
+      `;
+
+      participants.forEach(p => {
+        html += `
+          <div class="person-chip ${p.anchor_group}">
+            Person ${p.participant_number}: ${p.anchor_group === "low" ? "tief" : "hoch"}
+          </div>
+        `;
+      });
+
+      html += `
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Auswertungssatz</h3>
+          <p>
+            Im ersten Test haben beide Gruppen dieselben Produkte und Angebote bewertet.
+            Im zweiten Test haben beide Gruppen dieselben Wissensfragen geschätzt.
+            Der Unterschied war jeweils, dass eine Gruppe vorher tiefere Werte und eine Gruppe vorher höhere Werte gesehen hat.
+          </p>
+          <p>
+            Wenn die Gruppe mit hohen Startwerten im Durchschnitt höher schätzt, sieht man den Ankereffekt:
+            Ein zuerst gesehener Wert beeinflusst, was danach als angemessen oder realistisch empfunden wird.
+          </p>
+        </div>
+      `;
+
+      tableDiv.innerHTML = html;
+    }
+
+    function formatExtraValue(value, unit) {
+      if (unit === "Mio. Einwohner/innen") {
+        return Number(value).toFixed(1) + " Mio.";
+      }
+
+      if (unit === "km") {
+        return Number(value).toLocaleString("de-CH", { maximumFractionDigits: 0 }) + " km";
+      }
+
+      if (unit === "km²") {
+        return Number(value).toLocaleString("de-CH", { maximumFractionDigits: 0 }) + " km²";
+      }
+
+      return Number(value).toFixed(1) + " " + unit;
+    }
+
+    async function resetData() {
+      const confirmReset = confirm("Wirklich alle Daten dieser Session löschen?");
+      if (!confirmReset) return;
+
+      const { error } = await client.rpc("reset_anchor_experiment", {
+        p_session_id: SESSION_ID
+      });
+
+      if (error) {
+        alert("Fehler beim Zurücksetzen: " + error.message);
+        return;
+      }
+
+      resetSessionForNewRun();
+      alert("Daten wurden zurückgesetzt.");
+      loadResults();
+    }
+  </script>
+</body>
+</html>
