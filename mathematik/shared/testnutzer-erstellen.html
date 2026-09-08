@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Testnutzer anlegen</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../shared/supabase-config.js"></script>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body class="layout-medium">
+
+<h1>Testnutzer anlegen</h1>
+<p style="color:var(--muted); font-size:0.9rem;">
+  Legt 5 Fake-Schülerkonten über den normalen Registrierungs-Weg an (gleicher Weg wie echte Schüler).
+  Diese Seite danach am besten wieder löschen — sie ist nur ein einmaliges Hilfsmittel.
+</p>
+
+<button onclick="createAll()">5 Testnutzer erstellen</button>
+
+<div id="log" style="margin-top:20px; font-family: monospace; font-size:0.85rem; white-space: pre-wrap;"></div>
+
+<script>
+const TEST_USERS = [
+  { email: "test.elena@beispiel-schule.ch", password: "TestPass123!", name: "Elena M." },
+  { email: "test.noah@beispiel-schule.ch",  password: "TestPass123!", name: "Noah K." },
+  { email: "test.lina@beispiel-schule.ch",  password: "TestPass123!", name: "Lina F." },
+  { email: "test.tim@beispiel-schule.ch",   password: "TestPass123!", name: "Tim R." },
+  { email: "test.mia@beispiel-schule.ch",   password: "TestPass123!", name: "Mia S." }
+];
+
+function log(line) {
+  document.getElementById('log').textContent += line + "\n";
+}
+
+async function createAll() {
+  document.getElementById('log').textContent = '';
+  for (const u of TEST_USERS) {
+    const { data, error } = await sb.auth.signUp({ email: u.email, password: u.password });
+    if (error) {
+      log(`❌ ${u.email}: ${error.message}`);
+    } else {
+      log(`✅ ${u.email} angelegt (${u.name})`);
+    }
+  }
+  log("\nFertig. Passwort für alle: TestPass123!");
+  log("Falls 'Confirm email' in deinen Supabase-Auth-Einstellungen aktiv ist,");
+  log("musst du die Konten dort einmal manuell bestätigen, bevor Login funktioniert.");
+}
+</script>
+
+</body>
+</html>

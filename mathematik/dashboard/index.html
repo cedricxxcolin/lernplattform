@@ -41,13 +41,9 @@
     <tbody id="error-analysis-body"></tbody>
   </table>
 
-  <h2>Materialien (Übungsblätter)</h2>
-  <table>
-    <thead>
-      <tr><th>Thema</th><th>Datei</th><th>Fertig markiert von</th></tr>
-    </thead>
-    <tbody id="materials-body"></tbody>
-  </table>
+  <h2>Materialien</h2>
+  <p style="font-size:0.82rem;color:var(--muted); margin-top:-8px;">Klick auf eine Online-Übung öffnet die Ergebnisse pro Schüler.</p>
+  <div id="materials-list"></div>
   <p style="font-size:0.85rem;color:#666;">Neue Blätter werden per SQL in die Tabelle "materials" eingetragen und erscheinen dann automatisch hier und im Schüler-Dashboard.</p>
 </div>
 
@@ -218,35 +214,129 @@ function exportExcel() {
   XLSX.writeFile(wb, `klassen-statistik-${new Date().toISOString().slice(0,10)}.xlsx`);
 }
 
-// ---- Materialien: dynamisch aus DB, inkl. Übersicht "fertig markiert von X Schülern" ----
+// ---- Materialien: Karten mit Übersicht pro Schüler, klickbar aufklappbar ----
+let allStudentsCache = []; // wird in loadProgress befüllt, hier wiederverwendet
+
 async function loadMaterials() {
   const { data: materials } = await sb.from('materials').select('*').order('thema');
   const { data: allStatuses } = await sb.from('student_material_status').select('material_id, status');
+  const { data: attempts } = await sb.from('exercise_attempts').select('user_id, exercise_id, is_correct, created_at');
+  const { data: progressRows } = await sb.from('exercise_progress').select('user_id, exercise_id, completed_count, total_count');
+  const { data: profiles } = await sb.from('profiles').select('id, email, is_teacher');
+
+  const students = (profiles || []).filter(p => !p.is_teacher);
+  const emailById = {};
+  students.forEach(s => emailById[s.id] = s.email || s.id);
 
   const doneCountByMaterial = {};
   (allStatuses || []).forEach(s => {
-    if (s.status === 'fertig') {
-      doneCountByMaterial[s.material_id] = (doneCountByMaterial[s.material_id] || 0) + 1;
-    }
+    if (s.status === 'fertig') doneCountByMaterial[s.material_id] = (doneCountByMaterial[s.material_id] || 0) + 1;
   });
 
-  const tbody = document.getElementById('materials-body');
-  tbody.innerHTML = '';
-  (materials || []).forEach(m => {
-    const linkLabel = m.type === 'html' ? 'Öffnen' : (m.type === 'word' ? 'Word herunterladen' : 'PDF herunterladen');
-    const doneCount = doneCountByMaterial[m.id] || 0;
-    const row = document.createElement('tr');
-    row.innerHTML = `
-      <td>${m.title}${m.thema ? `<br><span style="color:#888;font-size:0.8rem;">${m.thema}</span>` : ''}</td>
-      <td><a class="file" href="../${m.file_path}">${linkLabel}</a></td>
-      <td>${doneCount} Schüler</td>
-    `;
-    tbody.appendChild(row);
+  // Versuche gruppiert nach exercise_id -> user_id -> {total, anyCorrect, lastAt}
+  const attemptsByExercise = {};
+  (attempts || []).forEach(a => {
+    if (!attemptsByExercise[a.exercise_id]) attemptsByExercise[a.exercise_id] = {};
+    const byUser = attemptsByExercise[a.exercise_id];
+    if (!byUser[a.user_id]) byUser[a.user_id] = { total: 0, anyCorrect: false };
+    byUser[a.user_id].total++;
+    if (a.is_correct) byUser[a.user_id].anyCorrect = true;
   });
+
+  // Fortschritt gruppiert nach exercise_id -> user_id -> {completed, total}
+  const progressByExercise = {};
+  (progressRows || []).forEach(p => {
+    if (!progressByExercise[p.exercise_id]) progressByExercise[p.exercise_id] = {};
+    progressByExercise[p.exercise_id][p.user_id] = { completed: p.completed_count, total: p.total_count };
+  });
+
+  const container = document.getElementById('materials-list');
+  container.innerHTML = '';
+
+  (materials || []).forEach((m, idx) => {
+    const isMulti = m.total_tasks && m.total_tasks > 1;
+    const isTrackableHtml = m.type === 'html' && m.exercise_id;
+    const cardId = `mat-detail-${idx}`;
+
+    let summaryHtml = '';
+    let detailHtml = '';
+
+    if (isTrackableHtml && isMulti) {
+      const byUser = progressByExercise[m.exercise_id] || {};
+      const withProgress = students.filter(s => byUser[s.id] && byUser[s.id].completed > 0);
+      const avgPct = withProgress.length
+        ? Math.round(withProgress.reduce((sum, s) => sum + (byUser[s.id].completed / byUser[s.id].total), 0) / withProgress.length * 100)
+        : null;
+      summaryHtml = `<span><b>${withProgress.length}/${students.length}</b> bearbeitet</span>` +
+        (avgPct !== null ? `<span>Ø <b>${avgPct}%</b></span>` : '');
+
+      const rows = students.map(s => {
+        const p = byUser[s.id];
+        const completed = p ? p.completed : 0;
+        const total = p ? p.total : m.total_tasks;
+        const pct = total ? Math.round((completed / total) * 100) : 0;
+        const barClass = pct >= 70 ? '' : 'low';
+        return `<tr>
+          <td>${emailById[s.id]}</td>
+          <td><div class="mini-progress">
+            <div class="mini-progress-track"><div class="mini-progress-fill ${barClass}" style="width:${pct}%"></div></div>
+            <span class="mini-progress-label">${completed}/${total}</span>
+          </div></td>
+        </tr>`;
+      }).join('');
+      detailHtml = `<table><thead><tr><th>Schüler</th><th>Fortschritt</th></tr></thead><tbody>${rows}</tbody></table>`;
+
+    } else if (isTrackableHtml) {
+      const byUser = attemptsByExercise[m.exercise_id] || {};
+      const attemptedCount = students.filter(s => byUser[s.id]).length;
+      const correctCount = students.filter(s => byUser[s.id] && byUser[s.id].anyCorrect).length;
+      const quote = attemptedCount ? Math.round((correctCount / attemptedCount) * 100) : null;
+      summaryHtml = `<span><b>${attemptedCount}/${students.length}</b> bearbeitet</span>` +
+        (quote !== null ? `<span>Quote <b>${quote}%</b></span>` : '');
+
+      const rows = students.map(s => {
+        const a = byUser[s.id];
+        let statusHtml;
+        if (!a) statusHtml = `<span class="badge open">nicht bearbeitet</span>`;
+        else if (a.anyCorrect) statusHtml = `<span class="badge ok">richtig</span>`;
+        else statusHtml = `<span class="badge warn">falsch</span>`;
+        return `<tr><td>${emailById[s.id]}</td><td>${statusHtml}</td><td>${a ? a.total : 0}</td></tr>`;
+      }).join('');
+      detailHtml = `<table><thead><tr><th>Schüler</th><th>Status</th><th>Versuche</th></tr></thead><tbody>${rows}</tbody></table>`;
+
+    } else {
+      // Word/PDF ohne automatisches Tracking — wie bisher, kein Aufklappen
+      const doneCount = doneCountByMaterial[m.id] || 0;
+      summaryHtml = `<span>${doneCount} Schüler als fertig markiert</span>`;
+    }
+
+    const linkLabel = m.type === 'html' ? 'Öffnen' : (m.type === 'word' ? 'Word herunterladen' : 'PDF herunterladen');
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="material-card-head" ${detailHtml ? `onclick="toggleMaterial('${cardId}', this)"` : ''} style="${detailHtml ? 'cursor:pointer;' : ''}">
+        <div>
+          ${m.thema ? `<div style="font-size:0.75rem;color:var(--muted);text-transform:uppercase;">${m.thema}</div>` : ''}
+          <strong>${m.title}</strong>
+          — <a class="file" href="../${m.file_path}" onclick="event.stopPropagation()">${linkLabel}</a>
+        </div>
+        <div class="summary">${summaryHtml}${detailHtml ? '<span class="chevron">▾</span>' : ''}</div>
+      </div>
+      ${detailHtml ? `<div class="material-detail" id="${cardId}">${detailHtml}</div>` : ''}
+    `;
+    container.appendChild(card);
+  });
+
   if ((materials || []).length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3">Noch keine Materialien vorhanden.</td></tr>';
+    container.innerHTML = '<p>Noch keine Materialien vorhanden.</p>';
   }
 }
+
+function toggleMaterial(id, headEl) {
+  document.getElementById(id).classList.toggle('open');
+  headEl.classList.toggle('open');
+}
+
 
 checkSession();
 </script>
