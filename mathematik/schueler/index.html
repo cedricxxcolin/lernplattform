@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Mein Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../shared/supabase-config.js"></script>
+<link rel="stylesheet" href="../shared/style.css">
+</head>
+<body class="layout-medium">
+
+<p><a class="back" href="../index.html">&larr; Zurück zur Übersicht</a></p>
+
+<div id="auth">
+  <h1>Login</h1>
+  <input id="email" type="email" placeholder="E-Mail"><br>
+  <input id="password" type="password" placeholder="Passwort"><br>
+  <button onclick="signIn()">Einloggen</button>
+  <button onclick="signUp()">Registrieren</button>
+  <div id="auth-msg" class="msg"></div>
+</div>
+
+<div id="app" style="display:none;">
+  <h1>Mein Dashboard — <span id="user-email"></span></h1>
+  <button onclick="signOut()">Ausloggen</button>
+
+  <h2>Mein Fortschritt bei Online-Übungen</h2>
+  <table>
+    <thead><tr><th>Übung</th><th>Versuche</th><th>Richtig</th><th>Quote</th><th>Zuletzt</th></tr></thead>
+    <tbody id="progress-body"></tbody>
+  </table>
+
+  <h2>Fortschritt bei mehrteiligen Übungen</h2>
+  <table>
+    <thead><tr><th>Übung</th><th>Fortschritt</th></tr></thead>
+    <tbody id="multi-progress-body"></tbody>
+  </table>
+
+  <h2>Alle Übungen &amp; Arbeitsblätter</h2>
+  <table>
+    <thead><tr><th>Thema</th><th>Datei</th><th>Status</th><th>Notiz</th><th>Fällig</th></tr></thead>
+    <tbody id="materials-body"></tbody>
+  </table>
+
+  <h2>Eigene Aufgaben (z. B. aus dem Schulbuch)</h2>
+  <div class="card">
+    <input id="task-title" type="text" placeholder="z. B. Schulbuch S. 42, Aufgabe 5b">
+    <label style="font-size:0.85rem;">Fällig bis (optional):</label>
+    <input id="task-due" type="date">
+    <button onclick="addTask()">Hinzufügen</button>
+  </div>
+  <table>
+    <thead><tr><th>Aufgabe</th><th>Status</th><th>Fällig</th><th>Erstellt</th></tr></thead>
+    <tbody id="tasks-body"></tbody>
+  </table>
+
+  <h2>Meine Notizen</h2>
+  <div class="card">
+    <textarea id="note-content" rows="2" placeholder="Notiz, z. B. 'Hausaufgabe bis Freitag'"></textarea>
+    <button onclick="addNote()">Notiz speichern</button>
+  </div>
+  <ul id="notes-list"></ul>
+</div>
+
+<script>
+async function checkSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (session) { showApp(session.user); }
+  else { document.getElementById('auth').style.display = 'block'; }
+}
+
+function showApp(user) {
+  document.getElementById('auth').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  document.getElementById('user-email').textContent = user.email;
+  loadProgress();
+  loadMultiProgress();
+  loadMaterials();
+  loadTasks();
+  loadNotes();
+}
+
+async function signUp() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const { error } = await sb.auth.signUp({ email, password });
+  const msg = document.getElementById('auth-msg');
+  if (error) { msg.textContent = error.message; msg.className = 'msg error'; }
+  else { msg.textContent = 'Registriert! Bitte einloggen.'; msg.className = 'msg ok'; }
+}
+
+async function signIn() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  const msg = document.getElementById('auth-msg');
+  if (error) { msg.textContent = error.message; msg.className = 'msg error'; }
+  else { showApp(data.user); }
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  location.reload();
+}
+
+// ---- Fortschritt bei Online-Übungen ----
+async function loadProgress() {
+  const { data: { user } } = await sb.auth.getUser();
+  const { data } = await sb
+    .from('exercise_attempts')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  const stats = {};
+  (data || []).forEach(a => {
+    if (!stats[a.exercise_id]) stats[a.exercise_id] = { total: 0, correct: 0, last: a.created_at };
+    stats[a.exercise_id].total++;
+    if (a.is_correct) stats[a.exercise_id].correct++;
+    if (new Date(a.created_at) > new Date(stats[a.exercise_id].last)) stats[a.exercise_id].last = a.created_at;
+  });
+
+  const tbody = document.getElementById('progress-body');
+  tbody.innerHTML = '';
+  Object.keys(stats).forEach(ex => {
+    const s = stats[ex];
+    const quote = Math.round((s.correct / s.total) * 100);
+    const badgeClass = quote >= 70 ? 'ok' : 'warn';
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${ex}</td><td>${s.total}</td><td>${s.correct}</td>
+      <td><span class="badge ${badgeClass}">${quote}%</span></td>
+      <td>${new Date(s.last).toLocaleString()}</td>
+    `;
+    tbody.appendChild(row);
+  });
+  if (Object.keys(stats).length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5">Noch keine Übungen gelöst.</td></tr>';
+  }
+}
+
+// ---- Fortschritt bei mehrteiligen Übungen ----
+async function loadMultiProgress() {
+  const { data: { user } } = await sb.auth.getUser();
+  const { data } = await sb
+    .from('exercise_progress')
+    .select('*')
+    .eq('user_id', user.id);
+
+  const tbody = document.getElementById('multi-progress-body');
+  tbody.innerHTML = '';
+  (data || []).forEach(p => {
+    const pct = Math.round((p.completed_count / p.total_count) * 100);
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${p.exercise_id}</td><td>${p.completed_count} von ${p.total_count} (${pct}%)</td>`;
+    tbody.appendChild(row);
+  });
+  if ((data || []).length === 0) {
+    tbody.innerHTML = '<tr><td colspan="2">Noch keine mehrteiligen Übungen begonnen.</td></tr>';
+  }
+}
+
+// ---- Materialien: dynamisch geladen, mit Status/Notiz/Fälligkeit je Blatt ----
+async function loadMaterials() {
+  const { data: { user } } = await sb.auth.getUser();
+
+  const { data: materials } = await sb.from('materials').select('*').order('thema');
+  const { data: statuses } = await sb
+    .from('student_material_status')
+    .select('*')
+    .eq('user_id', user.id);
+
+  const statusByMaterial = {};
+  (statuses || []).forEach(s => statusByMaterial[s.material_id] = s);
+
+  const tbody = document.getElementById('materials-body');
+  tbody.innerHTML = '';
+
+  (materials || []).forEach(m => {
+    const s = statusByMaterial[m.id] || { status: 'nicht_begonnen', note: '', due_date: null };
+    const linkLabel = m.type === 'html' ? 'Öffnen' : (m.type === 'word' ? 'Word herunterladen' : 'PDF herunterladen');
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${m.title}${m.thema ? `<br><span style="color:#888;font-size:0.8rem;">${m.thema}</span>` : ''}</td>
+      <td><a class="file" href="../${m.file_path}">${linkLabel}</a></td>
+      <td>
+        <select onchange="updateMaterialStatus('${m.id}', 'status', this.value)">
+          <option value="nicht_begonnen" ${s.status === 'nicht_begonnen' ? 'selected' : ''}>Nicht begonnen</option>
+          <option value="in_bearbeitung" ${s.status === 'in_bearbeitung' ? 'selected' : ''}>In Bearbeitung</option>
+          <option value="fertig" ${s.status === 'fertig' ? 'selected' : ''}>Fertig</option>
+        </select>
+      </td>
+      <td><input type="text" value="${s.note || ''}" placeholder="Notiz..." onchange="updateMaterialStatus('${m.id}', 'note', this.value)"></td>
+      <td><input type="date" value="${s.due_date || ''}" onchange="updateMaterialStatus('${m.id}', 'due_date', this.value)"></td>
+    `;
+    tbody.appendChild(row);
+  });
+
+  if ((materials || []).length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5">Noch keine Materialien vorhanden.</td></tr>';
+  }
+}
+
+async function updateMaterialStatus(materialId, field, value) {
+  const { data: { user } } = await sb.auth.getUser();
+  const update = { user_id: user.id, material_id: materialId, updated_at: new Date().toISOString() };
+  update[field] = value || null;
+  await sb.from('student_material_status').upsert(update, { onConflict: 'user_id,material_id' });
+}
+
+// ---- Eigene Aufgaben (manuell erfasst) ----
+async function addTask() {
+  const title = document.getElementById('task-title').value.trim();
+  const dueDate = document.getElementById('task-due').value || null;
+  if (!title) return;
+  const { data: { user } } = await sb.auth.getUser();
+  await sb.from('student_tasks').insert({ user_id: user.id, title, status: 'nicht_begonnen', due_date: dueDate });
+  document.getElementById('task-title').value = '';
+  document.getElementById('task-due').value = '';
+  loadTasks();
+}
+
+function daysUntil(dateStr) {
+  if (!dateStr) return '–';
+  const diff = Math.ceil((new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24));
+  if (diff < 0) return `überfällig (${Math.abs(diff)} Tage)`;
+  if (diff === 0) return 'heute fällig';
+  return `noch ${diff} Tage`;
+}
+
+async function loadTasks() {
+  const { data: { user } } = await sb.auth.getUser();
+  const { data } = await sb
+    .from('student_tasks')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  const tbody = document.getElementById('tasks-body');
+  tbody.innerHTML = '';
+  (data || []).forEach(t => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${t.title}</td>
+      <td>
+        <select onchange="updateTaskStatus('${t.id}', this.value)">
+          <option value="nicht_begonnen" ${t.status === 'nicht_begonnen' ? 'selected' : ''}>Nicht begonnen</option>
+          <option value="in_bearbeitung" ${t.status === 'in_bearbeitung' ? 'selected' : ''}>In Bearbeitung</option>
+          <option value="fertig" ${t.status === 'fertig' ? 'selected' : ''}>Fertig</option>
+        </select>
+      </td>
+      <td>${daysUntil(t.due_date)}</td>
+      <td>${new Date(t.created_at).toLocaleDateString()}</td>
+    `;
+    tbody.appendChild(row);
+  });
+  if ((data || []).length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4">Noch keine eigenen Aufgaben erfasst.</td></tr>';
+  }
+}
+
+async function updateTaskStatus(id, status) {
+  await sb.from('student_tasks').update({ status, updated_at: new Date().toISOString() }).eq('id', id);
+}
+
+// ---- Notizen ----
+async function addNote() {
+  const content = document.getElementById('note-content').value.trim();
+  if (!content) return;
+  const { data: { user } } = await sb.auth.getUser();
+  await sb.from('student_notes').insert({ user_id: user.id, content });
+  document.getElementById('note-content').value = '';
+  loadNotes();
+}
+
+async function loadNotes() {
+  const { data: { user } } = await sb.auth.getUser();
+  const { data } = await sb
+    .from('student_notes')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false });
+
+  const list = document.getElementById('notes-list');
+  list.innerHTML = '';
+  (data || []).forEach(n => {
+    const li = document.createElement('li');
+    li.textContent = `${n.content} (${new Date(n.created_at).toLocaleString()})`;
+    list.appendChild(li);
+  });
+}
+
+checkSession();
+</script>
+
+</body>
+</html>

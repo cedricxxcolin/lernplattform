@@ -1,0 +1,1859 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Externe Effekte Challenge</title>
+<style>
+:root{
+  --primary:#6366f1;
+  --primary-dark:#4f46e5;
+  --secondary:#06b6d4;
+  --success:#22c55e;
+  --warning:#f59e0b;
+  --danger:#ef4444;
+  --neutral:#94a3b8;
+  --text:#1e293b;
+  --muted:#64748b;
+  --bg:linear-gradient(135deg,#f0f9ff 0%,#e0e7ff 100%);
+  --card:rgba(255,255,255,.96);
+  --shadow:0 10px 25px -5px rgba(0,0,0,.1),0 8px 10px -6px rgba(0,0,0,.1);
+  --radius:1.4rem;
+}
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+body{min-height:100vh;background:var(--bg);background-attachment:fixed;color:var(--text);display:flex;flex-direction:column;align-items:center}
+#dashboard{width:calc(100% - 2rem);max-width:1100px;background:var(--card);margin:1rem;padding:1rem 1.5rem;border-radius:1rem;display:none;justify-content:space-between;align-items:center;box-shadow:var(--shadow);position:sticky;top:10px;z-index:100;backdrop-filter:blur(10px);gap:1rem}
+.user-info{display:flex;align-items:center;gap:1rem;min-width:0}
+.user-avatar{font-size:2.4rem}
+.user-details h3{color:var(--primary-dark);font-size:1.05rem;max-width:260px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-details span{color:var(--muted);font-size:.9rem}
+.stats-grid{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:1rem;text-align:center}
+.stat-item span{display:block;font-size:.72rem;text-transform:uppercase;color:var(--neutral);font-weight:800;letter-spacing:.04em}
+.stat-value{font-size:1.1rem;font-weight:900;color:var(--primary)}
+.screen{width:100%;max-width:900px;padding:2rem;display:none;animation:fadeIn .35s ease-out}
+.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--card);border-radius:var(--radius);padding:2rem;box-shadow:var(--shadow);margin-bottom:1.5rem}
+h1{font-size:clamp(2.1rem,5vw,3.2rem);margin-bottom:1.3rem;background:linear-gradient(to right,var(--primary),var(--secondary));-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-align:center;line-height:1.1}
+h2{font-size:1.8rem;margin-bottom:1.2rem}
+h3{margin-bottom:.8rem}
+.intro{font-size:1.08rem;line-height:1.6;color:#475569;text-align:center;margin-bottom:1.5rem}
+.hint{color:var(--muted);font-size:.96rem;line-height:1.45}
+.btn{background:var(--primary);color:#fff;border:none;padding:.9rem 1.3rem;border-radius:1rem;font-size:1rem;font-weight:800;cursor:pointer;transition:all .22s ease;display:inline-block;text-align:center}
+.btn:hover{background:var(--primary-dark);transform:translateY(-2px);box-shadow:0 4px 12px rgba(99,102,241,.35)}
+.btn:disabled{background:var(--neutral);opacity:.7;cursor:not-allowed;transform:none;box-shadow:none}
+.btn-outline{background:transparent;border:2px solid var(--primary);color:var(--primary)}
+.btn-outline:hover{background:#eef2ff;color:var(--primary-dark)}
+.btn-danger{background:var(--danger)}
+.btn-danger:hover{background:#dc2626}
+.btn-small{padding:.6rem .95rem;font-size:.9rem;border-radius:.8rem}
+.actions{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;margin-top:1.4rem}
+input[type=text],select{padding:.85rem 1rem;border-radius:.85rem;border:2px solid #e2e8f0;font-size:1rem;width:100%;background:#fff;color:var(--text)}
+input[type=text]:focus,select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(99,102,241,.16)}
+.form-box{max-width:440px;margin:0 auto;display:flex;flex-direction:column;gap:1rem}
+.avatar-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:1.1rem;margin-bottom:1.6rem}
+.avatar-card{background:#fff;padding:1.25rem;border-radius:1.2rem;text-align:center;cursor:pointer;border:3px solid transparent;transition:all .2s ease;box-shadow:0 4px 6px rgba(0,0,0,.05)}
+.avatar-card:hover{transform:scale(1.04);box-shadow:var(--shadow)}
+.avatar-card.selected{border-color:var(--primary);background:#f5f3ff}
+.avatar-emoji{display:block;font-size:3.2rem;margin-bottom:.4rem}
+.level-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
+.level-card{background:#fff;border-radius:var(--radius);padding:1.6rem;text-align:center;box-shadow:var(--shadow);border:3px solid transparent;position:relative}
+.level-card.completed{border-color:var(--success);opacity:.75}
+.level-card.locked{opacity:.55;filter:grayscale(.8)}
+.badge{position:absolute;top:-10px;right:-10px;background:var(--success);color:#fff;padding:.4rem .75rem;border-radius:999px;font-size:.75rem;font-weight:900}
+.progress-container{margin-top:1rem;width:100%;background:#e2e8f0;height:10px;border-radius:999px;overflow:hidden}
+.progress-bar{height:100%;width:0%;background:linear-gradient(to right,var(--primary),var(--secondary));transition:width .3s ease}
+.task-container{text-align:center}
+.situation-box{background:#f8fafc;padding:1.5rem;border-radius:1rem;margin-bottom:1.5rem;border-left:5px solid var(--primary);font-size:1.16rem;font-weight:700;line-height:1.45}
+.choice-buttons{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-bottom:1rem}
+.btn-choice{flex:1 1 210px;padding:1.1rem;border-radius:1rem;border:2px solid #e2e8f0;background:#fff;color:var(--text);font-weight:850;cursor:pointer;transition:all .2s ease;font-size:.98rem}
+.btn-choice:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(0,0,0,.08)}
+.grid-options{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin:1.2rem 0}
+.option-card{background:#fff;padding:1rem;border:2px solid #e2e8f0;border-radius:1rem;cursor:pointer;min-height:72px;display:flex;align-items:center;text-align:left;font-weight:700;line-height:1.3;transition:all .2s ease}
+.option-card:hover{border-color:var(--primary);background:#f8fafc}
+.option-card.selected{border-color:var(--primary);background:#eef2ff;box-shadow:0 0 0 2px rgba(99,102,241,.22)}
+.option-card.correct-highlight{background:#dcfce7;border-color:var(--success)}
+.option-card.wrong-highlight{background:#fee2e2;border-color:var(--danger)}
+.feedback{display:none;padding:1.25rem;border-radius:1rem;margin-top:1rem;text-align:left;line-height:1.5}
+.feedback.correct{background:#dcfce7;color:#166534;border-left:5px solid var(--success)}
+.feedback.partial{background:#fef3c7;color:#92400e;border-left:5px solid var(--warning)}
+.feedback.wrong{background:#fee2e2;color:#991b1b;border-left:5px solid var(--danger)}
+.memo{margin-top:.7rem;font-weight:900}
+.score-display{font-size:clamp(2.4rem,8vw,4rem);color:var(--primary);font-weight:950;margin:1rem 0}
+.result-text{font-size:1.35rem;font-weight:850;margin-bottom:1.4rem}
+.modal-backdrop{display:none;position:fixed;inset:0;z-index:500;background:rgba(15,23,42,.55);padding:1rem;align-items:center;justify-content:center}
+.modal{width:min(950px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:1.3rem;padding:1.5rem;box-shadow:var(--shadow)}
+.result-table{width:100%;border-collapse:collapse;font-size:.9rem;margin-top:1rem}
+.result-table th,.result-table td{border-bottom:1px solid #e2e8f0;padding:.65rem;text-align:left;vertical-align:top}
+.pill{display:inline-block;padding:.25rem .55rem;border-radius:999px;font-size:.78rem;font-weight:900}
+.pill-right{background:#dcfce7;color:#166534}
+.pill-partial{background:#fef3c7;color:#92400e}
+.pill-wrong{background:#fee2e2;color:#991b1b}
+.pill-gray{background:#e2e8f0;color:#475569}
+.empty-note{color:var(--muted);padding:1rem;background:#f8fafc;border-radius:1rem;margin-top:1rem}
+@media(max-width:820px){
+  #dashboard{flex-direction:column;align-items:flex-start}
+  .stats-grid{width:100%;justify-content:space-between}
+  .screen{padding:1rem}
+  .card{padding:1.35rem}
+  .level-grid,.grid-options{grid-template-columns:1fr}
+  .choice-buttons{flex-direction:column}
+  .btn-choice{flex-basis:auto}
+}
+</style>
+</head>
+<body>
+
+<header id="dashboard">
+  <div class="user-info">
+    <div class="user-avatar" id="dash-avatar">❓</div>
+    <div class="user-details">
+      <h3 id="dash-name">Nicht angemeldet</h3>
+      <span id="dash-class">Keine Klasse</span><br>
+      <span id="dash-level">Startseite</span>
+    </div>
+  </div>
+  <div class="stats-grid">
+    <div class="stat-item"><span>Punkte</span><div class="stat-value" id="dash-score">0 / 0</div></div>
+    <div class="stat-item"><span>Streak</span><div class="stat-value" id="dash-streak">0</div></div>
+    <div class="stat-item"><span>Beste Streak</span><div class="stat-value" id="dash-best-streak">0</div></div>
+    <div class="stat-item"><span>Fortschritt</span><div class="stat-value" id="dash-progress">0%</div></div>
+  </div>
+</header>
+
+<section id="screen-start" class="screen active">
+  <div class="card">
+    <h1>Externe Effekte Challenge</h1>
+    <p class="intro">
+      Externe Effekte entstehen, wenn Handlungen Auswirkungen auf andere haben,
+      ohne dass diese Folgen vollständig im Preis enthalten sind.
+      Du erkennst Effektarten, passende Aussagen und versteckte gesellschaftliche Folgen.
+    </p>
+    <div class="actions">
+      <button class="btn" onclick="goFromStart()">Starten</button>
+      <button class="btn btn-outline" onclick="showResultsModal()">Zwischenresultate anzeigen</button>
+    </div>
+  </div>
+  <div class="card" style="max-width:650px;margin:0 auto">
+    <h3>Spielaufbau</h3>
+    <p class="hint">
+      Level 1: Effektart erkennen und passende Aussagen auswählen<br>
+      Level 2: Hidden Impacts erkennen<br>
+      Wiederholung: falsche und teilweise gelöste Aufgaben verbessern
+    </p>
+  </div>
+</section>
+
+<section id="screen-login" class="screen">
+  <div class="card">
+    <h2 style="text-align:center">Anmeldung</h2>
+    <p class="hint" style="text-align:center;margin-bottom:1.5rem">Gib deinen Namen und deine Klasse ein.</p>
+    <div class="form-box">
+      <input type="text" id="login-name" placeholder="Dein Name" maxlength="30">
+      <select id="login-class" onchange="toggleOtherClass()">
+        <option value="">Klasse wählen</option>
+        <option value="2b">2b</option>
+        <option value="3b">3b</option>
+        <option value="BBMa">BBMa</option>
+        <option value="BBMb">BBMb</option>
+        <option value="BMa">BMa</option>
+        <option value="BMb">BMb</option>
+        <option value="BMc">BMc</option>
+        <option value="BMd">BMd</option>
+        <option value="BMe">BMe</option>
+        <option value="1W">1W</option>
+        <option value="2W">2W</option>
+        <option value="3W">3W</option>
+        <option value="4W">4W</option>
+        <option value="Sonstige">Sonstige</option>
+      </select>
+      <input type="text" id="login-other-class" placeholder="Eigene Klasse eingeben" maxlength="30" style="display:none">
+      <button class="btn" onclick="saveLogin()">Weiter zur Charakterwahl</button>
+      <button class="btn btn-outline" onclick="showScreen('screen-start')">Zurück</button>
+    </div>
+  </div>
+</section>
+
+<section id="screen-char" class="screen">
+  <div class="card">
+    <h2 style="text-align:center">Wähle deinen Charakter</h2>
+    <div class="avatar-grid" id="avatar-container"></div>
+    <div class="actions">
+      <button class="btn" id="btn-confirm-avatar" onclick="confirmAvatar()" disabled>Weiter zum Menü</button>
+      <button class="btn btn-outline" onclick="showScreen('screen-login')">Anmeldung ändern</button>
+    </div>
+  </div>
+</section>
+
+<section id="screen-levels" class="screen">
+  <div class="card">
+    <h2 style="text-align:center">Levelmenü</h2>
+    <p class="hint" style="text-align:center;margin-bottom:1.5rem">
+      Level dürfen frei gespielt werden. Abgeschlossene Level werden in dieser Sitzung gesperrt.
+      Das Wiederholungslevel öffnet sich, sobald es falsche oder teilweise Antworten gibt.
+    </p>
+    <div class="level-grid">
+      <div class="level-card" id="lvl-card-1">
+        <div class="badge" id="badge-1" style="display:none">Abgeschlossen</div>
+        <div style="font-size:3rem;margin-bottom:1rem">🔍</div>
+        <h3>Level 1</h3>
+        <p class="hint">Effektart erkennen und passende Aussagen finden.</p>
+        <div class="progress-container"><div class="progress-bar" id="level1-bar"></div></div>
+        <p class="hint" id="level1-note" style="margin:.8rem 0 1rem">Noch nicht begonnen</p>
+        <button class="btn" id="btn-start-lvl-1" onclick="startLevel(1)">Starten</button>
+      </div>
+
+      <div class="level-card" id="lvl-card-2">
+        <div class="badge" id="badge-2" style="display:none">Abgeschlossen</div>
+        <div style="font-size:3rem;margin-bottom:1rem">🎯</div>
+        <h3>Level 2</h3>
+        <p class="hint">Hidden Impact: versteckte externe Folgen finden.</p>
+        <div class="progress-container"><div class="progress-bar" id="level2-bar"></div></div>
+        <p class="hint" id="level2-note" style="margin:.8rem 0 1rem">Noch nicht begonnen</p>
+        <button class="btn" id="btn-start-lvl-2" onclick="startLevel(2)">Starten</button>
+      </div>
+
+      <div class="level-card locked" id="lvl-card-repeat">
+        <div style="font-size:3rem;margin-bottom:1rem">🔁</div>
+        <h3>Wiederholung</h3>
+        <p class="hint">Level-1-Fehler werden als ganze Aufgabe wiederholt.</p>
+        <div class="progress-container"><div class="progress-bar" id="repeat-bar"></div></div>
+        <p class="hint" id="repeat-note" style="margin:.8rem 0 1rem">Noch keine Fehler</p>
+        <button class="btn" id="btn-start-repeat" onclick="startRepeatLevel()" disabled>Gesperrt</button>
+      </div>
+    </div>
+    <div class="actions">
+      <button class="btn btn-outline" onclick="showResultsModal()">Zwischenresultate anzeigen</button>
+      <button class="btn btn-outline" onclick="showScreen('screen-char')">Charakter ändern</button>
+      <button class="btn btn-danger" onclick="resetGame()">Reset</button>
+    </div>
+  </div>
+</section>
+
+<section id="screen-lvl1" class="screen">
+  <div class="card task-container">
+    <div class="actions" style="margin-top:0;margin-bottom:1.4rem">
+      <button class="btn btn-outline btn-small" onclick="showScreen('screen-levels')">Zurück ins Menü</button>
+      <button class="btn btn-outline btn-small" onclick="showResultsModal()">Zwischenresultate</button>
+    </div>
+    <div id="lvl1-progress-info" style="margin-bottom:1rem;font-weight:900;color:var(--primary)">Aufgabe 1 von 6</div>
+    <div class="situation-box" id="lvl1-situation">Situationstext</div>
+
+    <div id="lvl1-part1">
+      <h3>Teil 1: Um welche Art von Effekt handelt es sich?</h3>
+      <div class="choice-buttons">
+        <button class="btn-choice" onclick="checkLvl1Type('pos')">Positiver externer Effekt</button>
+        <button class="btn-choice" onclick="checkLvl1Type('neg')">Negativer externer Effekt</button>
+        <button class="btn-choice" onclick="checkLvl1Type('none')">Kein externer Effekt</button>
+      </div>
+    </div>
+
+    <div id="lvl1-part2" style="display:none">
+      <h3>Teil 2: Welche Aussagen passen?</h3>
+      <p class="hint">Wähle alle passenden Aussagen aus.</p>
+      <div class="grid-options" id="lvl1-statement-options"></div>
+      <button class="btn" id="btn-check-lvl1-statements" onclick="checkLvl1Statements()">Überprüfen</button>
+    </div>
+
+    <div id="lvl1-feedback" class="feedback"></div>
+    <div class="actions" id="lvl1-next-container" style="display:none">
+      <button class="btn" onclick="nextLvl1Task()">Nächste Aufgabe</button>
+      <button class="btn btn-outline" onclick="showScreen('screen-levels')">Menü</button>
+    </div>
+  </div>
+</section>
+
+<section id="screen-lvl2" class="screen">
+  <div class="card task-container">
+    <div class="actions" style="margin-top:0;margin-bottom:1.4rem">
+      <button class="btn btn-outline btn-small" onclick="showScreen('screen-levels')">Zurück ins Menü</button>
+      <button class="btn btn-outline btn-small" onclick="showResultsModal()">Zwischenresultate</button>
+    </div>
+    <div id="lvl2-progress-info" style="margin-bottom:1rem;font-weight:900;color:var(--primary)">Aufgabe 1 von 6</div>
+    <div class="situation-box" id="lvl2-situation">Situationstext</div>
+    <h3>Wähle die 3 richtigen externen Folgen aus:</h3>
+    <div class="grid-options" id="lvl2-options"></div>
+    <div id="lvl2-feedback" class="feedback"></div>
+    <div class="actions">
+      <button class="btn" id="btn-check-lvl2" onclick="checkLvl2()">Überprüfen</button>
+      <button class="btn" id="btn-next-lvl2" onclick="nextLvl2Task()" style="display:none">Nächste Aufgabe</button>
+      <button class="btn btn-outline" onclick="showScreen('screen-levels')">Menü</button>
+    </div>
+  </div>
+</section>
+
+<section id="screen-repeat" class="screen">
+  <div class="card task-container">
+    <div class="actions" style="margin-top:0;margin-bottom:1.4rem">
+      <button class="btn btn-outline btn-small" onclick="showScreen('screen-levels')">Zurück ins Menü</button>
+      <button class="btn btn-outline btn-small" onclick="showResultsModal()">Zwischenresultate</button>
+    </div>
+    <div id="repeat-progress-info" style="margin-bottom:1rem;font-weight:900;color:var(--primary)">Wiederholung</div>
+    <div class="situation-box" id="repeat-situation">Situation</div>
+    <h3 id="repeat-title">Wähle die richtige Antwort:</h3>
+    <p class="hint" id="repeat-hint"></p>
+    <div id="repeat-options" class="grid-options"></div>
+    <div id="repeat-feedback" class="feedback"></div>
+    <div class="actions">
+      <button class="btn" id="btn-check-repeat" onclick="checkRepeat()">Überprüfen</button>
+      <button class="btn" id="btn-next-repeat" onclick="nextRepeatStep()" style="display:none">Weiter</button>
+      <button class="btn btn-outline" onclick="showScreen('screen-levels')">Menü</button>
+    </div>
+  </div>
+</section>
+
+<section id="screen-end" class="screen">
+  <div class="card" style="text-align:center">
+    <div id="end-avatar" style="font-size:5rem;margin-bottom:1rem">🎉</div>
+    <h2 id="end-title">Glückwunsch!</h2>
+    <p>Du hast die normalen Level abgeschlossen.</p>
+    <div class="score-display" id="end-score">0 / 0</div>
+    <div class="result-text" id="end-result">Auswertung</div>
+    <div class="actions">
+      <button class="btn" onclick="showResultsModal()">Resultate anzeigen</button>
+      <button class="btn btn-outline" onclick="showScreen('screen-levels')">Zurück ins Menü</button>
+      <button class="btn btn-danger" onclick="resetGame()">Neues Spiel starten</button>
+    </div>
+  </div>
+</section>
+
+<div class="modal-backdrop" id="results-modal">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start">
+      <div>
+        <h2 style="margin-bottom:.4rem">Zwischenresultate</h2>
+        <p class="hint" id="results-summary">Noch keine Resultate.</p>
+      </div>
+      <button class="btn btn-outline btn-small" onclick="closeResultsModal()">Schliessen</button>
+    </div>
+    <div id="results-content"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL_RAW = "https://xvgbisxwptnfupibcbpg.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_WF742ZbvUE8BzCTT2MZw2w_K2wFvYyt";
+const TABLE_NAME = "externe_effekte_rohdaten";
+const GAME_ID = "externe-effekte-challenge";
+const GAME_TITLE = "Externe Effekte Challenge";
+const VERSION = "2.0.1-final";
+const STORAGE_KEY = "extEffekteChallengeFinalV2_1";
+const QUEUE_KEY = "extEffekteChallengeFinalV2Queue_1";
+const SUPABASE_URL = String(SUPABASE_URL_RAW).replace(/\/rest\/v1\/?$/, "").replace(/\/$/, "");
+
+const avatars = ["🦊","🐼","🐸","🦁","🐨","🐯","🐵","🐧"];
+
+const lvl1Tasks = [
+  {
+    sit:"Eine Person lässt sich impfen.",
+    cat:"pos",
+    solution:"Positiver externer Effekt",
+    explanationType:"Die Impfung schützt nicht nur die geimpfte Person, sondern senkt auch das Ansteckungsrisiko für andere.",
+    memo:"Positive externe Effekte bringen Dritten einen Nutzen.",
+    statementExplanation:"Die passenden Aussagen zeigen den zusätzlichen Nutzen für andere Personen oder die Gesellschaft.",
+    statements:[
+      {t:"Auch gefährdete Personen im Umfeld profitieren.",c:true},
+      {t:"Es kann zu weniger Ansteckungen kommen.",c:true},
+      {t:"Das Gesundheitssystem kann entlastet werden.",c:true},
+      {t:"Nur die geimpfte Person hat einen Nutzen.",c:false},
+      {t:"Es ist immer ein negativer externer Effekt.",c:false},
+      {t:"Andere Personen sind sicher nicht betroffen.",c:false}
+    ]
+  },
+  {
+    sit:"Eine Fabrik leitet ungeklärtes Abwasser in einen Fluss.",
+    cat:"neg",
+    solution:"Negativer externer Effekt",
+    explanationType:"Die Fabrik verursacht Schäden, die nicht vollständig von ihr selbst bezahlt werden.",
+    memo:"Negative externe Effekte belasten Dritte.",
+    statementExplanation:"Die passenden Aussagen zeigen Schäden, die ausserhalb der Fabrik entstehen.",
+    statements:[
+      {t:"Menschen, die den Fluss nutzen, können geschädigt werden.",c:true},
+      {t:"Tiere und Pflanzen im Fluss können betroffen sein.",c:true},
+      {t:"Die Allgemeinheit kann Reinigungskosten tragen müssen.",c:true},
+      {t:"Nur die Fabrik selbst ist betroffen.",c:false},
+      {t:"Es entsteht sicher kein Schaden für Dritte.",c:false},
+      {t:"Das ist ein positiver externer Effekt.",c:false}
+    ]
+  },
+  {
+    sit:"Jemand kauft sich ein Sandwich zum Mittagessen.",
+    cat:"none",
+    solution:"Kein externer Effekt",
+    explanationType:"Kosten und Nutzen betreffen hier hauptsächlich Käufer und Verkäufer.",
+    memo:"Nicht jede Handlung hat automatisch externe Effekte.",
+    statementExplanation:"Die passenden Aussagen zeigen, dass hier kein klarer zusätzlicher Schaden oder Nutzen für Dritte vorliegt.",
+    statements:[
+      {t:"Der Nutzen liegt vor allem bei der kaufenden Person.",c:true},
+      {t:"Der Verkaufserlös liegt beim Verkäufer.",c:true},
+      {t:"Es gibt hier keinen klaren zusätzlichen Schaden oder Nutzen für Dritte.",c:true},
+      {t:"Alle Menschen in der Stadt sind stark betroffen.",c:false},
+      {t:"Die Umwelt trägt automatisch hohe Kosten.",c:false},
+      {t:"Es ist immer ein negativer externer Effekt.",c:false}
+    ]
+  },
+  {
+    sit:"Ein Unternehmen bildet Lernende aus.",
+    cat:"pos",
+    solution:"Positiver externer Effekt",
+    explanationType:"Nicht nur das Unternehmen profitiert, sondern später auch andere Betriebe und die Gesellschaft.",
+    memo:"Bildung erzeugt oft Nutzen über die einzelne Firma hinaus.",
+    statementExplanation:"Die passenden Aussagen zeigen den zusätzlichen Nutzen für den Arbeitsmarkt und die Gesellschaft.",
+    statements:[
+      {t:"Andere Betriebe können später von gut ausgebildeten Fachkräften profitieren.",c:true},
+      {t:"Die Gesellschaft profitiert von höherer Qualifikation.",c:true},
+      {t:"Kundinnen und Kunden können langfristig bessere Leistungen erhalten.",c:true},
+      {t:"Nur das aktuelle Unternehmen profitiert.",c:false},
+      {t:"Ausbildung erzeugt sicher immer Umweltkosten.",c:false},
+      {t:"Es gibt keinerlei Nutzen über den Betrieb hinaus.",c:false}
+    ]
+  },
+  {
+    sit:"Viele Autofahrer fahren morgens allein mit dem Auto in die Stadt.",
+    cat:"neg",
+    solution:"Negativer externer Effekt",
+    explanationType:"Jede einzelne Fahrt verursacht zusätzliche Belastungen für andere.",
+    memo:"Verkehr kann externe Kosten wie Stau, Lärm und Emissionen verursachen.",
+    statementExplanation:"Die passenden Aussagen zeigen Belastungen, die auch andere tragen.",
+    statements:[
+      {t:"Andere Verkehrsteilnehmende können durch Stau Zeit verlieren.",c:true},
+      {t:"Anwohnende können durch Lärm und Abgase belastet werden.",c:true},
+      {t:"Die Gesellschaft kann Umwelt- und Gesundheitskosten tragen.",c:true},
+      {t:"Nur die Autofahrerin selbst ist betroffen.",c:false},
+      {t:"Stau ist immer ein privater Nutzen.",c:false},
+      {t:"Abgase betreffen nie andere Menschen.",c:false}
+    ]
+  },
+  {
+    sit:"Eine Person pflanzt in ihrem Vorgarten mehrere blühende Bäume.",
+    cat:"pos",
+    solution:"Positiver externer Effekt",
+    explanationType:"Die Person verschönert nicht nur den eigenen Garten, sondern schafft auch Nutzen für andere und die Umwelt.",
+    memo:"Auch kleine private Entscheidungen können positive externe Effekte haben.",
+    statementExplanation:"Die passenden Aussagen zeigen zusätzliche Vorteile für Umgebung, Tiere und Nachbarschaft.",
+    statements:[
+      {t:"Nachbarinnen und Nachbarn können ein schöneres Quartier erleben.",c:true},
+      {t:"Insekten und Vögel können zusätzlichen Lebensraum finden.",c:true},
+      {t:"Die Umgebung kann von mehr Grün und Schatten profitieren.",c:true},
+      {t:"Nur die Person mit dem Garten profitiert.",c:false},
+      {t:"Bäume verursachen hier sicher nur externe Kosten.",c:false},
+      {t:"Ein Privatgarten kann nie Auswirkungen auf andere haben.",c:false}
+    ]
+  }
+];
+
+const lvl2Tasks = [
+  {
+    sit:"Du bestellst billige Kleidung im Online-Shop.",
+    options:[
+      {t:"lange Transportwege",c:true},
+      {t:"Umweltbelastung durch Verpackung",c:true},
+      {t:"problematische Arbeitsbedingungen",c:true},
+      {t:"tiefere Produktionskosten für den Anbieter",c:false},
+      {t:"höherer Lagerbedarf",c:false},
+      {t:"Preisdruck auf andere Modefirmen",c:false},
+      {t:"mehr Auswahl für dich",c:false},
+      {t:"schnellere Lieferung als persönlicher Vorteil",c:false}
+    ],
+    explanation:"Extern relevant sind Folgen für Umwelt, Arbeitskräfte oder Gesellschaft, die nicht vollständig im Preis sichtbar sind.",
+    memo:"Billige Preise können versteckte gesellschaftliche Kosten verdecken."
+  },
+  {
+    sit:"Ein Unternehmen produziert ohne Filteranlage.",
+    options:[
+      {t:"Luftverschmutzung",c:true},
+      {t:"Gesundheitsbelastung für andere",c:true},
+      {t:"gesellschaftliche Folgekosten",c:true},
+      {t:"tiefere Investitionskosten für das Unternehmen",c:false},
+      {t:"höhere Gewinnmarge für die Firma",c:false},
+      {t:"weniger Wartungsaufwand intern",c:false},
+      {t:"schnellere Produktion im Betrieb",c:false},
+      {t:"günstigere interne Abläufe",c:false}
+    ],
+    explanation:"Die Einsparungen sind interne Vorteile. Schäden an Luft und Gesundheit betreffen Dritte.",
+    memo:"Wer Kosten auf andere abwälzt, verursacht negative externe Effekte."
+  },
+  {
+    sit:"Eine Gemeinde baut sichere Velowege.",
+    options:[
+      {t:"weniger Unfälle",c:true},
+      {t:"weniger Autoverkehr und Emissionen",c:true},
+      {t:"mehr Gesundheit durch Bewegung",c:true},
+      {t:"Baukosten für die Gemeinde",c:false},
+      {t:"Planungsaufwand in der Verwaltung",c:false},
+      {t:"Kosten für Markierungen und Schilder",c:false},
+      {t:"politische Diskussion im Gemeinderat",c:false},
+      {t:"Auftrag für eine Baufirma",c:false}
+    ],
+    explanation:"Die externen Wirkungen betreffen Sicherheit, Umwelt und Gesundheit der Bevölkerung.",
+    memo:"Infrastruktur kann positive externe Effekte auslösen."
+  },
+  {
+    sit:"Viele Menschen streamen täglich Videos in sehr hoher Qualität.",
+    options:[
+      {t:"hoher Stromverbrauch in Rechenzentren",c:true},
+      {t:"zusätzliche CO₂-Emissionen je nach Strommix",c:true},
+      {t:"Belastung digitaler Infrastruktur",c:true},
+      {t:"Unterhaltung für die streamende Person",c:false},
+      {t:"monatliche Abo-Kosten",c:false},
+      {t:"bessere Bildqualität für die Nutzerin",c:false},
+      {t:"grössere Serienauswahl",c:false},
+      {t:"eigener Datenverbrauch als persönlicher Nachteil",c:false}
+    ],
+    explanation:"Persönlicher Nutzen und eigene Kosten sind intern. Energie- und Klimafolgen können extern sein.",
+    memo:"Auch digitale Angebote können reale Umweltfolgen haben."
+  },
+  {
+    sit:"Eine Schule bietet kostenlose Nachhilfe für schwächere Lernende an.",
+    options:[
+      {t:"bessere Bildungschancen",c:true},
+      {t:"weniger spätere Folgekosten durch Schulabbrüche",c:true},
+      {t:"mehr qualifizierte Arbeitskräfte in der Zukunft",c:true},
+      {t:"Kosten für Lehrpersonen",c:false},
+      {t:"Raumplanung in der Schule",c:false},
+      {t:"Zeitaufwand der teilnehmenden Lernenden",c:false},
+      {t:"Organisation des Stundenplans",c:false},
+      {t:"Kopierkosten für Arbeitsblätter",c:false}
+    ],
+    explanation:"Die Gesellschaft profitiert langfristig von besseren Bildungschancen und höherer Qualifikation.",
+    memo:"Bildung hat oft positive Wirkungen über die einzelne Person hinaus."
+  },
+  {
+    sit:"In einem Wohnquartier wird nachts häufig sehr laut gefeiert.",
+    options:[
+      {t:"Schlafstörungen bei Anwohnenden",c:true},
+      {t:"Stress und Gesundheitsbelastung",c:true},
+      {t:"geringere Lebensqualität im Quartier",c:true},
+      {t:"Spass für die feiernden Personen",c:false},
+      {t:"Kosten für Getränke",c:false},
+      {t:"Zeitaufwand für die Partyplanung",c:false},
+      {t:"Musikauswahl der Gäste",c:false},
+      {t:"private Einladung der Gastgeber",c:false}
+    ],
+    explanation:"Der private Nutzen der Feiernden ist intern. Lärm und Stress für andere sind externe Kosten.",
+    memo:"Lärm ist ein klassischer negativer externer Effekt."
+  }
+];
+
+const defaultState = {
+  sessionId:"",
+  name:"",
+  classChoice:"",
+  otherClass:"",
+  className:"",
+  avatar:"",
+  score:0,
+  maxPossible:0,
+  streak:0,
+  bestStreak:0,
+  countRight:0,
+  countPartial:0,
+  countWrong:0,
+  countSkipped:0,
+  results:[],
+  currentLevel:0,
+  selectedLvl1Statements:[],
+  selectedLvl2Options:[],
+  repeatQueue:[],
+  repeatIndex:0,
+  repeatStep:1,
+  repeatSelected:[],
+  repeatTypeCorrect:false,
+  level1:{currentTaskIdx:0,currentPart:1,completed:false,typeDone:false,statementsDone:false,shuffledStatements:[],startedAt:0},
+  level2:{currentTaskIdx:0,completed:false,checked:false,shuffledOptions:[],startedAt:0}
+};
+
+let gameState = structuredClone(defaultState);
+
+function newSessionId(){
+  return "sess_" + Date.now() + "_" + Math.random().toString(36).slice(2,10);
+}
+
+function ensureSession(){
+  if(!gameState.sessionId) gameState.sessionId = newSessionId();
+}
+
+function saveState(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(gameState));
+}
+
+function loadState(){
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if(!saved){
+    gameState = structuredClone(defaultState);
+    ensureSession();
+    saveState();
+    return;
+  }
+
+  try{
+    gameState = Object.assign(structuredClone(defaultState), JSON.parse(saved));
+    gameState.level1 = Object.assign(structuredClone(defaultState.level1), gameState.level1 || {});
+    gameState.level2 = Object.assign(structuredClone(defaultState.level2), gameState.level2 || {});
+    ensureSession();
+  }catch(e){
+    gameState = structuredClone(defaultState);
+    ensureSession();
+  }
+
+  saveState();
+}
+
+function getQueue(){
+  try{
+    return JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]");
+  }catch(e){
+    return [];
+  }
+}
+
+function setQueue(q){
+  localStorage.setItem(QUEUE_KEY, JSON.stringify(q));
+}
+
+function enqueue(row){
+  const q = getQueue();
+  q.push(row);
+  setQueue(q);
+  flushQueue();
+}
+
+async function flushQueue(){
+  let q = getQueue();
+  if(!q.length) return;
+
+  const remain = [];
+
+  for(const row of q){
+    try{
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/${TABLE_NAME}?on_conflict=record_id`, {
+        method:"POST",
+        headers:{
+          apikey:SUPABASE_ANON_KEY,
+          Authorization:`Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type":"application/json",
+          Prefer:"resolution=ignore-duplicates,return=minimal"
+        },
+        body:JSON.stringify(row)
+      });
+
+      if(!(res.ok || res.status === 409)){
+        remain.push(row);
+      }
+    }catch(e){
+      remain.push(row);
+    }
+  }
+
+  setQueue(remain);
+}
+
+setInterval(flushQueue, 5000);
+window.addEventListener("online", flushQueue);
+window.addEventListener("visibilitychange", () => {
+  if(!document.hidden) flushQueue();
+});
+
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.getElementById("dashboard").style.display = (id === "screen-start" || id === "screen-login") ? "none" : "flex";
+
+  if(id === "screen-levels"){
+    gameState.currentLevel = 0;
+    updateLevelSelectionUI();
+  }
+
+  updateDashboard();
+  saveState();
+  window.scrollTo(0,0);
+}
+
+function goFromStart(){
+  if(!gameState.name || !gameState.className) showScreen("screen-login");
+  else if(!gameState.avatar) showScreen("screen-char");
+  else showScreen("screen-levels");
+}
+
+function toggleOtherClass(){
+  document.getElementById("login-other-class").style.display =
+    document.getElementById("login-class").value === "Sonstige" ? "block" : "none";
+}
+
+function saveLogin(){
+  const name = document.getElementById("login-name").value.trim();
+  const classChoice = document.getElementById("login-class").value;
+  const otherClass = document.getElementById("login-other-class").value.trim();
+
+  if(!name){
+    alert("Bitte gib deinen Namen ein.");
+    return;
+  }
+
+  if(!classChoice){
+    alert("Bitte wähle deine Klasse.");
+    return;
+  }
+
+  if(classChoice === "Sonstige" && !otherClass){
+    alert("Bitte gib deine Klasse ein.");
+    return;
+  }
+
+  gameState.name = name;
+  gameState.classChoice = classChoice;
+  gameState.otherClass = classChoice === "Sonstige" ? otherClass : "";
+  gameState.className = classChoice === "Sonstige" ? otherClass : classChoice;
+
+  saveState();
+  updateDashboard();
+  showScreen("screen-char");
+}
+
+function fillLoginFields(){
+  document.getElementById("login-name").value = gameState.name || "";
+  document.getElementById("login-class").value = gameState.classChoice || "";
+  document.getElementById("login-other-class").value = gameState.otherClass || "";
+  toggleOtherClass();
+}
+
+function initAvatars(){
+  const c = document.getElementById("avatar-container");
+  c.innerHTML = "";
+
+  avatars.forEach(a => {
+    const card = document.createElement("div");
+    card.className = "avatar-card" + (gameState.avatar === a ? " selected" : "");
+    card.innerHTML = `<span class="avatar-emoji">${a}</span><strong>Wählen</strong>`;
+    card.onclick = () => selectAvatar(a);
+    c.appendChild(card);
+  });
+
+  document.getElementById("btn-confirm-avatar").disabled = !gameState.avatar;
+}
+
+function selectAvatar(a){
+  gameState.avatar = a;
+  saveState();
+  initAvatars();
+  updateDashboard();
+}
+
+function confirmAvatar(){
+  if(!gameState.avatar){
+    alert("Bitte wähle einen Charakter.");
+    return;
+  }
+  showScreen("screen-levels");
+}
+
+function totalNormalSubtasks(){
+  return lvl1Tasks.length * 2 + lvl2Tasks.length;
+}
+
+function normalResults(){
+  return gameState.results.filter(r => !r.isRepeat);
+}
+
+function overallProgress(){
+  return Math.min(100, Math.round(normalResults().length / totalNormalSubtasks() * 100));
+}
+
+function levelProgress(level){
+  if(level === 1){
+    return Math.min(100, Math.round(normalResults().filter(r => r.levelId === "1").length / (lvl1Tasks.length * 2) * 100));
+  }
+  if(level === 2){
+    return Math.min(100, Math.round(normalResults().filter(r => r.levelId === "2").length / lvl2Tasks.length * 100));
+  }
+  return 0;
+}
+
+function updateDashboard(){
+  document.getElementById("dash-avatar").innerText = gameState.avatar || "❓";
+  document.getElementById("dash-name").innerText = gameState.name || "Nicht angemeldet";
+  document.getElementById("dash-class").innerText = gameState.className ? "Klasse: " + gameState.className : "Keine Klasse";
+  document.getElementById("dash-score").innerText = `${gameState.score} / ${gameState.maxPossible}`;
+  document.getElementById("dash-streak").innerText = gameState.streak;
+  document.getElementById("dash-best-streak").innerText = gameState.bestStreak;
+  document.getElementById("dash-progress").innerText = `${overallProgress()}%`;
+
+  let t = "Menü";
+  if(gameState.currentLevel === 1) t = "Level 1: Grundlagen";
+  if(gameState.currentLevel === 2) t = "Level 2: Hidden Impacts";
+  if(gameState.currentLevel === 3) t = "Wiederholung";
+
+  document.getElementById("dash-level").innerText = t;
+}
+
+function updateLevelSelectionUI(){
+  const l1p = levelProgress(1);
+  const l2p = levelProgress(2);
+  const repeatItems = openRepeatItems();
+
+  document.getElementById("level1-bar").style.width = l1p + "%";
+  document.getElementById("level2-bar").style.width = l2p + "%";
+
+  document.getElementById("level1-note").innerText =
+    gameState.level1.completed ? "Abgeschlossen" : l1p > 0 ? `Fortschritt: ${l1p}%` : "Noch nicht begonnen";
+
+  document.getElementById("level2-note").innerText =
+    gameState.level2.completed ? "Abgeschlossen" : l2p > 0 ? `Fortschritt: ${l2p}%` : "Noch nicht begonnen";
+
+  setCompletedUI(1, gameState.level1.completed);
+  setCompletedUI(2, gameState.level2.completed);
+
+  const rc = document.getElementById("lvl-card-repeat");
+  const rb = document.getElementById("btn-start-repeat");
+  const rn = document.getElementById("repeat-note");
+  const rp = document.getElementById("repeat-bar");
+
+  if(repeatItems.length > 0){
+    rc.classList.remove("locked");
+    rb.disabled = false;
+    rb.innerText = "Starten";
+    rn.innerText = `${repeatItems.length} Aufgabe(n) zum Verbessern`;
+    rp.style.width = "100%";
+  }else{
+    rc.classList.add("locked");
+    rb.disabled = true;
+    rb.innerText = "Gesperrt";
+    rn.innerText = "Noch keine Fehler";
+    rp.style.width = "0%";
+  }
+
+  if(gameState.level1.completed && gameState.level2.completed) updateEndScreen();
+}
+
+function setCompletedUI(level, done){
+  const card = document.getElementById(`lvl-card-${level}`);
+  const badge = document.getElementById(`badge-${level}`);
+  const btn = document.getElementById(`btn-start-lvl-${level}`);
+
+  if(done){
+    card.classList.add("completed");
+    badge.style.display = "block";
+    btn.disabled = true;
+    btn.innerText = "Abgeschlossen";
+  }else{
+    card.classList.remove("completed");
+    badge.style.display = "none";
+    btn.disabled = false;
+    btn.innerText = levelProgress(level) > 0 ? "Fortsetzen" : "Starten";
+  }
+}
+
+function startLevel(level){
+  if(!gameState.name || !gameState.className){
+    showScreen("screen-login");
+    return;
+  }
+
+  if(!gameState.avatar){
+    showScreen("screen-char");
+    return;
+  }
+
+  if(level === 1 && gameState.level1.completed) return;
+  if(level === 2 && gameState.level2.completed) return;
+
+  gameState.currentLevel = level;
+
+  if(level === 1){
+    if(!gameState.level1.startedAt) gameState.level1.startedAt = Date.now();
+    showLvl1Task();
+    showScreen("screen-lvl1");
+  }else{
+    if(!gameState.level2.startedAt) gameState.level2.startedAt = Date.now();
+    showLvl2Task();
+    showScreen("screen-lvl2");
+  }
+}
+
+function catLabel(cat){
+  if(cat === "pos") return "Positiver externer Effekt";
+  if(cat === "neg") return "Negativer externer Effekt";
+  return "Kein externer Effekt";
+}
+
+function shuffleArray(arr){
+  const copy = [...arr];
+  for(let i = copy.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function duration(level){
+  const st = level === 1 ? gameState.level1.startedAt : gameState.level2.startedAt;
+  return st ? Date.now() - st : null;
+}
+
+function recordResult(data){
+  const points = Number(data.points || 0);
+  const maxPoints = Number(data.maxPoints || 0);
+  const status = data.status;
+
+  gameState.score += points;
+  gameState.maxPossible += maxPoints;
+
+  if(status === "richtig"){
+    gameState.streak++;
+    gameState.countRight++;
+  }else if(status === "teilweise"){
+    gameState.streak = 0;
+    gameState.countPartial++;
+  }else if(status === "übersprungen"){
+    gameState.streak = 0;
+    gameState.countSkipped++;
+  }else{
+    gameState.streak = 0;
+    gameState.countWrong++;
+  }
+
+  gameState.bestStreak = Math.max(gameState.bestStreak, gameState.streak);
+
+  const recordId = gameState.sessionId + "_" + Date.now() + "_" + Math.random().toString(36).slice(2,8);
+
+  const local = {
+    recordId,
+    createdAt:new Date().toISOString(),
+    sessionId:gameState.sessionId,
+    name:gameState.name,
+    className:gameState.className,
+    scoreNow:gameState.score,
+    maxPossibleNow:gameState.maxPossible,
+    streak:gameState.streak,
+    bestStreak:gameState.bestStreak,
+    ...data
+  };
+
+  gameState.results.push(local);
+
+  const details = {
+    avatar:gameState.avatar,
+    taskKey:data.taskKey || "",
+    originalTaskKey:data.originalTaskKey || "",
+    originalRecordId:data.originalRecordId || "",
+    repeatWholeCorrect:!!data.repeatWholeCorrect,
+    repeatStep:data.repeatStep || "",
+    localCreatedAt:local.createdAt
+  };
+
+  const row = {
+    record_id:recordId,
+    game_id:GAME_ID,
+    game_title:GAME_TITLE,
+    version:VERSION,
+    session_id:gameState.sessionId,
+
+    name:gameState.name,
+    class_name:gameState.className,
+    class_choice:gameState.classChoice,
+    other_class:gameState.otherClass,
+
+    level_id:data.levelId,
+    level_name:data.levelName,
+    task_id:data.taskId,
+    task_title:data.taskTitle,
+    task_type:data.taskType,
+    subtask_id:data.subtaskId || data.taskId,
+    subtask_title:data.subtaskTitle,
+
+    question:data.question,
+    chosen_answer:data.chosenAnswer,
+    correct_solution:data.correctSolution,
+    status:data.status,
+
+    points:data.points,
+    max_points:data.maxPoints,
+    success_rate:maxPoints > 0 ? points / maxPoints : null,
+
+    attempt:1,
+    duration_ms:data.durationMs || null,
+
+    score_now:gameState.score,
+    total_possible:gameState.maxPossible,
+    streak:gameState.streak,
+    best_streak:gameState.bestStreak,
+
+    count_right:gameState.countRight,
+    count_partial:gameState.countPartial,
+    count_wrong:gameState.countWrong,
+    count_skipped:gameState.countSkipped,
+
+    progress:overallProgress(),
+    level_completed:!!data.levelCompleted,
+
+    error_type:data.errorType || "",
+    misconception:data.misconception || "",
+    explanation:data.explanation || "",
+    memo:data.memo || "",
+
+    is_repeat:!!data.isRepeat,
+    source:"schueler-html",
+    details:details
+  };
+
+  saveState();
+  updateDashboard();
+  enqueue(row);
+}
+
+function showLvl1Task(){
+  const idx = gameState.level1.currentTaskIdx;
+  const task = lvl1Tasks[idx];
+
+  document.getElementById("lvl1-progress-info").innerText = `Aufgabe ${idx + 1} von ${lvl1Tasks.length}`;
+  document.getElementById("lvl1-situation").innerText = task.sit;
+  document.getElementById("lvl1-feedback").style.display = "none";
+  document.getElementById("lvl1-next-container").style.display = "none";
+
+  if(gameState.level1.currentPart === 1){
+    document.getElementById("lvl1-part1").style.display = "block";
+    document.getElementById("lvl1-part2").style.display = "none";
+    document.querySelectorAll("#lvl1-part1 .btn-choice").forEach(b => {
+      b.disabled = false;
+      b.style.opacity = "1";
+    });
+  }else{
+    document.getElementById("lvl1-part1").style.display = "none";
+    showLvl1StatementsPart();
+  }
+
+  saveState();
+}
+
+function checkLvl1Type(choice){
+  if(gameState.level1.typeDone) return;
+
+  const idx = gameState.level1.currentTaskIdx;
+  const task = lvl1Tasks[idx];
+  const correct = choice === task.cat;
+  const key = `1.${idx + 1}`;
+
+  recordResult({
+    levelId:"1",
+    levelName:"Effektart und Aussagen",
+    taskId:`${key}a`,
+    taskKey:key,
+    taskTitle:task.sit,
+    taskType:"Single Choice",
+    subtaskTitle:"Effektart erkennen",
+    question:task.sit,
+    chosenAnswer:catLabel(choice),
+    correctSolution:task.solution,
+    status:correct ? "richtig" : "falsch",
+    points:correct ? 10 : 0,
+    maxPoints:10,
+    durationMs:duration(1),
+    explanation:task.explanationType,
+    memo:task.memo,
+    isRepeat:false
+  });
+
+  const f = document.getElementById("lvl1-feedback");
+  f.style.display = "block";
+  f.className = correct ? "feedback correct" : "feedback wrong";
+  f.innerHTML = `<strong>${correct ? "Richtig!" : "Falsch."}</strong> ${task.explanationType}<br><strong>Lösung:</strong> ${task.solution}<div class="memo">Merksatz: ${task.memo}</div>`;
+
+  document.querySelectorAll("#lvl1-part1 .btn-choice").forEach(b => {
+    b.disabled = true;
+    b.style.opacity = ".65";
+  });
+
+  gameState.level1.typeDone = true;
+  gameState.level1.currentPart = 2;
+  gameState.selectedLvl1Statements = [];
+  gameState.level1.startedAt = Date.now();
+  saveState();
+
+  setTimeout(() => {
+    document.getElementById("lvl1-part1").style.display = "none";
+    showLvl1StatementsPart();
+  }, 900);
+}
+
+function showLvl1StatementsPart(){
+  const idx = gameState.level1.currentTaskIdx;
+  const task = lvl1Tasks[idx];
+
+  document.getElementById("lvl1-part2").style.display = "block";
+  document.getElementById("btn-check-lvl1-statements").style.display = "inline-block";
+
+  if(!gameState.level1.shuffledStatements || !gameState.level1.shuffledStatements.length){
+    gameState.level1.shuffledStatements = shuffleArray(task.statements);
+  }
+
+  const el = document.getElementById("lvl1-statement-options");
+  el.innerHTML = "";
+
+  gameState.level1.shuffledStatements.forEach(opt => {
+    const card = document.createElement("div");
+    card.className = "option-card";
+    card.innerText = opt.t;
+    card.onclick = () => toggleLvl1Statement(card, opt);
+    el.appendChild(card);
+  });
+
+  saveState();
+}
+
+function toggleLvl1Statement(card, opt){
+  const exists = gameState.selectedLvl1Statements.some(o => o.t === opt.t);
+
+  if(exists){
+    gameState.selectedLvl1Statements = gameState.selectedLvl1Statements.filter(o => o.t !== opt.t);
+    card.classList.remove("selected");
+  }else{
+    gameState.selectedLvl1Statements.push(opt);
+    card.classList.add("selected");
+  }
+
+  saveState();
+}
+
+function checkLvl1Statements(){
+  if(gameState.level1.statementsDone) return;
+
+  const idx = gameState.level1.currentTaskIdx;
+  const task = lvl1Tasks[idx];
+  const selected = gameState.selectedLvl1Statements;
+
+  if(!selected.length){
+    alert("Bitte wähle mindestens eine Aussage aus.");
+    return;
+  }
+
+  const correctOptions = task.statements.filter(o => o.c);
+  const correctSelected = selected.filter(o => o.c).length;
+  const wrongSelected = selected.filter(o => !o.c).length;
+  const allCorrect = correctSelected === correctOptions.length && wrongSelected === 0;
+
+  let status = "falsch";
+  let points = 0;
+
+  if(allCorrect){
+    status = "richtig";
+    points = 10;
+  }else if(correctSelected > 0){
+    status = "teilweise";
+    points = Math.max(0, Math.min(8, Math.round((correctSelected / correctOptions.length) * 8) - wrongSelected * 2));
+  }
+
+  const key = `1.${idx + 1}`;
+
+  recordResult({
+    levelId:"1",
+    levelName:"Effektart und Aussagen",
+    taskId:`${key}b`,
+    taskKey:key,
+    taskTitle:task.sit,
+    taskType:"Mehrfachauswahl",
+    subtaskTitle:"Passende Aussagen auswählen",
+    question:"Welche Aussagen passen?",
+    chosenAnswer:selected.map(o => o.t).join(" | "),
+    correctSolution:correctOptions.map(o => o.t).join(" | "),
+    status,
+    points,
+    maxPoints:10,
+    durationMs:duration(1),
+    explanation:task.statementExplanation,
+    memo:task.memo,
+    isRepeat:false
+  });
+
+  document.querySelectorAll("#lvl1-statement-options .option-card").forEach(card => {
+    card.onclick = null;
+    const opt = task.statements.find(o => o.t === card.innerText);
+    if(opt && opt.c) card.classList.add("correct-highlight");
+    else if(selected.some(o => o.t === card.innerText)) card.classList.add("wrong-highlight");
+  });
+
+  const f = document.getElementById("lvl1-feedback");
+  f.style.display = "block";
+
+  if(status === "richtig"){
+    f.className = "feedback correct";
+    f.innerHTML = `<strong>Richtig!</strong> Du hast die passenden Aussagen erkannt.<br>${task.statementExplanation}<div class="memo">Merksatz: ${task.memo}</div>`;
+  }else if(status === "teilweise"){
+    f.className = "feedback partial";
+    f.innerHTML = `<strong>Teilweise richtig.</strong> Du hast ${correctSelected} von ${correctOptions.length} richtigen Aussagen gewählt.<br><strong>Lösung:</strong> ${correctOptions.map(o => o.t).join(" | ")}<br>${task.statementExplanation}<div class="memo">Merksatz: ${task.memo}</div>`;
+  }else{
+    f.className = "feedback wrong";
+    f.innerHTML = `<strong>Falsch.</strong><br><strong>Lösung:</strong> ${correctOptions.map(o => o.t).join(" | ")}<br>${task.statementExplanation}<div class="memo">Merksatz: ${task.memo}</div>`;
+  }
+
+  gameState.level1.statementsDone = true;
+  document.getElementById("btn-check-lvl1-statements").style.display = "none";
+  document.getElementById("lvl1-next-container").style.display = "flex";
+  saveState();
+  updateDashboard();
+}
+
+function nextLvl1Task(){
+  gameState.level1.currentTaskIdx++;
+
+  if(gameState.level1.currentTaskIdx >= lvl1Tasks.length){
+    gameState.level1.completed = true;
+    gameState.currentLevel = 0;
+    saveState();
+    updateLevelSelectionUI();
+
+    if(gameState.level2.completed) showEndScreen();
+    else showScreen("screen-levels");
+
+    return;
+  }
+
+  gameState.level1.currentPart = 1;
+  gameState.level1.typeDone = false;
+  gameState.level1.statementsDone = false;
+  gameState.level1.shuffledStatements = [];
+  gameState.selectedLvl1Statements = [];
+  gameState.level1.startedAt = Date.now();
+
+  saveState();
+  showLvl1Task();
+}
+
+function showLvl2Task(){
+  const idx = gameState.level2.currentTaskIdx;
+  const task = lvl2Tasks[idx];
+
+  document.getElementById("lvl2-progress-info").innerText = `Aufgabe ${idx + 1} von ${lvl2Tasks.length}`;
+  document.getElementById("lvl2-situation").innerText = task.sit;
+  document.getElementById("lvl2-feedback").style.display = "none";
+  document.getElementById("btn-check-lvl2").style.display = "inline-block";
+  document.getElementById("btn-next-lvl2").style.display = "none";
+
+  gameState.selectedLvl2Options = [];
+
+  if(!gameState.level2.shuffledOptions || !gameState.level2.shuffledOptions.length){
+    gameState.level2.shuffledOptions = shuffleArray(task.options);
+  }
+
+  const el = document.getElementById("lvl2-options");
+  el.innerHTML = "";
+
+  gameState.level2.shuffledOptions.forEach(opt => {
+    const card = document.createElement("div");
+    card.className = "option-card";
+    card.innerText = opt.t;
+    card.onclick = () => toggleLvl2Option(card, opt);
+    el.appendChild(card);
+  });
+
+  saveState();
+}
+
+function toggleLvl2Option(card, opt){
+  const exists = gameState.selectedLvl2Options.some(o => o.t === opt.t);
+
+  if(exists){
+    gameState.selectedLvl2Options = gameState.selectedLvl2Options.filter(o => o.t !== opt.t);
+    card.classList.remove("selected");
+  }else{
+    if(gameState.selectedLvl2Options.length < 3){
+      gameState.selectedLvl2Options.push(opt);
+      card.classList.add("selected");
+    }else{
+      alert("Du kannst genau 3 Optionen auswählen.");
+    }
+  }
+
+  saveState();
+}
+
+function checkLvl2(){
+  if(gameState.level2.checked) return;
+
+  if(gameState.selectedLvl2Options.length !== 3){
+    alert("Bitte wähle genau 3 Optionen aus.");
+    return;
+  }
+
+  const idx = gameState.level2.currentTaskIdx;
+  const task = lvl2Tasks[idx];
+  const selected = gameState.selectedLvl2Options;
+  const correctOptions = task.options.filter(o => o.c);
+  const correctCount = selected.filter(o => o.c).length;
+
+  let status = "falsch";
+  let points = 0;
+
+  if(correctCount === 3){
+    status = "richtig";
+    points = 20;
+  }else if(correctCount > 0){
+    status = "teilweise";
+    points = correctCount === 2 ? 10 : 5;
+  }
+
+  const key = `2.${idx + 1}`;
+
+  recordResult({
+    levelId:"2",
+    levelName:"Hidden Impacts",
+    taskId:key,
+    taskKey:key,
+    taskTitle:task.sit,
+    taskType:"Mehrfachauswahl",
+    subtaskTitle:"Versteckte externe Folgen finden",
+    question:task.sit,
+    chosenAnswer:selected.map(o => o.t).join(" | "),
+    correctSolution:correctOptions.map(o => o.t).join(" | "),
+    status,
+    points,
+    maxPoints:20,
+    durationMs:duration(2),
+    explanation:task.explanation,
+    memo:task.memo,
+    isRepeat:false
+  });
+
+  document.querySelectorAll("#lvl2-options .option-card").forEach(card => {
+    card.onclick = null;
+    const opt = task.options.find(o => o.t === card.innerText);
+    if(opt && opt.c) card.classList.add("correct-highlight");
+    else if(selected.some(o => o.t === card.innerText)) card.classList.add("wrong-highlight");
+  });
+
+  const f = document.getElementById("lvl2-feedback");
+  f.style.display = "block";
+
+  if(status === "richtig"){
+    f.className = "feedback correct";
+    f.innerHTML = `<strong>Perfekt!</strong> Alle 3 externen Folgen wurden erkannt.<br>${task.explanation}<div class="memo">Merksatz: ${task.memo}</div>`;
+  }else if(status === "teilweise"){
+    f.className = "feedback partial";
+    f.innerHTML = `<strong>Teilweise richtig.</strong> Du hast ${correctCount} von 3 richtigen Folgen gefunden.<br><strong>Lösung:</strong> ${correctOptions.map(o => o.t).join(" | ")}<br>${task.explanation}<div class="memo">Merksatz: ${task.memo}</div>`;
+  }else{
+    f.className = "feedback wrong";
+    f.innerHTML = `<strong>Falsch.</strong><br><strong>Lösung:</strong> ${correctOptions.map(o => o.t).join(" | ")}<br>${task.explanation}<div class="memo">Merksatz: ${task.memo}</div>`;
+  }
+
+  gameState.level2.checked = true;
+  document.getElementById("btn-check-lvl2").style.display = "none";
+  document.getElementById("btn-next-lvl2").style.display = "inline-block";
+  saveState();
+  updateDashboard();
+}
+
+function nextLvl2Task(){
+  gameState.level2.currentTaskIdx++;
+
+  if(gameState.level2.currentTaskIdx >= lvl2Tasks.length){
+    gameState.level2.completed = true;
+    gameState.currentLevel = 0;
+    saveState();
+    updateLevelSelectionUI();
+
+    if(gameState.level1.completed) showEndScreen();
+    else showScreen("screen-levels");
+
+    return;
+  }
+
+  gameState.level2.checked = false;
+  gameState.level2.shuffledOptions = [];
+  gameState.selectedLvl2Options = [];
+  gameState.level2.startedAt = Date.now();
+
+  saveState();
+  showLvl2Task();
+}
+
+function openRepeatItems(){
+  const items = [];
+
+  const fixedLevel1Keys = new Set(
+    gameState.results
+      .filter(r => r.isRepeat && r.levelId === "W1" && r.repeatWholeCorrect)
+      .map(r => r.originalTaskKey)
+  );
+
+  const fixedLevel2Records = new Set(
+    gameState.results
+      .filter(r => r.isRepeat && r.levelId === "W2" && r.status === "richtig")
+      .map(r => r.originalRecordId)
+  );
+
+  const wrongNormal = gameState.results.filter(r => !r.isRepeat && r.status !== "richtig");
+
+  const level1Keys = new Set();
+
+  wrongNormal.filter(r => r.levelId === "1").forEach(r => {
+    if(!fixedLevel1Keys.has(r.taskKey)) level1Keys.add(r.taskKey);
+  });
+
+  level1Keys.forEach(key => {
+    const idx = Number(key.split(".")[1]) - 1;
+    if(idx >= 0) items.push({kind:"level1",taskIndex:idx,taskKey:key});
+  });
+
+  wrongNormal.filter(r => r.levelId === "2").forEach(r => {
+    if(!fixedLevel2Records.has(r.recordId)){
+      const idx = Number(r.taskKey.split(".")[1]) - 1;
+      items.push({kind:"level2",taskIndex:idx,originalRecordId:r.recordId,taskKey:r.taskKey});
+    }
+  });
+
+  return items;
+}
+
+function startRepeatLevel(){
+  const items = openRepeatItems();
+
+  if(!items.length){
+    alert("Es gibt aktuell keine offenen Fehler zum Wiederholen.");
+    updateLevelSelectionUI();
+    return;
+  }
+
+  gameState.currentLevel = 3;
+  gameState.repeatQueue = items;
+  gameState.repeatIndex = 0;
+  gameState.repeatStep = 1;
+  gameState.repeatSelected = [];
+  gameState.repeatTypeCorrect = false;
+
+  saveState();
+  showRepeatTask();
+  showScreen("screen-repeat");
+}
+
+function currentRepeatItem(){
+  return gameState.repeatQueue[gameState.repeatIndex];
+}
+
+function showRepeatTask(){
+  const item = currentRepeatItem();
+
+  if(!item){
+    showScreen("screen-levels");
+    return;
+  }
+
+  gameState.repeatSelected = [];
+
+  document.getElementById("repeat-feedback").style.display = "none";
+  document.getElementById("btn-check-repeat").style.display = "inline-block";
+  document.getElementById("btn-next-repeat").style.display = "none";
+
+  const optionsEl = document.getElementById("repeat-options");
+  optionsEl.innerHTML = "";
+
+  if(item.kind === "level1"){
+    const task = lvl1Tasks[item.taskIndex];
+
+    document.getElementById("repeat-progress-info").innerText = `Wiederholung ${gameState.repeatIndex + 1} von ${gameState.repeatQueue.length}`;
+    document.getElementById("repeat-situation").innerText = task.sit;
+
+    if(gameState.repeatStep === 1){
+      document.getElementById("repeat-title").innerText = "Teil 1: Um welche Art von Effekt handelt es sich?";
+      document.getElementById("repeat-hint").innerText = "Die ganze Level-1-Aufgabe wird wiederholt.";
+      document.getElementById("btn-check-repeat").style.display = "none";
+
+      [
+        {t:"Positiver externer Effekt",v:"pos",c:task.cat === "pos"},
+        {t:"Negativer externer Effekt",v:"neg",c:task.cat === "neg"},
+        {t:"Kein externer Effekt",v:"none",c:task.cat === "none"}
+      ].forEach(opt => {
+        const card = document.createElement("div");
+        card.className = "option-card";
+        card.innerText = opt.t;
+        card.onclick = () => checkRepeatLevel1Type(opt);
+        optionsEl.appendChild(card);
+      });
+    }else{
+      document.getElementById("repeat-title").innerText = "Teil 2: Welche Aussagen passen?";
+      document.getElementById("repeat-hint").innerText = "Wähle alle passenden Aussagen aus.";
+      document.getElementById("btn-check-repeat").style.display = "inline-block";
+
+      shuffleArray(task.statements).forEach(opt => {
+        const card = document.createElement("div");
+        card.className = "option-card";
+        card.innerText = opt.t;
+        card.onclick = () => toggleRepeatOption(card, opt);
+        optionsEl.appendChild(card);
+      });
+    }
+  }else{
+    const task = lvl2Tasks[item.taskIndex];
+
+    document.getElementById("repeat-progress-info").innerText = `Wiederholung ${gameState.repeatIndex + 1} von ${gameState.repeatQueue.length}`;
+    document.getElementById("repeat-situation").innerText = task.sit;
+    document.getElementById("repeat-title").innerText = "Wähle die 3 richtigen externen Folgen aus:";
+    document.getElementById("repeat-hint").innerText = "Diese Level-2-Aufgabe wird einzeln wiederholt.";
+    document.getElementById("btn-check-repeat").style.display = "inline-block";
+
+    shuffleArray(task.options).forEach(opt => {
+      const card = document.createElement("div");
+      card.className = "option-card";
+      card.innerText = opt.t;
+      card.onclick = () => toggleRepeatOption(card, opt);
+      optionsEl.appendChild(card);
+    });
+  }
+
+  saveState();
+}
+
+function checkRepeatLevel1Type(opt){
+  const item = currentRepeatItem();
+  const task = lvl1Tasks[item.taskIndex];
+  const correct = opt.c;
+
+  gameState.repeatTypeCorrect = correct;
+
+  recordResult({
+    levelId:"W1",
+    levelName:"Wiederholung Level 1",
+    taskId:`W1.${item.taskIndex + 1}a`,
+    taskKey:`W1.${item.taskIndex + 1}`,
+    taskTitle:task.sit,
+    taskType:"Single Choice",
+    subtaskTitle:"Effektart wiederholen",
+    question:task.sit,
+    chosenAnswer:opt.t,
+    correctSolution:task.solution,
+    status:correct ? "richtig" : "falsch",
+    points:correct ? 5 : 0,
+    maxPoints:5,
+    explanation:task.explanationType,
+    memo:task.memo,
+    isRepeat:true,
+    originalTaskKey:item.taskKey,
+    repeatWholeCorrect:false,
+    repeatStep:"type"
+  });
+
+  document.querySelectorAll("#repeat-options .option-card").forEach(card => {
+    card.onclick = null;
+    if(card.innerText === task.solution) card.classList.add("correct-highlight");
+    else if(card.innerText === opt.t) card.classList.add("wrong-highlight");
+  });
+
+  const f = document.getElementById("repeat-feedback");
+  f.style.display = "block";
+  f.className = correct ? "feedback correct" : "feedback wrong";
+  f.innerHTML = `<strong>${correct ? "Richtig!" : "Falsch."}</strong> ${task.explanationType}<br><strong>Lösung:</strong> ${task.solution}<div class="memo">Merksatz: ${task.memo}</div>`;
+
+  document.getElementById("btn-next-repeat").style.display = "inline-block";
+  document.getElementById("btn-next-repeat").innerText = "Weiter zu Teil 2";
+  saveState();
+}
+
+function toggleRepeatOption(card, opt){
+  const exists = gameState.repeatSelected.some(o => o.t === opt.t);
+
+  if(exists){
+    gameState.repeatSelected = gameState.repeatSelected.filter(o => o.t !== opt.t);
+    card.classList.remove("selected");
+  }else{
+    gameState.repeatSelected.push(opt);
+    card.classList.add("selected");
+  }
+
+  saveState();
+}
+
+function checkRepeat(){
+  const item = currentRepeatItem();
+  if(!item) return;
+
+  const selected = gameState.repeatSelected;
+
+  if(!selected.length){
+    alert("Bitte wähle mindestens eine Option aus.");
+    return;
+  }
+
+  if(item.kind === "level1") checkRepeatLevel1Statements(item, selected);
+  else checkRepeatLevel2(item, selected);
+}
+
+function checkRepeatLevel1Statements(item, selected){
+  const task = lvl1Tasks[item.taskIndex];
+  const correctOptions = task.statements.filter(o => o.c);
+  const correctSelected = selected.filter(o => o.c).length;
+  const wrongSelected = selected.filter(o => !o.c).length;
+  const statementsCorrect = correctSelected === correctOptions.length && wrongSelected === 0;
+  const wholeCorrect = gameState.repeatTypeCorrect && statementsCorrect;
+
+  let status = "falsch";
+  let points = 0;
+
+  if(statementsCorrect){
+    status = "richtig";
+    points = 5;
+  }else if(correctSelected > 0){
+    status = "teilweise";
+    points = 2;
+  }
+
+  recordResult({
+    levelId:"W1",
+    levelName:"Wiederholung Level 1",
+    taskId:`W1.${item.taskIndex + 1}b`,
+    taskKey:`W1.${item.taskIndex + 1}`,
+    taskTitle:task.sit,
+    taskType:"Mehrfachauswahl",
+    subtaskTitle:"Aussagen wiederholen",
+    question:"Welche Aussagen passen?",
+    chosenAnswer:selected.map(o => o.t).join(" | "),
+    correctSolution:correctOptions.map(o => o.t).join(" | "),
+    status,
+    points,
+    maxPoints:5,
+    explanation:task.statementExplanation,
+    memo:task.memo,
+    isRepeat:true,
+    originalTaskKey:item.taskKey,
+    repeatWholeCorrect:wholeCorrect,
+    repeatStep:"statements"
+  });
+
+  document.querySelectorAll("#repeat-options .option-card").forEach(card => {
+    card.onclick = null;
+    const opt = task.statements.find(o => o.t === card.innerText);
+    if(opt && opt.c) card.classList.add("correct-highlight");
+    else if(selected.some(o => o.t === card.innerText)) card.classList.add("wrong-highlight");
+  });
+
+  const f = document.getElementById("repeat-feedback");
+  f.style.display = "block";
+
+  if(wholeCorrect){
+    f.className = "feedback correct";
+    f.innerHTML = `<strong>Verbessert!</strong> Die ganze Level-1-Aufgabe ist jetzt richtig gelöst.<br><strong>Lösung:</strong> ${correctOptions.map(o => o.t).join(" | ")}<div class="memo">Merksatz: ${task.memo}</div>`;
+  }else if(status === "richtig"){
+    f.className = "feedback partial";
+    f.innerHTML = `<strong>Teil 2 ist richtig.</strong> Die ganze Aufgabe zählt erst als verbessert, wenn auch Teil 1 richtig war.<br><strong>Lösung:</strong> ${correctOptions.map(o => o.t).join(" | ")}<div class="memo">Merksatz: ${task.memo}</div>`;
+  }else{
+    f.className = status === "teilweise" ? "feedback partial" : "feedback wrong";
+    f.innerHTML = `<strong>${status === "teilweise" ? "Teilweise richtig." : "Noch nicht richtig."}</strong><br><strong>Lösung:</strong> ${correctOptions.map(o => o.t).join(" | ")}<div class="memo">Merksatz: ${task.memo}</div>`;
+  }
+
+  document.getElementById("btn-check-repeat").style.display = "none";
+  document.getElementById("btn-next-repeat").style.display = "inline-block";
+  document.getElementById("btn-next-repeat").innerText = "Nächste Wiederholung";
+  saveState();
+  updateDashboard();
+}
+
+function checkRepeatLevel2(item, selected){
+  if(selected.length !== 3){
+    alert("Bitte wähle genau 3 Optionen aus.");
+    return;
+  }
+
+  const task = lvl2Tasks[item.taskIndex];
+  const correctOptions = task.options.filter(o => o.c);
+  const correctCount = selected.filter(o => o.c).length;
+
+  let status = "falsch";
+  let points = 0;
+
+  if(correctCount === 3){
+    status = "richtig";
+    points = 5;
+  }else if(correctCount > 0){
+    status = "teilweise";
+    points = 2;
+  }
+
+  recordResult({
+    levelId:"W2",
+    levelName:"Wiederholung Level 2",
+    taskId:`W2.${item.taskIndex + 1}`,
+    taskKey:`W2.${item.taskIndex + 1}`,
+    taskTitle:task.sit,
+    taskType:"Mehrfachauswahl",
+    subtaskTitle:"Hidden Impact wiederholen",
+    question:task.sit,
+    chosenAnswer:selected.map(o => o.t).join(" | "),
+    correctSolution:correctOptions.map(o => o.t).join(" | "),
+    status,
+    points,
+    maxPoints:5,
+    explanation:task.explanation,
+    memo:task.memo,
+    isRepeat:true,
+    originalRecordId:item.originalRecordId,
+    originalTaskKey:item.taskKey,
+    repeatStep:"hidden-impact"
+  });
+
+  document.querySelectorAll("#repeat-options .option-card").forEach(card => {
+    card.onclick = null;
+    const opt = task.options.find(o => o.t === card.innerText);
+    if(opt && opt.c) card.classList.add("correct-highlight");
+    else if(selected.some(o => o.t === card.innerText)) card.classList.add("wrong-highlight");
+  });
+
+  const f = document.getElementById("repeat-feedback");
+  f.style.display = "block";
+
+  if(status === "richtig"){
+    f.className = "feedback correct";
+    f.innerHTML = `<strong>Verbessert!</strong> Diese Aufgabe ist jetzt richtig gelöst.<br>${task.explanation}<div class="memo">Merksatz: ${task.memo}</div>`;
+  }else{
+    f.className = status === "teilweise" ? "feedback partial" : "feedback wrong";
+    f.innerHTML = `<strong>${status === "teilweise" ? "Teilweise verbessert." : "Noch nicht richtig."}</strong><br><strong>Lösung:</strong> ${correctOptions.map(o => o.t).join(" | ")}<div class="memo">Merksatz: ${task.memo}</div>`;
+  }
+
+  document.getElementById("btn-check-repeat").style.display = "none";
+  document.getElementById("btn-next-repeat").style.display = "inline-block";
+  document.getElementById("btn-next-repeat").innerText = "Nächste Wiederholung";
+  saveState();
+  updateDashboard();
+}
+
+function nextRepeatStep(){
+  const item = currentRepeatItem();
+
+  if(!item){
+    showScreen("screen-levels");
+    return;
+  }
+
+  if(item.kind === "level1" && gameState.repeatStep === 1){
+    gameState.repeatStep = 2;
+    gameState.repeatSelected = [];
+    saveState();
+    showRepeatTask();
+    return;
+  }
+
+  gameState.repeatIndex++;
+  gameState.repeatStep = 1;
+  gameState.repeatSelected = [];
+  gameState.repeatTypeCorrect = false;
+
+  const remaining = openRepeatItems();
+
+  if(gameState.repeatIndex >= gameState.repeatQueue.length || remaining.length === 0){
+    gameState.repeatQueue = [];
+    gameState.repeatIndex = 0;
+    gameState.repeatStep = 1;
+    saveState();
+    updateLevelSelectionUI();
+    showScreen("screen-levels");
+    return;
+  }
+
+  saveState();
+  showRepeatTask();
+}
+
+function showEndScreen(){
+  updateEndScreen();
+  showScreen("screen-end");
+}
+
+function updateEndScreen(){
+  document.getElementById("end-avatar").innerText = gameState.avatar || "🎉";
+  document.getElementById("end-title").innerText = `Glückwunsch, ${gameState.name || "du"}!`;
+  document.getElementById("end-score").innerText = `${gameState.score} / ${gameState.maxPossible} Punkte`;
+
+  const q = gameState.maxPossible > 0 ? gameState.score / gameState.maxPossible : 0;
+  document.getElementById("end-result").innerText =
+    q >= .8 ? "Externe-Effekte-Profi!" : q >= .55 ? "Gutes Verständnis." : "Du bist auf dem Übungsweg.";
+}
+
+function showResultsModal(){
+  const modal = document.getElementById("results-modal");
+  const content = document.getElementById("results-content");
+  const summary = document.getElementById("results-summary");
+  const q = gameState.maxPossible > 0 ? Math.round(gameState.score / gameState.maxPossible * 100) : 0;
+  const errors = openRepeatItems();
+
+  summary.innerText =
+    `${gameState.name || "Gast"} | ${gameState.className || "keine Klasse"} | ${gameState.score} von ${gameState.maxPossible} Punkten | Erfolgsquote: ${q}% | Beste Streak: ${gameState.bestStreak} | offene Wiederholungen: ${errors.length}`;
+
+  if(!gameState.results.length){
+    content.innerHTML = `<div class="empty-note">Noch keine Aufgaben beantwortet.</div>`;
+  }else{
+    content.innerHTML = `
+      <table class="result-table">
+        <thead>
+          <tr>
+            <th>Aufgabe</th>
+            <th>Level</th>
+            <th>Teilaufgabe</th>
+            <th>Status</th>
+            <th>Punkte</th>
+            <th>Antwort</th>
+            <th>Lösung</th>
+            <th>Wiederholung</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${gameState.results.map(r => `
+            <tr>
+              <td>${escapeHtml(r.taskId)}</td>
+              <td>${escapeHtml(r.levelName)}</td>
+              <td>${escapeHtml(r.subtaskTitle)}</td>
+              <td><span class="pill ${r.status === "richtig" ? "pill-right" : r.status === "teilweise" ? "pill-partial" : "pill-wrong"}">${escapeHtml(r.status)}</span></td>
+              <td>${r.points} / ${r.maxPoints}</td>
+              <td>${escapeHtml(r.chosenAnswer || "-")}</td>
+              <td>${escapeHtml(r.correctSolution || "-")}</td>
+              <td>${r.isRepeat ? "ja" : "nein"}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  modal.style.display = "flex";
+}
+
+function closeResultsModal(){
+  document.getElementById("results-modal").style.display = "none";
+}
+
+function escapeHtml(v){
+  return String(v)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function resetGame(){
+  if(!confirm("Willst du wirklich alles zurücksetzen? Name, Klasse, Spielstand, lokale Resultate und lokale Speicherwarteschlange werden gelöscht.")) return;
+
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem(QUEUE_KEY);
+
+  gameState = structuredClone(defaultState);
+  ensureSession();
+  saveState();
+
+  fillLoginFields();
+  initAvatars();
+  updateDashboard();
+  updateLevelSelectionUI();
+  showScreen("screen-start");
+}
+
+window.onload = () => {
+  loadState();
+  fillLoginFields();
+  initAvatars();
+  updateDashboard();
+  updateLevelSelectionUI();
+  flushQueue();
+
+  document.getElementById("results-modal").addEventListener("click", e => {
+    if(e.target.id === "results-modal") closeResultsModal();
+  });
+};
+</script>
+</body>
+</html>

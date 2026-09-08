@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Détective Français</title>
+<style>
+:root{--ink:#13213a;--muted:#6b7280;--line:#dfe3e8;--bg:#f6f8fc;--card:#fff;--blue:#4f46e5;--green:#16a34a;--red:#dc2626;--gold:#f59e0b}
+*{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
+button,input{font:inherit}button{cursor:pointer}.wrap{width:min(1180px,calc(100% - 28px));margin:auto;padding:20px 0 40px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}.brand{font-size:28px;font-weight:950}.profile{display:flex;gap:10px;align-items:center;background:white;border:1px solid var(--line);border-radius:999px;padding:8px 13px;font-weight:850}
+.panel{background:white;border:1px solid var(--line);border-radius:28px;min-height:680px;padding:clamp(20px,4vw,42px);box-shadow:0 18px 50px #17203312}
+.hidden{display:none!important}h1{font-size:clamp(38px,7vw,68px);margin:10px 0}h2{font-size:clamp(28px,5vw,44px);margin:0 0 10px}.muted{color:var(--muted)}
+.hero{text-align:center;max-width:760px;margin:auto;padding-top:45px}.heroEmoji{font-size:88px}.name{width:min(430px,100%);padding:16px;border:2px solid var(--line);border-radius:16px;text-align:center;font-size:21px;font-weight:800;outline:0}.name:focus{border-color:var(--blue)}
+.btn{border:0;border-radius:15px;padding:13px 19px;font-weight:900;background:var(--blue);color:white}.btn.light{background:white;color:var(--ink);border:1px solid var(--line)}.btn.soft{background:#eef2ff;color:#3730a3}
+.emojiGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:10px;max-width:650px;margin:24px auto}.emoji{font-size:36px;background:white;border:2px solid var(--line);border-radius:17px;padding:12px}.emoji.sel{border-color:var(--blue);background:#eef2ff}
+.modes{display:grid;grid-template-columns:repeat(2,1fr);gap:17px;margin-top:25px}.mode{background:white;border:2px solid var(--line);border-radius:22px;padding:24px;text-align:left;min-height:185px}.mode:hover{border-color:var(--blue);transform:translateY(-2px)}.mode .icon{font-size:46px}.mode h3{font-size:25px;margin:8px 0}
+.hud{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px}.pill{background:#f3f4f6;border:1px solid var(--line);border-radius:999px;padding:10px 15px;font-weight:900}
+.feedback{text-align:center;font-size:20px;font-weight:900;min-height:32px;margin-top:12px}
+.memory{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}.mem{min-height:105px;border:0;border-radius:17px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:white;font-size:19px;font-weight:900;padding:10px}.mem.open{background:white;color:var(--ink);border:2px solid var(--line)}.mem.done{background:#dcfce7;color:#166534;border:2px solid #86efac}
+.balloonGame{position:relative;height:500px;overflow:hidden;border-radius:24px;background:linear-gradient(#dbeafe,#eff6ff 65%,#dcfce7);border:1px solid #bfdbfe;margin-top:16px}.target{text-align:center;background:#fff;border:2px solid #bfdbfe;border-radius:18px;padding:12px 18px;font-size:24px;font-weight:950;position:relative;z-index:4;max-width:550px;margin:12px auto}.balloon{position:absolute;width:145px;height:170px;border:0;background:transparent;font-size:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;filter:drop-shadow(0 6px 5px #0002);transition:transform .1s}.balloon span{font-size:15px;font-weight:950;color:#172033;background:#ffffffee;border-radius:10px;padding:5px 7px;max-width:135px}.balloon:hover{transform:scale(1.06)}.pop{animation:pop .22s forwards}@keyframes pop{to{transform:scale(1.6);opacity:0}}
+.clueBox{background:#fff7ed;border:1px solid #fdba74;border-radius:20px;padding:20px;font-size:21px;font-weight:850;line-height:1.55}.suspects{display:grid;grid-template-columns:repeat(3,1fr);gap:15px;margin-top:18px}.suspect{background:white;border:2px solid var(--line);border-radius:20px;padding:18px;text-align:center}.suspect:hover{border-color:var(--blue)}.person{font-size:64px}.features{font-size:34px;min-height:45px}.tag{font-size:14px;color:var(--muted)}
+.map{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;max-width:650px;margin:22px auto}.room{aspect-ratio:1;border-radius:15px;border:2px solid var(--line);background:#f8fafc;display:grid;place-items:center;font-size:28px;font-weight:900}.room.you{background:#dbeafe;border-color:#60a5fa}.room.key{background:#fef3c7}.room.vault{background:#e5e7eb}.room.wall{background:#334155}.directionGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:650px;margin:15px auto}.choice{padding:16px;border:2px solid var(--line);background:white;border-radius:16px;font-weight:900}.choice:hover{border-color:var(--blue)}
+.end{text-align:center;padding-top:70px}.endIcon{font-size:90px}.bigScore{font-size:54px;font-weight:950}
+
+
+.avatarBox{
+  width:120px;
+  height:125px;
+  margin:2px auto 10px;
+  position:relative;
+}
+.avatarHead{
+  position:absolute;
+  left:50%;
+  top:25px;
+  transform:translateX(-50%);
+  width:72px;
+  height:78px;
+  border-radius:48% 48% 44% 44%;
+  background:#f2c6a0;
+  border:2px solid #d9a77f;
+}
+.avatarHair{
+  position:absolute;
+  left:50%;
+  top:14px;
+  transform:translateX(-50%);
+  width:78px;
+  height:38px;
+  border-radius:46px 46px 18px 18px;
+  z-index:2;
+}
+.avatarHair.blond{background:#f4cf4f}
+.avatarHair.braun{background:#5b3424}
+.avatarEye{
+  position:absolute;
+  top:54px;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:#172033;
+  z-index:3;
+}
+.avatarEye.left{left:42px}
+.avatarEye.right{right:42px}
+.avatarGlasses{
+  position:absolute;
+  left:50%;
+  top:43px;
+  transform:translateX(-50%);
+  z-index:4;
+  font-size:27px;
+  line-height:1;
+}
+.avatarMoustache{
+  position:absolute;
+  left:50%;
+  top:76px;
+  transform:translateX(-50%);
+  z-index:4;
+  width:28px;
+  height:10px;
+}
+.avatarMoustache:before,
+.avatarMoustache:after{
+  content:"";
+  position:absolute;
+  top:0;
+  width:16px;
+  height:9px;
+  background:#3f2a20;
+  border-radius:80% 20% 70% 30%;
+}
+.avatarMoustache:before{right:12px;transform:rotate(15deg)}
+.avatarMoustache:after{left:12px;transform:scaleX(-1) rotate(15deg)}
+.avatarHat{
+  position:absolute;
+  left:50%;
+  top:2px;
+  transform:translateX(-50%);
+  z-index:6;
+  font-size:48px;
+  line-height:1;
+}
+.avatarSmile{
+  position:absolute;
+  left:50%;
+  top:83px;
+  transform:translateX(-50%);
+  width:18px;
+  height:9px;
+  border-bottom:2px solid #9f3457;
+  border-radius:0 0 18px 18px;
+  z-index:3;
+}
+.featureLegend{
+  margin-top:8px;
+  font-size:13px;
+  color:var(--muted);
+  font-weight:750;
+}
+
+
+.flashGame{
+  position:relative;
+  height:540px;
+  overflow:hidden;
+  border-radius:24px;
+  border:1px solid #1f2937;
+  background:
+    linear-gradient(#334155 0 18%,#475569 18% 20%,#374151 20% 72%,#292524 72% 100%);
+  margin-top:16px;
+  cursor:none;
+  user-select:none;
+}
+.flashGame:before{
+  content:"";
+  position:absolute;
+  left:7%;
+  top:18%;
+  width:22%;
+  height:48%;
+  background:#475569;
+  border:8px solid #1f2937;
+  border-bottom-width:14px;
+  opacity:.8;
+}
+.flashGame:after{
+  content:"";
+  position:absolute;
+  right:8%;
+  bottom:17%;
+  width:27%;
+  height:22%;
+  background:#78350f;
+  border-radius:8px 8px 2px 2px;
+  box-shadow:0 -14px 0 #92400e;
+  opacity:.85;
+}
+.flashTarget{
+  max-width:620px;
+  margin:0 auto 14px;
+  padding:13px 18px;
+  text-align:center;
+  background:#fff;
+  border:2px solid #a78bfa;
+  border-radius:18px;
+  font-size:24px;
+  font-weight:950;
+}
+.roomObject{
+  position:absolute;
+  z-index:3;
+  width:92px;
+  height:92px;
+  border:0;
+  background:transparent;
+  border-radius:18px;
+  font-size:54px;
+  display:grid;
+  place-items:center;
+  cursor:pointer;
+  filter:brightness(.18);
+  transition:filter .08s,transform .12s;
+}
+.roomObject.lit{filter:brightness(1)}
+.roomObject:hover{transform:scale(1.07)}
+.flashDark{
+  position:absolute;
+  inset:0;
+  z-index:5;
+  pointer-events:none;
+  background:rgba(2,6,23,.94);
+  --mx:50%;
+  --my:50%;
+  -webkit-mask-image:radial-gradient(circle 105px at var(--mx) var(--my),transparent 0 72px,rgba(0,0,0,.22) 86px,#000 108px);
+  mask-image:radial-gradient(circle 105px at var(--mx) var(--my),transparent 0 72px,rgba(0,0,0,.22) 86px,#000 108px);
+}
+.flashBeam{
+  position:absolute;
+  z-index:7;
+  pointer-events:none;
+  width:215px;
+  height:215px;
+  border-radius:50%;
+  border:3px solid rgba(255,255,210,.55);
+  box-shadow:0 0 35px rgba(255,255,190,.18);
+  transform:translate(-50%,-50%);
+}
+.flashTorch{
+  position:absolute;
+  z-index:8;
+  pointer-events:none;
+  font-size:34px;
+  transform:translate(15px,18px) rotate(-35deg);
+}
+.flashObjectLabel{
+  position:absolute;
+  z-index:4;
+  transform:translateX(-50%);
+  padding:3px 7px;
+  border-radius:8px;
+  background:#fff;
+  color:#172033;
+  font-size:12px;
+  font-weight:900;
+  opacity:0;
+  pointer-events:none;
+}
+.flashObjectLabel.show{opacity:1}
+
+.frogGame{
+  position:relative;
+  min-height:520px;
+  overflow:hidden;
+  border:1px solid #93c5fd;
+  border-radius:24px;
+  margin-top:16px;
+  padding:22px;
+  background:linear-gradient(#dbeafe 0 28%,#7dd3fc 28% 100%);
+}
+.frogTarget{
+  max-width:620px;
+  margin:0 auto 18px;
+  padding:13px 18px;
+  text-align:center;
+  background:#fff;
+  border:2px solid #60a5fa;
+  border-radius:18px;
+  font-size:24px;
+  font-weight:950;
+  position:relative;
+  z-index:4;
+}
+.pond{
+  position:relative;
+  height:390px;
+}
+.lily{
+  position:absolute;
+  width:180px;
+  min-height:92px;
+  transform:translate(-50%,-50%);
+  border:0;
+  border-radius:50%;
+  padding:15px 12px;
+  background:#86efac;
+  box-shadow:inset 0 -9px 0 #4ade80,0 8px 18px #0f172a22;
+  color:#14532d;
+  font-size:17px;
+  font-weight:950;
+  line-height:1.15;
+}
+.lily:hover{filter:brightness(1.04)}
+.lily.correct{background:#bbf7d0;outline:5px solid #22c55e}
+.lily.wrong{background:#fecaca;outline:5px solid #ef4444}
+.frog{
+  position:absolute;
+  left:50%;
+  bottom:4px;
+  transform:translateX(-50%);
+  font-size:64px;
+  z-index:5;
+  transition:left .38s ease,bottom .38s ease,transform .38s ease;
+  pointer-events:none;
+}
+.splash{
+  position:absolute;
+  font-size:52px;
+  z-index:6;
+  animation:splash .55s ease forwards;
+}
+@keyframes splash{
+  0%{transform:scale(.5);opacity:0}
+  40%{transform:scale(1.25);opacity:1}
+  100%{transform:scale(1.7);opacity:0}
+}
+
+@media(max-width:720px){.modes,.suspects{grid-template-columns:1fr}.memory{grid-template-columns:repeat(3,1fr)}.panel{min-height:0}.balloonGame{height:560px}.balloon{width:120px}.map{grid-template-columns:repeat(5,1fr)}}
+@media(max-width:460px){.memory{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <div class="top"><div class="brand">🕵️ Détective Français</div><div id="profile" class="profile hidden"><span id="pe">🕵️</span><span id="pn"></span><span>⭐ <span id="gs">0</span></span></div></div>
+ <main id="app" class="panel"></main>
+</div>
+<script>
+const vocab=[
+["la chasse","die Jagd"],["la montre","die Uhr"],["le détective","der Detektiv"],["la voleuse","die Diebin"],["le voleur","der Dieb"],["la police","die Polizei"],["avoir","haben"],["voler","stehlen"],["crier","rufen / schreien"],["téléphoner à","anrufen"],["vieux / vieille","alt"],["aujourd’hui","heute"],["tout à coup","plötzlich"],["la moustache","der Schnauz"],["les cheveux","die Haare"],["les lunettes","die Brille"],["les lunettes de soleil","die Sonnenbrille"],["le chapeau","der Hut"],["les chaussures","die Schuhe"],["le nez","die Nase"],["les yeux","die Augen"],["blond / blonde","blond"],["brun / brune","braun"],["mince","dünn / schlank"],["long / longue","lang"],["court / courte","kurz"],["l’objet","der Gegenstand"],["tourner","abbiegen"],["traverser","überqueren"],["à droite","nach rechts"],["à gauche","nach links"],["sous","unter"],["devant","vor"],["derrière","hinter"]];
+const avatars=["🕵️","🕵️‍♀️","🥷","🦊","🐼","🐯","🤖","👻","🐲","🦄","🐧","🐙"];
+const S={name:"",emoji:"🕵️",score:0,run:0}; const app=document.querySelector("#app");
+const shuffle=a=>[...a].sort(()=>Math.random()-.5); const sample=(a,n)=>shuffle(a).slice(0,n);
+function add(n){S.score+=n;document.querySelector("#gs").textContent=S.score}
+function nav(){return `<button class="btn light" onclick="menu()">← Spielmodi</button>`}
+function start(){document.querySelector("#profile").classList.add("hidden");app.innerHTML=`<div class="hero"><div class="heroEmoji">🕵️‍♂️</div><h1>Détective Français</h1><p class="muted">Vier Spiele, immer neue zufällige Wörter.</p><input id="name" class="name" placeholder="Dein Name" maxlength="18"><p><button class="btn" onclick="nameNext()">Weiter</button></p></div>`}
+function nameNext(){let n=document.querySelector("#name").value.trim();if(!n)return document.querySelector("#name").focus();S.name=n;app.innerHTML=`<div class="hero"><h2>Wähle deinen Charakter</h2><div class="emojiGrid">${avatars.map((x,i)=>`<button class="emoji ${i==0?"sel":""}" onclick="pickEmoji(this,'${x}')">${x}</button>`).join("")}</div><button class="btn" onclick="menu()">Los gehts</button></div>`}
+function pickEmoji(el,x){S.emoji=x;document.querySelectorAll(".emoji").forEach(e=>e.classList.remove("sel"));el.classList.add("sel")}
+function menu(){S.run++;document.querySelector("#profile").classList.remove("hidden");document.querySelector("#pe").textContent=S.emoji;document.querySelector("#pn").textContent=S.name;document.querySelector("#gs").textContent=S.score;app.innerHTML=`<h2>Wähle einen Spielmodus</h2><p class="muted">Du kannst jeden Modus beliebig oft spielen. Bei jedem Start werden die Aufgaben neu gemischt.</p><div class="modes">
+<button class="mode" onclick="balloons()"><div class="icon">🎈</div><h3>Ballonjäger</h3><p>Der deutsche Begriff steht oben. Lass den richtigen französischen Ballon platzen, bevor er entkommt.</p></button>
+<button class="mode" onclick="memory()"><div class="icon">🧩</div><h3>Paare finden</h3><p>Finde französische Wörter und ihre deutschen Übersetzungen. Jedes Spiel hat neue Zufallswörter.</p></button>
+<button class="mode" onclick="thief()"><div class="icon">🕵️</div><h3>Wer ist der Dieb?</h3><p>Nutze die französischen Hinweise. Sichtbare Merkmale stimmen jetzt exakt mit den Hinweisen überein.</p></button>
+<button class="mode" onclick="flashlightGame()"><div class="icon">🔦</div><h3>Taschenlampensuche</h3><p>Suche die Gegenstände nacheinander im dunklen Raum und sammle sie ein.</p></button></div>`}
+function finish(icon,title,points){app.innerHTML=`<div class="end"><div class="endIcon">${icon}</div><h2>${title}</h2><div class="bigScore">+${points} ⭐</div><p class="muted">Du kannst den Modus sofort nochmals spielen. Die Aufgaben werden neu ausgelost.</p><p><button class="btn" onclick="${icon==="🎈"?"balloons()":icon==="🧩"?"memory()":icon==="🕵️"?"thief()":icon==="🔦"?"flashlightGame()":"menu()"}">Nochmals spielen</button> <button class="btn soft" onclick="menu()">Spielmodi</button></p></div>`}
+
+/* MEMORY */
+function memory(){
+  let chosen=sample(vocab,6);
+  let deck=shuffle(chosen.flatMap((v,i)=>[{id:i,t:v[0]},{id:i,t:v[1]}]));
+  let open=[], done=new Set(), moves=0, pts=0;
+  app.innerHTML=`<div class="hud">${nav()}<span class="pill">Züge <b id="moves">0</b></span><span class="pill">Paare <b id="pairs">0</b>/6</span></div><h2>🧩 Paare finden</h2><div class="memory">${deck.map((x,i)=>`<button class="mem" data-i="${i}">?</button>`).join("")}</div>`;
+  const cards=[...document.querySelectorAll(".mem")];
+  cards.forEach(c=>{
+    c.onclick=()=>{
+      const i=+c.dataset.i;
+      if(open.length===2 || open.includes(i) || done.has(deck[i].id)) return;
+      c.classList.add("open");
+      c.textContent=deck[i].t;
+      open.push(i);
+      if(open.length!==2) return;
+      moves++;
+      document.querySelector("#moves").textContent=moves;
+      const [a,b]=open;
+      if(deck[a].id===deck[b].id){
+        done.add(deck[a].id);
+        cards[a].classList.add("done"); cards[b].classList.add("done");
+        cards[a].disabled=true; cards[b].disabled=true;
+        pts+=100; add(100);
+        document.querySelector("#pairs").textContent=done.size;
+        open=[];
+        if(done.size===6) setTimeout(()=>finish("🧩","Alle Paare gefunden!",pts),600);
+      } else {
+        setTimeout(()=>{
+          [a,b].forEach(k=>{cards[k].classList.remove("open");cards[k].textContent="?";});
+          open=[];
+        },700);
+      }
+    };
+  });
+}
+
+/* BALLOONS */
+let balloonTimer=null;
+function balloons(){
+ clearInterval(balloonTimer);let round=0,pts=0,lives=3;
+ function next(){
+  clearInterval(balloonTimer);
+  if(round>=8||lives<=0)return finish("🎈",lives>0?"Ballonrunde geschafft!":"Die Ballons sind entwischt!",pts);
+  round++;
+  let correct=vocab[Math.floor(Math.random()*vocab.length)], options=shuffle([correct,...sample(vocab.filter(v=>v[0]!=correct[0]),3)]);
+  app.innerHTML=`<div class="hud">${nav()}<span class="pill">Runde ${round}/8</span><span class="pill">❤️ ${lives}</span><span class="pill">Punkte ${pts}</span></div><h2>🎈 Ballonjäger</h2><div class="target">Finde: 🇩🇪 ${correct[1]}</div><div id="sky" class="balloonGame"></div><div id="bf" class="feedback"></div>`;
+  let sky=document.querySelector("#sky"), H=sky.clientHeight, positions=[5,29,53,76], bs=[];
+  options.forEach((o,i)=>{let b=document.createElement("button");b.className="balloon";b.style.left=positions[i]+"%";b.style.bottom="-160px";b.innerHTML=`🎈<span>${o[0]}</span>`;b.dataset.correct=o[0]==correct[0];sky.appendChild(b);bs.push({el:b,y:-160,speed:0.68+Math.random()*.38});b.onclick=()=>{if(b.dataset.correct==="true"){b.classList.add("pop");pts+=120;add(120);document.querySelector("#bf").textContent="💥 Richtig!";clearInterval(balloonTimer);setTimeout(next,400)}else{b.classList.add("pop");b.disabled=true;pts=Math.max(0,pts-20);document.querySelector("#bf").textContent="❌ Falscher Ballon!"}}});
+  balloonTimer=setInterval(()=>{let escaped=false;bs.forEach(b=>{if(!b.el.isConnected)return;b.y+=b.speed*2.1;b.el.style.bottom=b.y+"px";if(b.y>H+20&&b.el.dataset.correct==="true")escaped=true});if(escaped){clearInterval(balloonTimer);lives--;document.querySelector("#bf").textContent="😮 Der richtige Ballon ist entwischt!";setTimeout(next,600)}},20);
+ }
+ next();
+}
+
+/* THIEF: use feature icons so clues can never contradict visual */
+const hairs=[
+ {fr:"les cheveux blonds",name:"blond"},
+ {fr:"les cheveux bruns",name:"braun"}
+];
+function makePerson(){
+ let hair=hairs[Math.floor(Math.random()*hairs.length)],
+     glasses=Math.random()<.5,
+     moustache=Math.random()<.5,
+     hat=Math.random()<.5;
+ return {hair,glasses,moustache,hat};
+}
+function signature(p){return [p.hair.name,p.glasses,p.moustache,p.hat].join("|")}
+function personHTML(p,i){
+ return `<button class="suspect" data-i="${i}">
+   <div class="avatarBox">
+     <div class="avatarHead"></div>
+     <div class="avatarHair ${p.hair.name}"></div>
+     <div class="avatarEye left"></div>
+     <div class="avatarEye right"></div>
+     <div class="avatarSmile"></div>
+     ${p.glasses?'<div class="avatarGlasses">👓</div>':""}
+     ${p.moustache?'<div class="avatarMoustache"></div>':""}
+     ${p.hat?'<div class="avatarHat">🎩</div>':""}
+   </div>
+   <div class="tag">Person ${i+1}</div>
+ </button>`
+}
+function thief(){
+ let round=0,pts=0;
+ function next(){
+  if(round>=5)return finish("🕵️","Alle Fälle gelöst!",pts);round++;
+  let people=[];while(people.length<3){let p=makePerson();if(!people.some(q=>signature(q)==signature(p)))people.push(p)}
+  let ci=Math.floor(Math.random()*3),c=people[ci],clues=[`La personne a ${c.hair.fr}.`,c.glasses?"La personne porte des lunettes.":"La personne ne porte pas de lunettes.",c.hat?"La personne porte un chapeau.":"La personne ne porte pas de chapeau."];
+  if(c.moustache)clues.push("La personne a une moustache.");
+  app.innerHTML=`<div class="hud">${nav()}<span class="pill">Fall ${round}/5</span><span class="pill">Punkte ${pts}</span></div><h2>🕵️ Wer ist der Dieb?</h2><p class="muted">Achte genau auf Haarfarbe, Brille, Hut und Schnauz.</p><div class="clueBox">${clues.join("<br>")}</div><div class="suspects">${people.map(personHTML).join("")}</div><div id="tf" class="feedback"></div>`;
+  document.querySelectorAll(".suspect").forEach(b=>b.onclick=()=>{document.querySelectorAll(".suspect").forEach(x=>x.disabled=true);if(+b.dataset.i===ci){b.style.background="#dcfce7";b.style.borderColor="#86efac";pts+=150;add(150);document.querySelector("#tf").textContent="✅ Richtig kombiniert!"}else{b.style.background="#fee2e2";b.style.borderColor="#fca5a5";document.querySelectorAll(".suspect")[ci].style.background="#dcfce7";document.querySelector("#tf").textContent="❌ Diese Person passt nicht zu allen Hinweisen."}setTimeout(next,900)})
+ }next();
+}
+
+/* FLASHLIGHT SEARCH */
+const searchObjects=[
+  {fr:"la montre",de:"die Uhr",icon:"⌚"},
+  {fr:"les lunettes",de:"die Brille",icon:"👓"},
+  {fr:"les lunettes de soleil",de:"die Sonnenbrille",icon:"🕶️"},
+  {fr:"le chapeau",de:"der Hut",icon:"🎩"},
+  {fr:"les chaussures",de:"die Schuhe",icon:"👟"},
+  {fr:"le nez",de:"die Nase",icon:"👃"},
+  {fr:"les yeux",de:"die Augen",icon:"👀"},
+  {fr:"le téléphone",de:"das Telefon",icon:"📱"},
+  {fr:"l’objet",de:"der Gegenstand",icon:"📦"}
+];
+
+function flashlightGame(){
+ let pts=0,lives=3,collected=0;
+ const objects=shuffle([...searchObjects]);
+ const total=objects.length;
+
+ const spots=shuffle([
+   {x:12,y:28},{x:29,y:56},{x:46,y:31},
+   {x:62,y:62},{x:78,y:35},{x:87,y:70},
+   {x:18,y:76},{x:53,y:79},{x:38,y:78},
+   {x:72,y:78},{x:90,y:24},{x:10,y:58}
+ ]).slice(0,total);
+
+ function render(){
+  if(collected>=total || lives<=0){
+    return finish("🔦",collected>=total?"Alle Gegenstände eingesammelt!":"Der Dieb ist entkommen!",pts);
+  }
+
+  const target=objects[collected];
+
+  app.innerHTML=`
+    <div class="hud">
+      ${nav()}
+      <span class="pill">Gesammelt ${collected}/${total}</span>
+      <span class="pill">❤️ ${lives}</span>
+      <span class="pill">Punkte ${pts}</span>
+    </div>
+    <h2>🔦 Taschenlampensuche</h2>
+    <p class="muted">Finde die Gegenstände nacheinander. Leuchte den Raum ab und klicke direkt auf den richtigen Gegenstand.</p>
+    <div class="flashTarget">Finde: 🇫🇷 ${target.fr}</div>
+    <div id="darkRoom" class="flashGame">
+      ${objects.map((o,i)=>i<collected?"":`
+        <button class="roomObject" data-i="${i}"
+          style="left:calc(${spots[i].x}% - 46px);top:calc(${spots[i].y}% - 46px)"
+          aria-label="Gegenstand">
+          ${o.icon}
+        </button>`).join("")}
+      <div id="flashDark" class="flashDark"></div>
+      <div id="flashBeam" class="flashBeam"></div>
+      <div id="flashTorch" class="flashTorch">🔦</div>
+    </div>
+    <div id="flashFb" class="feedback"></div>`;
+
+  const room=document.querySelector("#darkRoom");
+  const dark=document.querySelector("#flashDark");
+  const beam=document.querySelector("#flashBeam");
+  const torch=document.querySelector("#flashTorch");
+  const buttons=[...document.querySelectorAll(".roomObject")];
+
+  function moveLight(clientX,clientY){
+    const r=room.getBoundingClientRect();
+    const x=Math.max(0,Math.min(r.width,clientX-r.left));
+    const y=Math.max(0,Math.min(r.height,clientY-r.top));
+    dark.style.setProperty("--mx",x+"px");
+    dark.style.setProperty("--my",y+"px");
+    beam.style.left=x+"px";
+    beam.style.top=y+"px";
+    torch.style.left=x+"px";
+    torch.style.top=y+"px";
+
+    buttons.forEach(b=>{
+      const br=b.getBoundingClientRect();
+      const bx=br.left+br.width/2;
+      const by=br.top+br.height/2;
+      const d=Math.hypot(clientX-bx,clientY-by);
+      b.classList.toggle("lit",d<110);
+    });
+  }
+
+  room.addEventListener("mousemove",e=>moveLight(e.clientX,e.clientY));
+  room.addEventListener("touchmove",e=>{
+    const t=e.touches[0];
+    if(t){moveLight(t.clientX,t.clientY);e.preventDefault()}
+  },{passive:false});
+
+  const rr=room.getBoundingClientRect();
+  moveLight(rr.left+rr.width/2,rr.top+rr.height/2);
+
+  buttons.forEach(btn=>{
+    btn.onclick=()=>{
+      const i=+btn.dataset.i;
+      const chosen=objects[i];
+
+      if(i===collected){
+        buttons.forEach(b=>b.disabled=true);
+        btn.style.background="#dcfce7";
+        btn.style.filter="brightness(1)";
+        pts+=150;
+        add(150);
+        flashFb.textContent="✅ Richtig, eingesammelt!";
+        collected++;
+        setTimeout(render,650);
+      }else{
+        btn.disabled=true;
+        btn.style.background="#fee2e2";
+        btn.style.filter="brightness(1)";
+        lives--;
+        flashFb.textContent="❌ Falsch! Das ist "+chosen.de+". Du verlierst ein Leben.";
+        if(lives<=0){
+          buttons.forEach(b=>b.disabled=true);
+          setTimeout(render,900);
+        }else{
+          setTimeout(()=>{
+            if(btn.isConnected){
+              btn.style.background="transparent";
+              btn.disabled=false;
+            }
+            flashFb.textContent="";
+          },900);
+        }
+      }
+    };
+  });
+ }
+ render();
+}
+
+start();
+</script>
+</body></html>

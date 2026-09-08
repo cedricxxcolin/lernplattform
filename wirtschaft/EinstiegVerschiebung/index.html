@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Döner News, der Markt gerät durcheinander</title>
+<style>
+:root{--bg:#050a12;--panel:#0d1a2c;--text:#f7f9fc;--muted:#acb9ca;--red:#ed2441;--blue:#1889ef;--green:#24cf7c;--yellow:#ffc947;--line:rgba(255,255,255,.17)}
+*{box-sizing:border-box}html,body{margin:0;height:100%}body{overflow:hidden;color:var(--text);background:radial-gradient(circle at 85% 15%,#0c3c6b 0,transparent 32%),linear-gradient(145deg,#02050a,var(--bg) 55%,#0b1b30);font-family:Arial,Helvetica,sans-serif}.app{height:100vh;display:grid;grid-template-rows:68px 1fr 82px}header{z-index:5;display:flex;align-items:center;justify-content:space-between;padding:0 4vw;background:#02060ded;border-bottom:1px solid var(--line)}.brand{display:flex;align-items:center;gap:14px;font-size:clamp(20px,2vw,30px);font-weight:950;letter-spacing:-.04em;text-transform:uppercase}.mark{padding:7px 11px;background:var(--red);transform:skew(-8deg);box-shadow:5px 5px #1889ef44}.mark span{display:block;transform:skew(8deg)}.live{display:flex;align-items:center;gap:9px;color:#ffd8de;font-size:13px;font-weight:900;letter-spacing:.13em}.dot{width:10px;height:10px;border-radius:50%;background:var(--red);animation:pulse 1.5s infinite}@keyframes pulse{0%{box-shadow:0 0 0 0 #ed2441cc}70%{box-shadow:0 0 0 9px #ed244100}}
+main{position:relative;min-height:0;overflow:hidden}.screen{position:absolute;inset:0;padding:clamp(28px,4vw,62px) 6vw;overflow:auto;animation:enter .32s ease both}@keyframes enter{from{opacity:0;transform:translateY(18px)}}.kicker{display:flex;align-items:center;gap:10px;margin-bottom:17px;color:#69b8ff;font-size:clamp(14px,1.2vw,18px);font-weight:900;letter-spacing:.13em;text-transform:uppercase}.kicker:before{content:"";width:34px;height:4px;background:var(--red)}h1,h2,p{margin-top:0}h1{margin-bottom:23px;font-size:clamp(48px,7.7vw,112px);line-height:.9;letter-spacing:-.07em;text-transform:uppercase;text-wrap:balance}h2{margin-bottom:19px;font-size:clamp(37px,5.1vw,78px);line-height:1;letter-spacing:-.05em;text-wrap:balance}.lead{max-width:850px;margin-bottom:0;color:#d0dae7;font-size:clamp(19px,1.7vw,27px);line-height:1.43}.hero,.news,.room-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(340px,.8fr);gap:5vw;align-items:center;min-height:100%}.hero-art{min-height:min(54vh,540px);display:grid;place-items:center;border:1px solid var(--line);border-radius:22px;background:radial-gradient(circle,#1889ef55,#07101e55 58%);box-shadow:0 28px 75px #0007}.price{width:min(68%,370px);aspect-ratio:1;display:grid;place-items:center;border:4px solid #ffffff22;border-radius:50%;font-size:clamp(60px,8vw,125px);font-weight:950;box-shadow:inset 0 0 70px #1889ef26,0 0 90px #1889ef33}
+.rules{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:1100px;margin-top:36px}.rule{min-height:170px;padding:24px;border:1px solid var(--line);border-radius:16px;background:#ffffff0e}.rule b{display:block;margin-bottom:14px;color:var(--red);font-size:34px}.rule span{font-size:clamp(17px,1.35vw,22px);line-height:1.4}
+.room-holder{width:100%;max-width:720px;margin:auto}.room{position:relative;width:100%;aspect-ratio:1.55;border:3px solid #ffffff45;border-radius:14px;background:linear-gradient(#1889ef0c 1px,transparent 1px),linear-gradient(90deg,#1889ef0c 1px,transparent 1px),#050c16d9;background-size:32px 32px;box-shadow:inset 0 0 55px #0007,0 24px 65px #0005}.wall{position:absolute;top:-17px;left:23%;width:54%;height:31px;display:grid;place-items:center;border-radius:6px;background:#d9eaff;color:#09121f;font-size:12px;font-weight:950;letter-spacing:.13em;text-transform:uppercase}.corner,.middle{position:absolute;display:grid;place-items:center;text-align:center;font-weight:950;line-height:1.08;transition:.35s}.corner{width:38%;min-height:25%;padding:16px;border:2px solid #ffffff2e;border-radius:13px;background:#0e1e33f2;font-size:clamp(16px,1.55vw,24px)}.corner small{display:block;margin-top:7px;color:var(--muted);font-size:12px;letter-spacing:.08em;text-transform:uppercase}.nw{left:4%;top:9%}.ne{right:4%;top:9%}.sw{left:4%;bottom:7%}.se{right:4%;bottom:7%}.middle{left:50%;top:50%;width:25%;aspect-ratio:1;padding:12px;transform:translate(-50%,-50%);border:3px solid var(--yellow);border-radius:50%;background:#2a240e;color:#ffdd78;font-size:clamp(15px,1.25vw,20px);box-shadow:0 0 0 8px #ffc94712}.middle.pulse{animation:mid 1.25s infinite}@keyframes mid{50%{box-shadow:0 0 0 20px #ffc94700;transform:translate(-50%,-50%) scale(1.045)}}.correct-nw .nw,.correct-ne .ne,.correct-sw .sw,.correct-se .se{border-color:var(--green);background:#116946f2;transform:scale(1.04);box-shadow:0 0 32px #24cf7c47}.correct-mid .middle{border-color:var(--green);background:#126d48;color:white;box-shadow:0 0 0 15px #24cf7c1f,0 0 38px #24cf7c52}.dim .corner:not(.selected){opacity:.26;filter:saturate(.2)}.orientation{display:flex;justify-content:space-between;margin-top:13px;color:var(--muted);font-size:13px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+.breaking{display:inline-block;margin-bottom:20px;padding:8px 15px;background:var(--red);font-size:15px;font-weight:950;letter-spacing:.12em;text-transform:uppercase;transform:skew(-7deg)}.breaking span{display:block;transform:skew(7deg)}.detail{max-width:800px;color:#cbd7e6;font-size:clamp(19px,1.65vw,27px);line-height:1.42}.image{position:relative;min-height:min(57vh,560px);overflow:hidden;border:1px solid var(--line);border-radius:20px;background:linear-gradient(145deg,#162a47,#09111e);box-shadow:0 27px 70px #0007}.image:after{content:"";position:absolute;inset:0;background:linear-gradient(155deg,transparent 45%,#03080fb3)}.image img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.fallback{position:absolute;inset:0;display:grid;place-items:center;color:#ffffff2b;font-size:clamp(110px,16vw,235px);font-weight:950}.round2 .image{transform:rotate(1.4deg);border-radius:6px 28px}.round3 .image{clip-path:polygon(8% 0,100% 0,92% 100%,0 100%);border-radius:0}.round4 .image{transform:rotate(-1.2deg);border:7px solid #ffffff14}.round5 .image{border-radius:50% 8px}.round6 .image{clip-path:polygon(0 0,94% 4%,100% 96%,6% 100%);border-radius:0}.round7 .image{border-color:#ed24418c;box-shadow:0 27px 70px #ed244124}
+.decision{text-align:center}.decision h2{margin-bottom:8px;color:var(--yellow);text-transform:uppercase}.decision p{color:#d5dfec;font-size:clamp(17px,1.4vw,22px)}.decision .room-holder{width:min(65vw,760px)}.solution{max-width:580px;padding:25px 27px;border-left:6px solid var(--green);border-radius:0 15px 15px 0;background:#0f49358c}.solution strong{display:block;margin-bottom:12px;color:#6df0b2;font-size:clamp(25px,2.5vw,39px)}.solution p{margin:0;color:#e0eee8;font-size:clamp(17px,1.4vw,22px);line-height:1.43}
+.countdown{position:absolute;inset:0;z-index:20;display:none;place-items:center;background:#02050ab8;backdrop-filter:blur(7px)}.countdown.show{display:grid}.count-number{font-size:min(38vw,380px);line-height:1;font-weight:950;letter-spacing:-.1em;text-shadow:0 0 60px #1889ef6b;animation:pop .85s ease both}@keyframes pop{from{opacity:0;transform:scale(1.35)}35%{opacity:1}to{transform:scale(.85)}}
+footer{z-index:12;display:grid;grid-template-columns:1fr auto;background:#02060c;border-top:1px solid var(--line)}.ticker{display:flex;align-items:center;min-width:0;overflow:hidden}.ticker-tag{align-self:stretch;display:grid;place-items:center;padding:0 23px;background:var(--red);font-weight:950;text-transform:uppercase;transform:skew(-7deg);transform-origin:left bottom}.ticker-tag span{transform:skew(7deg)}.ticker-text{overflow:hidden;padding:0 28px;white-space:nowrap;text-overflow:ellipsis;color:#d3ddea;font-size:clamp(14px,1.15vw,18px);font-weight:750}.controls{display:flex;align-items:center;gap:10px;padding:0 3vw 0 18px}.btn{min-height:45px;padding:0 18px;border:1px solid #ffffff33;border-radius:9px;color:white;background:#ffffff14;cursor:pointer;font-weight:850}.btn:hover{background:#ffffff29}.btn.primary{min-width:165px;background:var(--blue);border-color:#3ba0ff}.btn.reveal{background:#16734e;border-color:var(--green)}.btn.icon{min-width:45px;padding:0 13px;font-size:21px}.counter{min-width:75px;color:var(--muted);text-align:center;font-size:14px;font-weight:850}.progress{position:fixed;z-index:30;top:67px;left:0;height:3px;background:linear-gradient(90deg,var(--red),var(--blue));transition:.35s}
+@media(max-width:900px){.app{grid-template-rows:60px 1fr 122px}.hero,.news,.room-layout{grid-template-columns:1fr;min-height:auto}.hero-art,.image{min-height:250px;max-height:34vh}.rules{grid-template-columns:1fr}.room-layout{padding-bottom:30px}footer{grid-template-columns:1fr}.ticker{min-height:53px}.controls{min-height:69px;justify-content:center;padding:0 12px}.decision .room-holder{width:90vw}.live{display:none}.progress{top:59px}.btn.primary{min-width:135px}}
+</style>
+</head>
+<body><div class="app"><header><div class="brand"><div class="mark"><span>DN</span></div>Döner News</div><div class="live"><span class="dot"></span>LIVE AUS BASEL</div></header><main id="stage"></main><footer><div class="ticker"><div class="ticker-tag"><span>Breaking</span></div><div class="ticker-text" id="ticker"></div></div><div class="controls"><button class="btn icon" id="back">‹</button><span class="counter" id="counter"></span><button class="btn primary" id="action"></button><button class="btn icon" id="full">⛶</button></div></footer><div class="progress" id="progress"></div><div class="countdown" id="countdown"><div class="count-number" id="countNumber">5</div></div></div>
+<script>
+const rounds=[
+{title:'TikTok Hype: Döner wird zum neuen Trendfood',detail:'Immer mehr Jugendliche möchten den gehypten Döner ausprobieren.',answer:'nw',label:'Nachfrage steigt',reason:'Mehr Menschen möchten Döner kaufen. Die Nachfrage nimmt zu.'},
+{title:'Viele Menschen verzichten plötzlich auf Fleisch',detail:'Eine neue Ernährungsbewegung gewinnt schnell an Beliebtheit.',answer:'ne',label:'Nachfrage sinkt',reason:'Weniger Menschen möchten einen Döner mit Fleisch kaufen. Die Nachfrage nimmt ab.'},
+{title:'Die Fleischpreise steigen massiv',detail:'Dönerläden müssen für ihre wichtigsten Zutaten deutlich mehr bezahlen.',answer:'se',label:'Angebot sinkt',reason:'Die Herstellung wird teurer. Die Dönerläden bieten insgesamt weniger Döner an.'},
+{title:'Eine neue Maschine senkt die Produktionskosten',detail:'Die Zubereitung wird schneller und benötigt weniger Personal.',answer:'sw',label:'Angebot steigt',reason:'Die Herstellung wird günstiger. Die Dönerläden können insgesamt mehr Döner anbieten.'},
+{title:'Der Preis für Pizza steigt stark',detail:'Eine vergleichbare Mahlzeit kostet plötzlich deutlich mehr als zuvor.',answer:'nw',label:'Nachfrage steigt',reason:'Einige Personen wechseln von der teureren Pizza zum Döner. Die Nachfrage nach Döner nimmt zu.'},
+{title:'Mehrere Dönerläden müssen schliessen',detail:'Wegen Personalmangels stellen mehrere Betriebe den Verkauf ein.',answer:'se',label:'Angebot sinkt',reason:'Es gibt weniger Verkaufsstellen. Insgesamt werden weniger Döner angeboten.'},
+{title:'Der Dönerpreis steigt von 12 auf 14 CHF',detail:'Ansonsten hat sich auf dem Markt nichts verändert.',answer:'mid',label:'Keine der vier Antworten',reason:'Eine Veränderung des Dönerpreises selbst bedeutet nicht, dass Angebot oder Nachfrage steigt oder sinkt. Im Modell ist dies eine Bewegung auf den Kurven.'}
+];
+const stage=document.querySelector('#stage'),ticker=document.querySelector('#ticker'),action=document.querySelector('#action'),back=document.querySelector('#back'),counter=document.querySelector('#counter'),progress=document.querySelector('#progress'),countdown=document.querySelector('#countdown'),countNumber=document.querySelector('#countNumber');let view='welcome',round=0,counting=false;
+function room(mode,answer=''){let cc=mode==='reveal'?`correct-${answer} dim`:'';let sel=k=>mode==='reveal'&&k===answer?' selected':'';return `<div class="room-holder"><div class="room ${cc}"><div class="wall">Leinwand</div><div class="corner nw${sel('nw')}">Nachfrage steigt<small>vorne links</small></div><div class="corner ne${sel('ne')}">Nachfrage sinkt<small>vorne rechts</small></div><div class="corner sw${sel('sw')}">Angebot steigt<small>hinten links</small></div><div class="corner se${sel('se')}">Angebot sinkt<small>hinten rechts</small></div><div class="middle ${mode==='center'?'pulse':''}">${mode==='reveal'&&answer==='mid'?'Hier bleiben':'Start in der Mitte'}</div></div><div class="orientation"><span>vorne</span><span>hinten</span></div></div>`}
+function render(){let h='',t='',b='Weiter',c='';if(view==='welcome'){h=`<section class="screen"><div class="hero"><div><div class="kicker">Sondersendung Wirtschaft</div><h1>Der Markt gerät durcheinander</h1><p class="lead">Sie entscheiden, wie sich neue Meldungen auf den Döner Markt auswirken.</p></div><div class="hero-art"><div class="price">12.–</div></div></div></section>`;t='Döner News analysiert live die neuesten Entwicklungen auf dem Markt.';b='Spiel erklären'}else if(view==='rules'){h=`<section class="screen"><div class="kicker">So funktioniert es</div><h2>Drei Regeln</h2><div class="rules"><div class="rule"><b>1</b><span>Bei jeder Meldung starten alle in der Mitte.</span></div><div class="rule"><b>2</b><span>Während des Countdowns überlegen Sie für sich und bleiben stehen.</span></div><div class="rule"><b>3</b><span>Erst bei «LOS!» gehen Sie gleichzeitig in die passende Ecke.</span></div></div></section>`;t='Zuerst denken, danach gleichzeitig entscheiden.';b='Raumplan zeigen'}else if(view==='plan'){h=`<section class="screen"><div class="room-layout"><div><div class="kicker">Orientierung</div><h2>Das sind Ihre vier Ecken</h2><p class="lead">Die Leinwand zeigt, wo vorne ist. Diese Zuordnung bleibt in jeder Runde gleich.</p></div>${room('center')}</div></section>`;t='Merken Sie sich die vier Antwortmöglichkeiten im Raum.';b='Runde 1 starten'}else if(view==='center'){h=`<section class="screen"><div class="room-layout"><div><div class="kicker">Runde ${round+1} von ${rounds.length}</div><h2>Alle in die Mitte</h2><p class="lead">Warten Sie auf die nächste Meldung.</p></div>${room('center')}</div></section>`;t=`Runde ${round+1}: Alle begeben sich in die Mitte.`;b='Meldung zeigen';c=`${round+1} / ${rounds.length}`}else if(view==='news'){let r=rounds[round];h=`<section class="screen round${round+1}"><div class="news"><div><div class="breaking"><span>Breaking News</span></div><h2>${r.title}</h2><p class="detail">${r.detail}</p></div><div class="image"><div class="fallback">${round+1}</div><img src="${round+1}.jpg" alt="Bild zur Meldung ${round+1}" onerror="this.style.display='none'"></div></div></section>`;t=r.title;b='Countdown starten';c=`${round+1} / ${rounds.length}`}else if(view==='vote'){h=`<section class="screen decision"><div class="kicker" style="justify-content:center">Ihre Entscheidung</div><h2>LOS!</h2><p>Gehen Sie jetzt in die passende Ecke.</p>${room('vote')}</section>`;t='Nachfrage steigt, Nachfrage sinkt, Angebot steigt oder Angebot sinkt?';b='Auflösung';c=`${round+1} / ${rounds.length}`}else if(view==='reveal'){let r=rounds[round];h=`<section class="screen"><div class="room-layout"><div><div class="kicker">Auflösung Runde ${round+1}</div><div class="solution"><strong>${r.label}</strong><p>${r.reason}</p></div></div>${room('reveal',r.answer)}</div></section>`;t=`Die richtige Lösung: ${r.label}.`;b=round===rounds.length-1?'Abschluss':'Nächste Runde';c=`${round+1} / ${rounds.length}`}else{h=`<section class="screen"><div class="hero"><div><div class="kicker">Sendung beendet</div><h1>Jetzt kommt das Modell</h1><p class="lead">Welche Veränderung bedeutet im Marktdiagramm eine Verschiebung nach links und welche eine Verschiebung nach rechts?</p></div><div class="hero-art"><div class="price" style="font-size:clamp(43px,6vw,88px)">A &amp; N</div></div></div></section>`;t='Überleitung: Die Entscheidungen werden nun ins Marktdiagramm übersetzt.';b='Neu starten'}stage.innerHTML=h;ticker.textContent=t;action.textContent=b;action.classList.toggle('reveal',view==='vote');counter.textContent=c;back.style.visibility=view==='welcome'?'hidden':'visible';let pos=view==='welcome'?0:view==='rules'?1:view==='plan'?2:view==='finish'?31:3+round*4+['center','news','vote','reveal'].indexOf(view);progress.style.width=`${Math.max(3,(pos+1)/31*100)}%`}
+function next(){if(counting)return;if(view==='welcome')view='rules';else if(view==='rules')view='plan';else if(view==='plan'){round=0;view='center'}else if(view==='center')view='news';else if(view==='news'){startCount();return}else if(view==='vote')view='reveal';else if(view==='reveal'){if(round<rounds.length-1){round++;view='center'}else view='finish'}else{round=0;view='welcome'}render()}
+function previous(){if(counting)return;if(view==='rules')view='welcome';else if(view==='plan')view='rules';else if(view==='center'){if(round===0)view='plan';else{round--;view='reveal'}}else if(view==='news')view='center';else if(view==='vote')view='news';else if(view==='reveal')view='vote';else if(view==='finish'){round=rounds.length-1;view='reveal'}render()}
+function startCount(){counting=true;countdown.classList.add('show');let n=5;showCount(n);let timer=setInterval(()=>{n--;if(n>0)showCount(n);else{clearInterval(timer);countNumber.textContent='LOS!';countNumber.style.fontSize='min(24vw,260px)';setTimeout(()=>{countdown.classList.remove('show');countNumber.style.fontSize='';counting=false;view='vote';render()},800)}},1000)}function showCount(n){countNumber.textContent=n;countNumber.style.animation='none';void countNumber.offsetWidth;countNumber.style.animation=''}
+action.onclick=next;back.onclick=previous;document.querySelector('#full').onclick=()=>document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();document.addEventListener('keydown',e=>{if((e.key===' '||e.key==='ArrowRight'||e.key==='Enter')&&!counting){e.preventDefault();next()}if(e.key==='ArrowLeft'&&!counting)previous();if(e.key.toLowerCase()==='f')document.querySelector('#full').click()});render();
+</script>
+<style>
+.case-strip{max-width:900px;margin:0 auto 18px;padding:11px 18px;border-left:5px solid var(--red);border-radius:0 9px 9px 0;background:#111f33;color:#f7f9fc;font-size:clamp(16px,1.25vw,21px);font-weight:850;line-height:1.3;text-align:left;box-shadow:0 10px 25px #0003}.case-strip span{margin-right:9px;color:#ff7388;font-size:.72em;letter-spacing:.1em;text-transform:uppercase}.room-layout .case-strip{margin:0 0 18px}
+</style>
+<script>
+const renderBase=render;
+render=function(){
+  renderBase();
+  if(view==='vote'){
+    const intro=stage.querySelector('.decision > p');
+    intro.insertAdjacentHTML('afterend',`<div class="case-strip"><span>Aktueller Fall</span>${rounds[round].title}</div>`);
+  }
+  if(view==='reveal'){
+    const solution=stage.querySelector('.solution');
+    solution.insertAdjacentHTML('beforebegin',`<div class="case-strip"><span>Aktueller Fall</span>${rounds[round].title}</div>`);
+  }
+};
+let audioContext;
+function playCountdownTone(isGo=false){
+  audioContext=audioContext||new (window.AudioContext||window.webkitAudioContext)();
+  const oscillator=audioContext.createOscillator();
+  const gain=audioContext.createGain();
+  oscillator.type=isGo?'sine':'square';
+  oscillator.frequency.setValueAtTime(isGo?880:440,audioContext.currentTime);
+  gain.gain.setValueAtTime(isGo?.24:.13,audioContext.currentTime);
+  gain.gain.exponentialRampToValueAtTime(.001,audioContext.currentTime+(isGo?.55:.16));
+  oscillator.connect(gain);gain.connect(audioContext.destination);
+  oscillator.start();oscillator.stop(audioContext.currentTime+(isGo?.55:.16));
+}
+startCount=function(){
+  counting=true;countdown.classList.add('show');let n=3;showCount(n);playCountdownTone();
+  const timer=setInterval(()=>{n--;if(n>0){showCount(n);playCountdownTone()}else{clearInterval(timer);countNumber.textContent='LOS!';countNumber.style.fontSize='min(24vw,260px)';playCountdownTone(true);setTimeout(()=>{countdown.classList.remove('show');countNumber.style.fontSize='';counting=false;view='vote';render()},800)}},1000);
+};
+render();
+</script>
+<style>
+.walker{position:absolute;z-index:9;left:50%;top:50%;width:54px;height:54px;transform:translate(-50%,-50%);transition:left 1s cubic-bezier(.42,0,.2,1),top 1s cubic-bezier(.42,0,.2,1);filter:drop-shadow(0 7px 8px #0009)}.walker-icon{width:100%;height:100%;display:grid;place-items:center;border:3px solid #dcebff;border-radius:50%;background:#147ac8;color:white;animation:unsure .65s ease-in-out}.walker svg{width:31px;height:31px;stroke:currentColor;stroke-width:2.3;fill:none;stroke-linecap:round;stroke-linejoin:round}.walker.go-nw{left:23%;top:22%}.walker.go-ne{left:77%;top:22%}.walker.go-sw{left:23%;top:78%}.walker.go-se{left:77%;top:78%}.walker.go-mid .walker-icon{animation:settle .55s ease}.solution.waiting{opacity:0;transform:translateY(8px)}.solution{transition:opacity .35s,transform .35s}@keyframes unsure{0%,100%{transform:translateX(0) rotate(0)}25%{transform:translateX(-11px) rotate(-7deg)}65%{transform:translateX(11px) rotate(7deg)}}@keyframes settle{50%{transform:scale(1.18)}100%{transform:scale(1)}}
+</style>
+<script>
+const renderWithCase=render;
+let revealRun=0;
+function chooseDirectRounds(){
+  const choices=Array.from({length:rounds.length-1},(_,index)=>index);
+  for(let index=choices.length-1;index>0;index--){const other=Math.floor(Math.random()*(index+1));[choices[index],choices[other]]=[choices[other],choices[index]]}
+  return new Set(choices.slice(0,2));
+}
+let directRounds=chooseDirectRounds();
+function walkDirect(walker,target){
+  const points={nw:[23,22],ne:[77,22],sw:[23,78],se:[77,78]};
+  const destination=points[target];
+  return walker.animate([{left:'50%',top:'50%'},{left:`${destination[0]}%`,top:`${destination[1]}%`}],{duration:2600,easing:'ease-in-out',fill:'forwards'}).finished;
+}
+function walkWithDetour(walker,target){
+  const points={mid:[50,50],nw:[23,22],ne:[77,22],sw:[23,78],se:[77,78]};
+  const wrongKeys=['nw','ne','sw','se'].filter(key=>key!==target);
+  const wrongA=points[wrongKeys[Math.floor(Math.random()*wrongKeys.length)]];
+  const remaining=wrongKeys.filter(key=>points[key]!==wrongA);
+  const wrongB=points[remaining[Math.floor(Math.random()*remaining.length)]];
+  const destination=points[target];
+  const partial=point=>[50+(point[0]-50)*(.42+Math.random()*.2),50+(point[1]-50)*(.42+Math.random()*.2)];
+  const nearMiddle=[46+Math.random()*8,46+Math.random()*8];
+  const variant=Math.floor(Math.random()*3);
+  let route;
+  if(variant===0)route=[points.mid,partial(wrongA),nearMiddle,destination];
+  else if(variant===1)route=[points.mid,partial(wrongA),partial(wrongB),nearMiddle,destination];
+  else route=[points.mid,partial(wrongA),[50+(wrongA[0]-50)*.2,50+(wrongA[1]-50)*.2],partial(wrongB),destination];
+  const frames=route.map((point,index)=>({left:`${point[0]}%`,top:`${point[1]}%`,offset:index/(route.length-1)}));
+  return walker.animate(frames,{duration:3200+Math.random()*900,easing:'ease-in-out',fill:'forwards'}).finished;
+}
+render=function(){
+  const thisRun=++revealRun;
+  renderWithCase();
+  if(view!=='reveal')return;
+  const r=rounds[round];
+  const roomElement=stage.querySelector('.room');
+  const solutionElement=stage.querySelector('.solution');
+  roomElement.classList.remove('dim',`correct-${r.answer}`);
+  solutionElement.classList.add('waiting');
+  if(r.answer==='mid')roomElement.querySelector('.middle').textContent='Start in der Mitte';
+  roomElement.insertAdjacentHTML('beforeend',`<div class="walker" aria-label="Figur entscheidet sich"><div class="walker-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="5" r="3"></circle><path d="M12 8v7M8 12l4-2 4 2M12 15l-4 6M12 15l4 6"></path></svg></div></div>`);
+  const walker=roomElement.querySelector('.walker');
+  setTimeout(async()=>{if(thisRun!==revealRun)return;const walk=directRounds.has(round)?walkDirect(walker,r.answer):walkWithDetour(walker,r.answer);await walk;if(thisRun!==revealRun)return;roomElement.classList.add(`correct-${r.answer}`,'dim');if(r.answer==='mid')roomElement.querySelector('.middle').textContent='Hier bleiben';solutionElement.classList.remove('waiting')},700);
+};
+render();
+const originalAction=action.onclick;
+action.onclick=()=>{const restarting=view==='finish';originalAction();if(restarting)directRounds=chooseDirectRounds()};
+</script>
+</body></html>

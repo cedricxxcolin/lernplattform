@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BIP-Mission – Lehrerdashboard</title>
+
+<style>
+:root{
+  --bg:#f3f6fb;--card:#fff;--text:#111827;--muted:#6b7280;--line:#e5e7eb;
+  --blue:#2563eb;--blue-soft:#dbeafe;--green:#16a34a;--green-soft:#dcfce7;
+  --orange:#f59e0b;--orange-soft:#fef3c7;--red:#dc2626;--red-soft:#fee2e2;
+  --gray:#64748b;--gray-soft:#f1f5f9;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+header{background:white;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.wrap{max-width:1450px;margin:0 auto;padding:18px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+h1{margin:0;font-size:1.7rem}.subtitle{color:var(--muted);margin:.25rem 0 0}
+main{max-width:1450px;margin:0 auto;padding:18px}
+.card{background:var(--card);border-radius:18px;padding:18px;box-shadow:0 8px 24px rgba(15,23,42,.06);border:1px solid var(--line);margin-bottom:18px}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;align-items:end}
+label{display:block;font-weight:bold;margin-bottom:6px}
+input,select{width:100%;border:1px solid #cbd5e1;border-radius:12px;padding:11px 12px;font-size:1rem;background:white}
+button{border:none;border-radius:12px;background:var(--blue);color:white;padding:11px 14px;cursor:pointer;font-weight:bold;font-size:.95rem}
+button:hover{filter:brightness(.96)}
+button.secondary{background:#e5e7eb;color:#111827}
+button.green{background:var(--green)}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.tab{background:#eef2ff;color:#1e3a8a}.tab.active{background:var(--blue);color:white}
+.statusline{color:var(--muted);font-size:.92rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.kpi{background:linear-gradient(135deg,#fff,#f8fafc);border:1px solid var(--line);border-radius:18px;padding:16px}
+.kpi .value{font-size:2rem;font-weight:bold;margin-top:6px}.kpi .label{color:var(--muted);font-weight:bold}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:16px;max-height:70vh}
+table{width:100%;border-collapse:collapse;min-width:900px;background:white}
+th,td{border-bottom:1px solid var(--line);padding:10px 11px;text-align:left;vertical-align:top;font-size:.92rem}
+th{background:#f8fafc;position:sticky;top:0;z-index:5;cursor:pointer;user-select:none;white-space:nowrap}
+tr:hover td{background:#f8fafc}
+.badge{display:inline-flex;align-items:center;justify-content:center;border-radius:999px;padding:4px 9px;font-weight:bold;font-size:.84rem;white-space:nowrap}
+.good{background:var(--green-soft);color:var(--green)}
+.mid{background:var(--orange-soft);color:#92400e}
+.bad{background:var(--red-soft);color:var(--red)}
+.neutral{background:var(--gray-soft);color:var(--gray)}
+.blue{background:var(--blue-soft);color:#1d4ed8}
+.progress{width:130px;height:12px;background:#e5e7eb;border-radius:999px;overflow:hidden;display:inline-block;vertical-align:middle;margin-right:8px}
+.progress>div{height:100%;background:var(--blue)}.progress.good>div{background:var(--green)}.progress.mid>div{background:var(--orange)}.progress.bad>div{background:var(--red)}
+.problem-row td{background:#fff7ed}.critical-row td{background:#fff1f2}
+.small{color:var(--muted);font-size:.86rem}.hidden{display:none!important}
+.errorbox{background:var(--red-soft);color:#991b1b;border:1px solid #fecaca;padding:12px;border-radius:14px;margin-top:12px;white-space:pre-wrap}
+.toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.namecell{display:flex;flex-direction:column;gap:6px}
+.detailbtn{padding:6px 9px;font-size:.82rem;border-radius:9px;background:#eff6ff;color:#1d4ed8;width:max-content}
+.modal-back{position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:100;display:flex;align-items:flex-start;justify-content:center;padding:40px 14px;overflow:auto}
+.modal{background:white;width:min(1250px,100%);border-radius:20px;padding:20px;box-shadow:0 25px 60px rgba(0,0,0,.25)}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.detail-summary{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+@media print{
+  header,.controls,.tabs,.toolbar button,.detailbtn{display:none!important}
+  body{background:white}.card{box-shadow:none;border:1px solid #ccc}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="wrap top">
+    <div>
+      <h1>BIP-Mission – Lehrerdashboard</h1>
+      <p class="subtitle">Live-Auswertung aus Supabase</p>
+    </div>
+    <div>
+      <button id="refreshBtn">Jetzt aktualisieren</button>
+      <button id="autoBtn" class="green">Auto-Refresh: an</button>
+      <button id="printBtn" class="secondary">Drucken</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section class="card">
+  <div class="controls">
+    <div>
+      <label for="classFilter">Klasse</label>
+      <select id="classFilter"><option value="">Alle Klassen</option></select>
+    </div>
+    <div>
+      <label for="nameSearch">Name suchen</label>
+      <input id="nameSearch" placeholder="Name eingeben">
+    </div>
+    <div>
+      <label for="levelFilter">Level</label>
+      <select id="levelFilter">
+        <option value="">Alle Level</option>
+        <option value="1">Level 1</option>
+        <option value="2">Level 2</option>
+        <option value="3">Level 3</option>
+        <option value="4">Level 4</option>
+        <option value="repeat">Wiederholung</option>
+      </select>
+    </div>
+    <div>
+      <label for="problemFilter">Anzeige</label>
+      <select id="problemFilter">
+        <option value="">Alles anzeigen</option>
+        <option value="problem">Nur problematische Aufgaben / Lernende</option>
+        <option value="complete">Nur vollständig oder fast vollständig</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span class="badge good">ab 80 %</span>
+    <span class="badge mid">50–79 %</span>
+    <span class="badge bad">unter 50 %</span>
+    <span class="badge neutral">keine Daten</span>
+  </div>
+
+  <p id="statusLine" class="statusline">Noch nicht geladen.</p>
+  <div id="errorBox" class="errorbox hidden"></div>
+</section>
+
+<section class="grid" id="kpiGrid"></section>
+
+<section class="card">
+  <div class="tabs">
+    <button class="tab active" data-tab="lernende">Lernende</button>
+    <button class="tab" data-tab="level">Levelübersicht</button>
+    <button class="tab" data-tab="aufgaben">Aufgabenanalyse</button>
+    <button class="tab" data-tab="wiederholung">Wiederholung</button>
+    <button class="tab" data-tab="rohdaten">Rohdaten</button>
+  </div>
+
+  <div id="tab_lernende" class="tabview">
+    <div class="toolbar">
+      <h2>Lernende</h2>
+      <button class="secondary" onclick="exportCurrentCsv()">CSV exportieren</button>
+    </div>
+    <div class="table-wrap" id="table_lernende"></div>
+  </div>
+
+  <div id="tab_level" class="tabview hidden">
+    <div class="toolbar">
+      <h2>Levelübersicht</h2>
+      <button class="secondary" onclick="exportCurrentCsv()">CSV exportieren</button>
+    </div>
+    <div class="table-wrap" id="table_level"></div>
+  </div>
+
+  <div id="tab_aufgaben" class="tabview hidden">
+    <div class="toolbar">
+      <h2>Aufgabenanalyse</h2>
+      <button class="secondary" onclick="exportCurrentCsv()">CSV exportieren</button>
+    </div>
+    <div class="table-wrap" id="table_aufgaben"></div>
+  </div>
+
+  <div id="tab_wiederholung" class="tabview hidden">
+    <div class="toolbar">
+      <h2>Wiederholung</h2>
+      <button class="secondary" onclick="exportCurrentCsv()">CSV exportieren</button>
+    </div>
+    <div class="table-wrap" id="table_wiederholung"></div>
+  </div>
+
+  <div id="tab_rohdaten" class="tabview hidden">
+    <div class="toolbar">
+      <h2>Rohdaten</h2>
+      <button class="secondary" onclick="exportCurrentCsv()">CSV exportieren</button>
+    </div>
+    <p class="small">Die neuesten 500 Rohdatenzeilen werden angezeigt.</p>
+    <div class="table-wrap" id="table_rohdaten"></div>
+  </div>
+</section>
+
+</main>
+
+<div id="detailModalBack" class="modal-back hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="detailTitle">Teilresultate</h2>
+        <p id="detailSub" class="small"></p>
+      </div>
+      <div>
+        <button class="secondary" id="detailExportBtn">CSV dieser Person</button>
+        <button id="detailCloseBtn">Schliessen</button>
+      </div>
+    </div>
+    <div id="detailSummary" class="detail-summary"></div>
+    <div class="table-wrap" id="detailTable"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = "https://xvgbisxwptnfupibcbpg.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_WF742ZbvUE8BzCTT2MZw2w_K2wFvYyt";
+
+const VIEWS = {
+  lernende:"v_bip_lernende",
+  level:"v_bip_leveluebersicht",
+  aufgaben:"v_bip_aufgaben",
+  wiederholung:"v_bip_wiederholung",
+  rohdaten:"bip_rohdaten"
+};
+
+let data={lernende:[],level:[],aufgaben:[],wiederholung:[],rohdaten:[]};
+let currentTab="lernende";
+let autoRefresh=true;
+let refreshTimer=null;
+let detailRows=[];
+
+let sortState={
+  lernende:{col:"klasse",dir:"asc"},
+  level:{col:"level_id",dir:"asc"},
+  aufgaben:{col:"task_id",dir:"asc"},
+  wiederholung:{col:"ursprungs_aufgabe",dir:"asc"},
+  rohdaten:{col:"created_at",dir:"desc"}
+};
+
+function $(id){return document.getElementById(id);}
+
+function escapeHtml(value){
+  return String(value??"")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function pct(value){
+  if(value===null||value===undefined||value==="") return null;
+  const n=Number(value);
+  if(Number.isNaN(n)) return null;
+  return n<=1?n*100:n;
+}
+
+function fmtNum(value,digits=1){
+  if(value===null||value===undefined||value==="") return "";
+  const n=Number(value);
+  if(Number.isNaN(n)) return String(value);
+  return n.toLocaleString("de-CH",{minimumFractionDigits:0,maximumFractionDigits:digits});
+}
+
+function fmtDate(value){
+  if(!value) return "";
+  const d=new Date(value);
+  if(Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleString("de-CH");
+}
+
+function clsByPct(value){
+  const p=pct(value);
+  if(p===null) return "neutral";
+  if(p>=80) return "good";
+  if(p>=50) return "mid";
+  return "bad";
+}
+
+function badgePct(value){
+  const p=pct(value);
+  if(p===null) return `<span class="badge neutral">–</span>`;
+  return `<span class="badge ${clsByPct(value)}">${Math.round(p)}%</span>`;
+}
+
+function progressPct(value){
+  const p=pct(value);
+  const val=p===null?0:Math.max(0,Math.min(100,p));
+  const cls=clsByPct(value);
+  return `<span class="progress ${cls}"><div style="width:${val}%"></div></span>${Math.round(val)}%`;
+}
+
+function badgeStatus(status){
+  const s=String(status||"").toLowerCase();
+  if(s==="richtig") return `<span class="badge good">richtig</span>`;
+  if(s==="teilweise") return `<span class="badge mid">teilweise</span>`;
+  if(s==="falsch") return `<span class="badge bad">falsch</span>`;
+  if(s==="übersprungen"||s==="uebersprungen") return `<span class="badge neutral">übersprungen</span>`;
+  return `<span class="badge neutral">${escapeHtml(status||"")}</span>`;
+}
+
+function compareTaskIds(a,b){
+  const sa=String(a??"");
+  const sb=String(b??"");
+  const pa=sa.split(".").map(x=>Number(x));
+  const pb=sb.split(".").map(x=>Number(x));
+  const len=Math.max(pa.length,pb.length);
+  for(let i=0;i<len;i++){
+    const na=Number.isNaN(pa[i])||pa[i]===undefined?0:pa[i];
+    const nb=Number.isNaN(pb[i])||pb[i]===undefined?0:pb[i];
+    if(na!==nb) return na-nb;
+  }
+  return sa.localeCompare(sb,"de-CH",{numeric:true,sensitivity:"base"});
+}
+
+function compareValues(a,b,col){
+  if(col==="task_id"||col==="ursprungs_aufgabe"||col==="level_id") return compareTaskIds(a,b);
+
+  if(["created_at","startzeit","letzte_aktivitaet","letzte_wiederholung"].includes(col)){
+    const da=new Date(a).getTime();
+    const db=new Date(b).getTime();
+    if(!Number.isNaN(da)&&!Number.isNaN(db)) return da-db;
+  }
+
+  const an=Number(a);
+  const bn=Number(b);
+  if(!Number.isNaN(an)&&!Number.isNaN(bn)&&a!==""&&b!=="") return an-bn;
+
+  return String(a??"").localeCompare(String(b??""),"de-CH",{numeric:true,sensitivity:"base"});
+}
+
+function defaultCompareForKey(key,a,b){
+  if(key==="lernende"){
+    let c=compareValues(a.klasse,b.klasse,"klasse"); if(c!==0) return c;
+    c=compareValues(a.name,b.name,"name"); if(c!==0) return c;
+    return compareValues(a.session_id,b.session_id,"session_id");
+  }
+  if(key==="level"){
+    let c=compareValues(a.klasse,b.klasse,"klasse"); if(c!==0) return c;
+    return compareValues(a.level_id,b.level_id,"level_id");
+  }
+  if(key==="aufgaben"){
+    let c=compareValues(a.klasse,b.klasse,"klasse"); if(c!==0) return c;
+    c=compareValues(a.level_id,b.level_id,"level_id"); if(c!==0) return c;
+    return compareTaskIds(a.task_id,b.task_id);
+  }
+  if(key==="wiederholung"){
+    let c=compareValues(a.klasse,b.klasse,"klasse"); if(c!==0) return c;
+    c=compareValues(a.name,b.name,"name"); if(c!==0) return c;
+    return compareTaskIds(a.ursprungs_aufgabe,b.ursprungs_aufgabe);
+  }
+  if(key==="rohdaten") return -compareValues(a.created_at,b.created_at,"created_at");
+  return 0;
+}
+
+async function supabaseGet(path,params=""){
+  const response=await fetch(`${SUPABASE_URL}/rest/v1/${path}${params}`,{
+    method:"GET",
+    headers:{
+      "apikey":SUPABASE_ANON_KEY,
+      "Authorization":"Bearer "+SUPABASE_ANON_KEY,
+      "Content-Type":"application/json"
+    }
+  });
+
+  if(!response.ok){
+    let text="";
+    try{text=await response.text();}catch(e){}
+    throw new Error(`${path}: HTTP ${response.status} ${text}`);
+  }
+  return response.json();
+}
+
+async function loadAll(){
+  $("errorBox").classList.add("hidden");
+  $("statusLine").textContent="Lade Daten …";
+
+  try{
+    const [lernende,level,aufgaben,wiederholung,rohdaten]=await Promise.all([
+      supabaseGet(VIEWS.lernende,"?select=*&order=klasse.asc,name.asc"),
+      supabaseGet(VIEWS.level,"?select=*&order=klasse.asc,level_id.asc"),
+      supabaseGet(VIEWS.aufgaben,"?select=*"),
+      supabaseGet(VIEWS.wiederholung,"?select=*"),
+      supabaseGet(VIEWS.rohdaten,"?select=created_at,name,class_name,level_id,level_name,task_id,question,chosen_answer,correct_solution,status,points,max_points,is_repeat,session_id,record_id&order=created_at.desc&limit=500")
+    ]);
+
+    data.lernende=lernende||[];
+    data.level=level||[];
+    data.aufgaben=aufgaben||[];
+    data.wiederholung=wiederholung||[];
+    data.rohdaten=rohdaten||[];
+
+    updateFilters();
+    renderAll();
+
+    $("statusLine").textContent=
+      "Zuletzt aktualisiert: "+new Date().toLocaleTimeString("de-CH")+
+      " | Lernende: "+data.lernende.length+
+      " | Rohdatenzeilen: "+data.rohdaten.length;
+  }catch(err){
+    $("errorBox").textContent=
+      "Fehler beim Laden.\n\n"+String(err.message||err)+
+      "\n\nFalls die Views fehlen: zuerst SQL-Views erstellen und SELECT-Rechte vergeben.";
+    $("errorBox").classList.remove("hidden");
+    $("statusLine").textContent="Fehler beim Laden.";
+  }
+}
+
+function updateFilters(){
+  const classes=new Set();
+  data.lernende.forEach(r=>{if(r.klasse) classes.add(r.klasse);});
+  data.rohdaten.forEach(r=>{if(r.class_name) classes.add(r.class_name);});
+  const current=$("classFilter").value;
+  const sorted=[...classes].sort((a,b)=>String(a).localeCompare(String(b),"de-CH",{numeric:true}));
+
+  $("classFilter").innerHTML=
+    `<option value="">Alle Klassen</option>`+
+    sorted.map(k=>`<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`).join("");
+
+  if(sorted.includes(current)) $("classFilter").value=current;
+}
+
+function filteredRows(key){
+  const klasse=$("classFilter").value;
+  const search=$("nameSearch").value.trim().toLowerCase();
+  const level=$("levelFilter").value;
+  const problem=$("problemFilter").value;
+
+  let rows=[...data[key]];
+
+  rows=rows.filter(r=>{
+    const rowClass=r.klasse??r.class_name??"";
+    if(klasse&&rowClass!==klasse) return false;
+
+    const rowName=String(r.name??"").toLowerCase();
+    if(search&&!rowName.includes(search)) return false;
+
+    const rowLevel=String(r.level_id??"");
+    if(level&&key!=="lernende"){
+      if(level==="repeat"){
+        if(!(r.is_repeat===true||r.level_id==="repeat")) return false;
+      }else{
+        if(rowLevel!==level) return false;
+      }
+    }
+
+    if(problem==="problem"){
+      if(key==="lernende"){
+        const eq=pct(r.erfolgsquote);
+        const offen=Number(r.offene_fehlerverbesserungen||0);
+        return (eq!==null&&eq<70)||offen>0;
+      }
+      if(key==="level"||key==="aufgaben"){
+        const eq=pct(r.durchschnittliche_erfolgsquote);
+        return eq!==null&&eq<70;
+      }
+      if(key==="wiederholung"){
+        const eq=pct(r.erfolgsquote);
+        return eq!==null&&eq<80;
+      }
+      if(key==="rohdaten") return r.status!=="richtig";
+    }
+
+    if(problem==="complete"&&key==="lernende"){
+      return Number(r.fortschritt_prozent||0)>=90;
+    }
+
+    return true;
+  });
+
+  const sort=sortState[key];
+
+  rows.sort((a,b)=>{
+    let cmp;
+
+    if(sort){
+      if(sort.col==="task_id"&&key==="aufgaben"){
+        cmp=compareValues(a.klasse,b.klasse,"klasse"); if(cmp!==0) return cmp;
+        cmp=compareValues(a.level_id,b.level_id,"level_id"); if(cmp!==0) return cmp;
+        cmp=compareTaskIds(a.task_id,b.task_id);
+      }else if(sort.col==="level_id"&&(key==="level"||key==="aufgaben")){
+        cmp=compareValues(a.klasse,b.klasse,"klasse"); if(cmp!==0) return cmp;
+        cmp=compareValues(a.level_id,b.level_id,"level_id"); if(cmp!==0) return cmp;
+        cmp=key==="aufgaben"?compareTaskIds(a.task_id,b.task_id):0;
+      }else{
+        cmp=compareValues(a[sort.col],b[sort.col],sort.col);
+      }
+
+      if(cmp===0) cmp=defaultCompareForKey(key,a,b);
+      return sort.dir==="desc"?-cmp:cmp;
+    }
+
+    return defaultCompareForKey(key,a,b);
+  });
+
+  return rows;
+}
+
+function renderAll(){
+  renderKpis();
+  renderLernende();
+  renderLevel();
+  renderAufgaben();
+  renderWiederholung();
+  renderRohdaten();
+}
+
+function renderKpis(){
+  const learners=filteredRows("lernende");
+  const raw=filteredRows("rohdaten");
+
+  const avg=learners.length
+    ? learners.reduce((s,r)=>s+(pct(r.erfolgsquote)??0),0)/learners.length
+    : null;
+
+  const offen=learners.reduce((s,r)=>s+Number(r.offene_fehlerverbesserungen||0),0);
+
+  const problemTasks=filteredRows("aufgaben").filter(r=>{
+    const eq=pct(r.durchschnittliche_erfolgsquote);
+    return eq!==null&&eq<50;
+  }).length;
+
+  $("kpiGrid").innerHTML=`
+    <div class="kpi"><div class="label">Lernende</div><div class="value">${learners.length}</div><div class="small">im aktuellen Filter</div></div>
+    <div class="kpi"><div class="label">Aktive Lernende</div><div class="value">${learners.filter(r=>Number(r.fortschritt_prozent||0)>0).length}</div><div class="small">mit mindestens einer Antwort</div></div>
+    <div class="kpi"><div class="label">Durchschnitt</div><div class="value">${avg===null?"–":Math.round(avg)+"%"}</div><div class="small">Erfolgsquote</div></div>
+    <div class="kpi"><div class="label">Offene Fehler</div><div class="value">${offen}</div><div class="small">noch zu verbessern</div></div>
+    <div class="kpi"><div class="label">Antworten</div><div class="value">${raw.length}</div><div class="small">neueste 500 Rohdaten</div></div>
+    <div class="kpi"><div class="label">Kritische Aufgaben</div><div class="value">${problemTasks}</div><div class="small">unter 50 % Erfolgsquote</div></div>
+  `;
+}
+
+function renderLernende(){
+  const rows=filteredRows("lernende");
+
+  const html=`
+    <table>
+      <thead>
+        <tr>
+          ${th("lernende","klasse","Klasse")}
+          ${th("lernende","name","Name")}
+          ${th("lernende","letzte_aktivitaet","Letzte Aktivität")}
+          ${th("lernende","absolvierte_level","Level")}
+          ${th("lernende","fortschritt_prozent","Fortschritt")}
+          ${th("lernende","gesamtpunkte","Punkte")}
+          ${th("lernende","erfolgsquote","Erfolgsquote")}
+          ${th("lernende","richtig","R")}
+          ${th("lernende","teilweise","T")}
+          ${th("lernende","falsch","F")}
+          ${th("lernende","uebersprungen","Ü")}
+          ${th("lernende","beste_streak","Beste Streak")}
+          ${th("lernende","offene_fehlerverbesserungen","Offene Fehler")}
+          ${th("lernende","wiederholung_punkte","Wiederholung")}
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r=>{
+          const eq=pct(r.erfolgsquote);
+          const offen=Number(r.offene_fehlerverbesserungen||0);
+          const rowClass=eq!==null&&eq<50?"critical-row":(offen>0||(eq!==null&&eq<70)?"problem-row":"");
+          const session=escapeHtml(r.session_id);
+
+          return `
+            <tr class="${rowClass}">
+              <td>${escapeHtml(r.klasse)}</td>
+              <td>
+                <div class="namecell">
+                  <strong>${escapeHtml(r.name)}</strong>
+                  <span class="small">${session}</span>
+                  <button class="detailbtn" onclick="openStudentDetails('${session}')">Details anzeigen</button>
+                </div>
+              </td>
+              <td>${fmtDate(r.letzte_aktivitaet)}</td>
+              <td>${escapeHtml(r.absolvierte_level||"")}</td>
+              <td>${progressPct(r.fortschritt_prozent)}</td>
+              <td>${fmtNum(r.gesamtpunkte)}/${fmtNum(r.maximal_moeglich)}</td>
+              <td>${badgePct(r.erfolgsquote)}</td>
+              <td><span class="badge good">${r.richtig||0}</span></td>
+              <td><span class="badge mid">${r.teilweise||0}</span></td>
+              <td><span class="badge bad">${r.falsch||0}</span></td>
+              <td><span class="badge neutral">${r.uebersprungen||0}</span></td>
+              <td>${r.beste_streak||0}</td>
+              <td>${offen>0?`<span class="badge bad">${offen}</span>`:`<span class="badge good">0</span>`}</td>
+              <td>${fmtNum(r.wiederholung_punkte)}/${fmtNum(r.wiederholung_max)} ${r.wiederholung_max?badgePct(r.wiederholung_erfolgsquote):""}</td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+  `;
+
+  $("table_lernende").innerHTML=rows.length?html:emptyTable("Keine Lernenden im aktuellen Filter.");
+}
+
+function renderLevel(){
+  const rows=filteredRows("level");
+
+  $("table_level").innerHTML=rows.length?`
+    <table>
+      <thead>
+        <tr>
+          ${th("level","klasse","Klasse")}
+          ${th("level","level_id","Level")}
+          ${th("level","level_name","Levelname")}
+          ${th("level","anzahl_teilaufgaben_bearbeitet","Teilaufgaben")}
+          ${th("level","anzahl_antworten","Antworten")}
+          ${th("level","durchschnittspunkte","Ø Punkte")}
+          ${th("level","durchschnittliche_erfolgsquote","Ø Erfolgsquote")}
+          ${th("level","richtig","R")}
+          ${th("level","teilweise","T")}
+          ${th("level","falsch","F")}
+          ${th("level","uebersprungen","Ü")}
+          ${th("level","haeufigste_falsche_antwort","Häufigster Fehler")}
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r=>{
+          const eq=pct(r.durchschnittliche_erfolgsquote);
+          const rowClass=eq!==null&&eq<50?"critical-row":(eq!==null&&eq<70?"problem-row":"");
+          return `
+            <tr class="${rowClass}">
+              <td>${escapeHtml(r.klasse)}</td>
+              <td><strong>${escapeHtml(r.level_id)}</strong></td>
+              <td>${escapeHtml(r.level_name)}</td>
+              <td>${r.anzahl_teilaufgaben_bearbeitet||0}</td>
+              <td>${r.anzahl_antworten||0}</td>
+              <td>${fmtNum(r.durchschnittspunkte)}/${fmtNum(r.durchschnitt_maxpunkte)}</td>
+              <td>${badgePct(r.durchschnittliche_erfolgsquote)}</td>
+              <td><span class="badge good">${r.richtig||0}</span></td>
+              <td><span class="badge mid">${r.teilweise||0}</span></td>
+              <td><span class="badge bad">${r.falsch||0}</span></td>
+              <td><span class="badge neutral">${r.uebersprungen||0}</span></td>
+              <td>${escapeHtml(r.haeufigste_falsche_antwort||"")}</td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+  `:emptyTable("Keine Leveldaten im aktuellen Filter.");
+}
+
+function renderAufgaben(){
+  const rows=filteredRows("aufgaben");
+
+  $("table_aufgaben").innerHTML=rows.length?`
+    <table>
+      <thead>
+        <tr>
+          ${th("aufgaben","klasse","Klasse")}
+          ${th("aufgaben","level_id","Level")}
+          ${th("aufgaben","task_id","Aufgabe")}
+          ${th("aufgaben","task_title","Frage / Titel")}
+          ${th("aufgaben","anzahl_antworten","Antworten")}
+          ${th("aufgaben","durchschnittspunkte","Ø Punkte")}
+          ${th("aufgaben","durchschnittliche_erfolgsquote","Ø Erfolgsquote")}
+          ${th("aufgaben","richtig","R")}
+          ${th("aufgaben","teilweise","T")}
+          ${th("aufgaben","falsch","F")}
+          ${th("aufgaben","uebersprungen","Ü")}
+          ${th("aufgaben","haeufigste_falsche_antwort","Häufigster Fehler")}
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r=>{
+          const eq=pct(r.durchschnittliche_erfolgsquote);
+          const rowClass=eq!==null&&eq<50?"critical-row":(eq!==null&&eq<70?"problem-row":"");
+          return `
+            <tr class="${rowClass}">
+              <td>${escapeHtml(r.klasse)}</td>
+              <td>${escapeHtml(r.level_id)}</td>
+              <td><strong>${escapeHtml(r.task_id)}</strong></td>
+              <td>${escapeHtml(r.task_title)}</td>
+              <td>${r.anzahl_antworten||0}</td>
+              <td>${fmtNum(r.durchschnittspunkte)}/${fmtNum(r.durchschnitt_maxpunkte)}</td>
+              <td>${badgePct(r.durchschnittliche_erfolgsquote)}</td>
+              <td><span class="badge good">${r.richtig||0}</span></td>
+              <td><span class="badge mid">${r.teilweise||0}</span></td>
+              <td><span class="badge bad">${r.falsch||0}</span></td>
+              <td><span class="badge neutral">${r.uebersprungen||0}</span></td>
+              <td>${escapeHtml(r.haeufigste_falsche_antwort||"")}</td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+  `:emptyTable("Keine Aufgabendaten im aktuellen Filter.");
+}
+
+function renderWiederholung(){
+  const rows=filteredRows("wiederholung");
+
+  $("table_wiederholung").innerHTML=rows.length?`
+    <table>
+      <thead>
+        <tr>
+          ${th("wiederholung","klasse","Klasse")}
+          ${th("wiederholung","name","Name")}
+          ${th("wiederholung","ursprungs_aufgabe","Aufgabe")}
+          ${th("wiederholung","question","Frage")}
+          ${th("wiederholung","anzahl_wiederholungen","Wiederholungen")}
+          ${th("wiederholung","letzte_wiederholung","Letzte Wiederholung")}
+          ${th("wiederholung","richtig","R")}
+          ${th("wiederholung","teilweise","T")}
+          ${th("wiederholung","falsch","F")}
+          ${th("wiederholung","uebersprungen","Ü")}
+          ${th("wiederholung","punkte","Punkte")}
+          ${th("wiederholung","erfolgsquote","Erfolgsquote")}
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r=>{
+          const eq=pct(r.erfolgsquote);
+          const rowClass=eq!==null&&eq<50?"critical-row":(eq!==null&&eq<80?"problem-row":"");
+          return `
+            <tr class="${rowClass}">
+              <td>${escapeHtml(r.klasse)}</td>
+              <td><strong>${escapeHtml(r.name)}</strong></td>
+              <td>${escapeHtml(r.ursprungs_aufgabe)}</td>
+              <td>${escapeHtml(r.question)}</td>
+              <td>${r.anzahl_wiederholungen||0}</td>
+              <td>${fmtDate(r.letzte_wiederholung)}</td>
+              <td><span class="badge good">${r.richtig||0}</span></td>
+              <td><span class="badge mid">${r.teilweise||0}</span></td>
+              <td><span class="badge bad">${r.falsch||0}</span></td>
+              <td><span class="badge neutral">${r.uebersprungen||0}</span></td>
+              <td>${fmtNum(r.punkte)}/${fmtNum(r.maximalpunkte)}</td>
+              <td>${badgePct(r.erfolgsquote)}</td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+  `:emptyTable("Noch keine Wiederholungsdaten.");
+}
+
+function renderRohdaten(){
+  const rows=filteredRows("rohdaten");
+
+  $("table_rohdaten").innerHTML=rows.length?`
+    <table>
+      <thead>
+        <tr>
+          ${th("rohdaten","created_at","Zeit")}
+          ${th("rohdaten","class_name","Klasse")}
+          ${th("rohdaten","name","Name")}
+          ${th("rohdaten","level_id","Level")}
+          ${th("rohdaten","task_id","Aufgabe")}
+          ${th("rohdaten","question","Frage")}
+          ${th("rohdaten","chosen_answer","Antwort")}
+          ${th("rohdaten","correct_solution","Lösung")}
+          ${th("rohdaten","status","Status")}
+          ${th("rohdaten","points","Punkte")}
+          ${th("rohdaten","is_repeat","Wdh.")}
+          ${th("rohdaten","session_id","Session")}
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r=>{
+          const rowClass=r.status==="falsch"?"critical-row":(r.status==="teilweise"||r.status==="übersprungen"?"problem-row":"");
+          return `
+            <tr class="${rowClass}">
+              <td>${fmtDate(r.created_at)}</td>
+              <td>${escapeHtml(r.class_name)}</td>
+              <td><strong>${escapeHtml(r.name)}</strong></td>
+              <td>${escapeHtml(r.level_id)}</td>
+              <td>${escapeHtml(r.task_id)}</td>
+              <td>${escapeHtml(r.question)}</td>
+              <td>${escapeHtml(r.chosen_answer)}</td>
+              <td>${escapeHtml(r.correct_solution)}</td>
+              <td>${badgeStatus(r.status)}</td>
+              <td>${fmtNum(r.points)}/${fmtNum(r.max_points)}</td>
+              <td>${r.is_repeat?`<span class="badge blue">ja</span>`:""}</td>
+              <td><span class="small">${escapeHtml(r.session_id)}</span></td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+  `:emptyTable("Keine Rohdaten im aktuellen Filter.");
+}
+
+async function openStudentDetails(sessionId){
+  $("detailModalBack").classList.remove("hidden");
+  $("detailTitle").textContent="Teilresultate werden geladen …";
+  $("detailSub").textContent=sessionId;
+  $("detailSummary").innerHTML="";
+  $("detailTable").innerHTML=emptyTable("Lade Daten …");
+  detailRows=[];
+
+  try{
+    const encoded=encodeURIComponent(sessionId);
+    const rows=await supabaseGet(
+      VIEWS.rohdaten,
+      `?select=created_at,name,class_name,level_id,level_name,task_id,task_title,question,chosen_answer,correct_solution,status,points,max_points,success_rate,is_repeat,source,explanation,memo,session_id,record_id&session_id=eq.${encoded}&order=created_at.asc`
+    );
+
+    detailRows=(rows||[]).sort((a,b)=>{
+      if(Boolean(a.is_repeat)!==Boolean(b.is_repeat)) return Boolean(a.is_repeat)-Boolean(b.is_repeat);
+      let c=compareTaskIds(a.task_id,b.task_id);
+      if(c!==0) return c;
+      return compareValues(a.created_at,b.created_at,"created_at");
+    });
+
+    renderStudentDetails(sessionId,detailRows);
+  }catch(err){
+    $("detailTitle").textContent="Fehler beim Laden";
+    $("detailTable").innerHTML=`<div class="errorbox">${escapeHtml(String(err.message||err))}</div>`;
+  }
+}
+
+function renderStudentDetails(sessionId,rows){
+  if(!rows.length){
+    $("detailTitle").textContent="Keine Teilresultate gefunden";
+    $("detailSub").textContent=sessionId;
+    $("detailSummary").innerHTML="";
+    $("detailTable").innerHTML=emptyTable("Für diese Session wurden keine Rohdaten gefunden.");
+    return;
+  }
+
+  const first=rows[0];
+  const totalPoints=rows.reduce((s,r)=>s+Number(r.points||0),0);
+  const maxPoints=rows.reduce((s,r)=>s+Number(r.max_points||0),0);
+  const quote=maxPoints?totalPoints/maxPoints:null;
+
+  const counts={
+    richtig:rows.filter(r=>r.status==="richtig").length,
+    teilweise:rows.filter(r=>r.status==="teilweise").length,
+    falsch:rows.filter(r=>r.status==="falsch").length,
+    uebersprungen:rows.filter(r=>r.status==="übersprungen").length,
+    repeat:rows.filter(r=>r.is_repeat).length
+  };
+
+  $("detailTitle").textContent=`Teilresultate: ${first.name || "Unbekannt"}`;
+  $("detailSub").textContent=`Klasse: ${first.class_name || ""} | Session: ${sessionId}`;
+
+  $("detailSummary").innerHTML=`
+    <span class="badge blue">Antworten: ${rows.length}</span>
+    <span class="badge ${clsByPct(quote)}">Erfolgsquote: ${quote===null?"–":Math.round(pct(quote))+"%"}</span>
+    <span class="badge blue">Punkte: ${fmtNum(totalPoints)}/${fmtNum(maxPoints)}</span>
+    <span class="badge good">Richtig: ${counts.richtig}</span>
+    <span class="badge mid">Teilweise: ${counts.teilweise}</span>
+    <span class="badge bad">Falsch: ${counts.falsch}</span>
+    <span class="badge neutral">Übersprungen: ${counts.uebersprungen}</span>
+    <span class="badge blue">Wiederholungen: ${counts.repeat}</span>
+  `;
+
+  $("detailTable").innerHTML=`
+    <table>
+      <thead>
+        <tr>
+          <th>Zeit</th>
+          <th>Level</th>
+          <th>Aufgabe</th>
+          <th>Frage</th>
+          <th>Antwort</th>
+          <th>Lösung</th>
+          <th>Status</th>
+          <th>Punkte</th>
+          <th>Wdh.</th>
+          <th>Erklärung / Merksatz</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map(r=>{
+          const rowClass=r.status==="falsch"?"critical-row":(r.status==="teilweise"||r.status==="übersprungen"?"problem-row":"");
+          return `
+            <tr class="${rowClass}">
+              <td>${fmtDate(r.created_at)}</td>
+              <td>${escapeHtml(r.level_id)}<br><span class="small">${escapeHtml(r.level_name||"")}</span></td>
+              <td><strong>${escapeHtml(r.task_id)}</strong></td>
+              <td>${escapeHtml(r.question||r.task_title||"")}</td>
+              <td>${escapeHtml(r.chosen_answer||"")}</td>
+              <td>${escapeHtml(r.correct_solution||"")}</td>
+              <td>${badgeStatus(r.status)}</td>
+              <td>${fmtNum(r.points)}/${fmtNum(r.max_points)}</td>
+              <td>${r.is_repeat?`<span class="badge blue">ja</span>`:""}</td>
+              <td>
+                ${escapeHtml(r.explanation||"")}
+                ${r.memo?`<br><span class="small">${escapeHtml(r.memo)}</span>`:""}
+              </td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
+function th(key,col,label){
+  const sort=sortState[key];
+  let marker="";
+  if(sort&&sort.col===col) marker=sort.dir==="asc"?" ▲":" ▼";
+  return `<th onclick="sortBy('${key}','${col}')">${escapeHtml(label)}${marker}</th>`;
+}
+
+function sortBy(key,col){
+  const current=sortState[key];
+  if(current&&current.col===col) current.dir=current.dir==="asc"?"desc":"asc";
+  else sortState[key]={col,dir:"asc"};
+  renderAll();
+}
+
+function emptyTable(text){
+  return `<div style="padding:18px;background:white;">${escapeHtml(text)}</div>`;
+}
+
+function switchTab(tab){
+  currentTab=tab;
+  document.querySelectorAll(".tab").forEach(btn=>btn.classList.toggle("active",btn.dataset.tab===tab));
+  document.querySelectorAll(".tabview").forEach(view=>view.classList.add("hidden"));
+  $("tab_"+tab).classList.remove("hidden");
+}
+
+function getCurrentRows(){
+  return filteredRows(currentTab);
+}
+
+function exportRowsCsv(rows,filename){
+  if(!rows.length){
+    alert("Keine Daten zum Exportieren.");
+    return;
+  }
+
+  const columns=Object.keys(rows[0]);
+  const csv=[
+    columns.join(";"),
+    ...rows.map(row=>columns.map(col=>csvCell(row[col])).join(";"))
+  ].join("\n");
+
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download=filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportCurrentCsv(){
+  exportRowsCsv(getCurrentRows(),"bip_mission_"+currentTab+"_"+new Date().toISOString().slice(0,10)+".csv");
+}
+
+function csvCell(value){
+  if(value===null||value===undefined) return "";
+  let s=String(value).replaceAll('"','""');
+  return `"${s}"`;
+}
+
+function startAutoRefresh(){
+  stopAutoRefresh();
+  refreshTimer=setInterval(()=>{if(autoRefresh) loadAll();},5000);
+}
+
+function stopAutoRefresh(){
+  if(refreshTimer){
+    clearInterval(refreshTimer);
+    refreshTimer=null;
+  }
+}
+
+$("refreshBtn").addEventListener("click",loadAll);
+
+$("autoBtn").addEventListener("click",()=>{
+  autoRefresh=!autoRefresh;
+  $("autoBtn").textContent=autoRefresh?"Auto-Refresh: an":"Auto-Refresh: aus";
+  $("autoBtn").className=autoRefresh?"green":"secondary";
+});
+
+$("printBtn").addEventListener("click",()=>window.print());
+
+$("classFilter").addEventListener("change",renderAll);
+$("nameSearch").addEventListener("input",renderAll);
+$("levelFilter").addEventListener("change",renderAll);
+$("problemFilter").addEventListener("change",renderAll);
+
+document.querySelectorAll(".tab").forEach(btn=>{
+  btn.addEventListener("click",()=>switchTab(btn.dataset.tab));
+});
+
+$("detailCloseBtn").addEventListener("click",()=>{
+  $("detailModalBack").classList.add("hidden");
+});
+
+$("detailModalBack").addEventListener("click",event=>{
+  if(event.target.id==="detailModalBack") $("detailModalBack").classList.add("hidden");
+});
+
+$("detailExportBtn").addEventListener("click",()=>{
+  exportRowsCsv(detailRows,"bip_mission_detail_"+new Date().toISOString().slice(0,10)+".csv");
+});
+
+loadAll();
+startAutoRefresh();
+</script>
+
+</body>
+</html>

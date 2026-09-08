@@ -1,0 +1,1281 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Wirtschafts-Imposter</title>
+  <style>
+    :root {
+      --bg: #f7f9ff;
+      --card: rgba(255, 255, 255, 0.92);
+      --text: #182033;
+      --muted: #65708a;
+      --primary: #4263eb;
+      --primary-dark: #2948c7;
+      --secondary: #15aabf;
+      --accent: #ffb703;
+      --danger: #e03131;
+      --success: #2f9e44;
+      --shadow: 0 18px 45px rgba(32, 47, 90, 0.14);
+      --soft-shadow: 0 10px 25px rgba(32, 47, 90, 0.10);
+      --radius: 26px;
+      --radius-small: 18px;
+      --max-width: 520px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(66, 99, 235, 0.18), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(21, 170, 191, 0.18), transparent 34%),
+        linear-gradient(180deg, #fbfcff 0%, var(--bg) 100%);
+    }
+
+    body {
+      overflow-x: hidden;
+    }
+
+    button, input, select, textarea {
+      font: inherit;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+    }
+
+    .app-shell {
+      width: min(100%, var(--max-width));
+      min-height: 100dvh;
+      margin: 0 auto;
+      padding: 18px 16px calc(24px + env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+      min-height: 48px;
+    }
+
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.78);
+      box-shadow: var(--soft-shadow);
+      color: var(--muted);
+      font-size: 0.92rem;
+      font-weight: 750;
+    }
+
+    .brand-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: 0 0 0 6px rgba(66, 99, 235, 0.10);
+    }
+
+    .screen {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      animation: popIn 220ms ease-out;
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .card {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px;
+      backdrop-filter: blur(18px);
+    }
+
+    .hero-card {
+      padding: 28px 22px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      width: 170px;
+      height: 170px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(66, 99, 235, 0.20), rgba(21, 170, 191, 0.12));
+      top: -70px;
+      right: -70px;
+    }
+
+    .hero-icon {
+      width: 72px;
+      height: 72px;
+      display: grid;
+      place-items: center;
+      border-radius: 24px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: 0 18px 35px rgba(66, 99, 235, 0.28);
+      color: white;
+      font-size: 2rem;
+      margin-bottom: 22px;
+      position: relative;
+    }
+
+    h1, h2, h3, p {
+      margin-top: 0;
+    }
+
+    h1 {
+      font-size: clamp(2.2rem, 11vw, 4.2rem);
+      line-height: 0.95;
+      letter-spacing: -0.075em;
+      margin-bottom: 14px;
+    }
+
+    h2 {
+      font-size: clamp(1.7rem, 7vw, 2.4rem);
+      line-height: 1.06;
+      letter-spacing: -0.045em;
+      margin-bottom: 12px;
+    }
+
+    h3 {
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--primary-dark);
+      font-weight: 850;
+      font-size: 1.05rem;
+      margin-bottom: 12px;
+    }
+
+    .lead, .muted {
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 1rem;
+    }
+
+    .lead {
+      font-size: 1.08rem;
+      margin-bottom: 24px;
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .space-between {
+      justify-content: space-between;
+    }
+
+    .btn {
+      width: 100%;
+      min-height: 56px;
+      border-radius: 18px;
+      padding: 15px 18px;
+      font-weight: 850;
+      font-size: 1.03rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn-primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: 0 14px 28px rgba(66, 99, 235, 0.25);
+    }
+
+    .btn-secondary {
+      color: var(--primary-dark);
+      background: #eef3ff;
+      box-shadow: var(--soft-shadow);
+    }
+
+    .btn-ghost {
+      width: auto;
+      min-height: 44px;
+      padding: 10px 14px;
+      color: var(--primary-dark);
+      background: rgba(255, 255, 255, 0.72);
+      box-shadow: var(--soft-shadow);
+      border-radius: 999px;
+      font-size: 0.94rem;
+    }
+
+    .btn-danger {
+      color: white;
+      background: linear-gradient(135deg, #fa5252, #e03131);
+    }
+
+    .btn-end {
+      width: auto;
+      min-height: 44px;
+      padding: 10px 14px;
+      color: white;
+      background: linear-gradient(135deg, #fa5252, #e03131);
+      box-shadow: var(--soft-shadow);
+      border-radius: 999px;
+      font-size: 0.94rem;
+    }
+
+    .btn-success {
+      color: white;
+      background: linear-gradient(135deg, #51cf66, #2f9e44);
+    }
+
+    .btn[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .choice-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .choice-btn {
+      min-height: 64px;
+      padding: 14px;
+      border-radius: 20px;
+      background: #fff;
+      box-shadow: var(--soft-shadow);
+      color: var(--text);
+      font-weight: 850;
+      border: 2px solid transparent;
+      transition: transform 140ms ease, border-color 140ms ease, background 140ms ease;
+    }
+
+    .choice-btn.selected {
+      border-color: var(--primary);
+      background: #eef3ff;
+      color: var(--primary-dark);
+    }
+
+    .choice-btn:active {
+      transform: scale(0.98);
+    }
+
+    .input, .select {
+      width: 100%;
+      min-height: 54px;
+      border: 2px solid #e6ebf7;
+      background: #fff;
+      border-radius: 18px;
+      padding: 13px 15px;
+      outline: none;
+      color: var(--text);
+      font-size: 1.02rem;
+      transition: border-color 130ms ease, box-shadow 130ms ease;
+    }
+
+    .input:focus, .select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 5px rgba(66, 99, 235, 0.10);
+    }
+
+    label {
+      display: block;
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 800;
+      margin-bottom: 7px;
+    }
+
+    .counter-box {
+      display: grid;
+      grid-template-columns: 58px 1fr 58px;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      border-radius: 22px;
+      box-shadow: var(--soft-shadow);
+      padding: 10px;
+    }
+
+    .counter-value {
+      text-align: center;
+      font-size: 2.1rem;
+      font-weight: 950;
+      letter-spacing: -0.04em;
+    }
+
+    .round-badge {
+      display: inline-flex;
+      align-items: center;
+      width: fit-content;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      color: var(--primary-dark);
+      background: #eef3ff;
+      font-size: 0.88rem;
+      font-weight: 850;
+      margin-bottom: 12px;
+    }
+
+    .big-message {
+      font-size: clamp(2rem, 10vw, 3.4rem);
+      line-height: 1;
+      letter-spacing: -0.06em;
+      font-weight: 950;
+      margin-bottom: 14px;
+    }
+
+    .secret-card {
+      text-align: center;
+      padding: 32px 22px;
+      min-height: 420px;
+      justify-content: center;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .secret-word {
+      display: block;
+      margin: 18px 0;
+      padding: 20px 16px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #eef3ff, #e6fcff);
+      color: var(--primary-dark);
+      font-size: clamp(2rem, 13vw, 4rem);
+      line-height: 1;
+      letter-spacing: -0.07em;
+      font-weight: 950;
+      word-break: break-word;
+    }
+
+    .imposter-alert {
+      display: block;
+      margin: 18px 0;
+      padding: 22px 16px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #fff4e6, #ffe3e3);
+      color: #c92a2a;
+      font-size: clamp(2rem, 12vw, 3.6rem);
+      line-height: 1;
+      letter-spacing: -0.06em;
+      font-weight: 950;
+    }
+
+    .neutral-cover {
+      background:
+        radial-gradient(circle at top, rgba(66, 99, 235, 0.18), transparent 35%),
+        #ffffff;
+    }
+
+    .name-list, .rule-list, .score-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .name-list li, .rule-list li, .score-row {
+      background: #fff;
+      border-radius: 18px;
+      padding: 13px 14px;
+      box-shadow: var(--soft-shadow);
+      color: var(--text);
+    }
+
+    .rule-list li {
+      line-height: 1.35;
+    }
+
+    .hint-order-number {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      margin-right: 8px;
+      background: #eef3ff;
+      color: var(--primary-dark);
+      font-weight: 900;
+    }
+
+    .vote-btn {
+      text-align: left;
+      justify-content: space-between;
+      background: #fff;
+      color: var(--text);
+      box-shadow: var(--soft-shadow);
+      border: 2px solid transparent;
+    }
+
+    .vote-btn.selected {
+      border-color: var(--primary);
+      background: #eef3ff;
+      color: var(--primary-dark);
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: #eef3ff;
+      color: var(--primary-dark);
+      font-weight: 850;
+      font-size: 0.86rem;
+    }
+
+    .status-box {
+      border-radius: 22px;
+      padding: 16px;
+      background: #fff;
+      box-shadow: var(--soft-shadow);
+    }
+
+    .starter-box {
+      text-align: center;
+      border-radius: 26px;
+      padding: 22px 16px;
+      background: linear-gradient(135deg, #eef3ff, #e6fcff);
+      box-shadow: var(--soft-shadow);
+    }
+
+    .starter-label {
+      color: var(--muted);
+      font-weight: 850;
+      font-size: 0.95rem;
+      margin-bottom: 8px;
+    }
+
+    .starter-name {
+      color: var(--primary-dark);
+      font-size: clamp(2.2rem, 12vw, 4rem);
+      line-height: 1;
+      letter-spacing: -0.07em;
+      font-weight: 950;
+      word-break: break-word;
+    }
+
+    .status-success {
+      border: 2px solid rgba(47, 158, 68, 0.25);
+      background: #ebfbee;
+    }
+
+    .status-fail {
+      border: 2px solid rgba(224, 49, 49, 0.18);
+      background: #fff5f5;
+    }
+
+    .score-row {
+      display: grid;
+      grid-template-columns: 42px 1fr auto;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .score-place {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #eef3ff, #e6fcff);
+      color: var(--primary-dark);
+      font-weight: 950;
+    }
+
+    .score-name {
+      font-weight: 900;
+      line-height: 1.15;
+    }
+
+    .score-role {
+      color: var(--muted);
+      font-size: 0.82rem;
+      margin-top: 3px;
+      font-weight: 750;
+    }
+
+    .score-points {
+      font-weight: 950;
+      color: var(--primary-dark);
+    }
+
+    .mini-scoreboard {
+      margin-top: 16px;
+    }
+
+    .mini-scoreboard .score-row {
+      padding: 10px 12px;
+      border-radius: 16px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: rgba(20, 28, 45, 0.28);
+      padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    .modal-backdrop.open {
+      display: flex;
+    }
+
+    .modal {
+      width: min(100%, var(--max-width));
+      max-height: 86dvh;
+      overflow: auto;
+      background: white;
+      border-radius: 28px;
+      padding: 22px;
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.22);
+      animation: slideUp 180ms ease-out;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tiny {
+      font-size: 0.85rem;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .sticky-actions {
+      position: sticky;
+      bottom: 0;
+      padding-top: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,0), var(--card) 32%);
+    }
+
+    .winner-box {
+      text-align: center;
+      border-radius: 26px;
+      padding: 20px;
+      background: linear-gradient(135deg, #fff9db, #e6fcff);
+      box-shadow: var(--soft-shadow);
+      margin-bottom: 14px;
+    }
+
+    .winner-name {
+      font-size: clamp(1.8rem, 9vw, 3rem);
+      line-height: 1;
+      letter-spacing: -0.055em;
+      font-weight: 950;
+      margin-top: 8px;
+    }
+
+    .confetti {
+      font-size: 2.1rem;
+      margin-bottom: 6px;
+    }
+
+    @media (min-width: 720px) {
+      .app-shell {
+        padding-top: 32px;
+        padding-bottom: 32px;
+      }
+
+      .screen {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="top-bar">
+      <div class="brand-pill"><span class="brand-dot"></span><span id="topStatus">Wirtschafts-Imposter</span></div>
+      <div class="row" style="gap:8px">
+        <button id="endGameButton" class="btn btn-end" type="button" onclick="endGameToStart()" style="display:none">Spiel beenden</button>
+        <button class="btn btn-ghost" type="button" onclick="openRules()">Regeln</button>
+      </div>
+    </div>
+    <main id="app" class="screen"></main>
+  </div>
+
+  <div id="rulesModal" class="modal-backdrop" onclick="closeRulesOnBackdrop(event)">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="rulesTitle">
+      <h2 id="rulesTitle">Regeln</h2>
+      <ul class="rule-list">
+        <li>Normale Spielerinnen und Spieler erhalten denselben Begriff.</li>
+        <li>Imposter erhalten keinen Begriff.</li>
+        <li>Im Modus „Mit Tipp“ erhalten Imposter einen kleinen Hinweis zum Begriff.</li>
+        <li>Alle geben Hinweise, ohne den Begriff direkt zu nennen.</li>
+        <li>Der Begriff selbst und direkte Wortbestandteile sind verboten.</li>
+        <li>Nach der Hinweisrunde wird frei diskutiert und in der Gruppe abgestimmt.</li>
+        <li>Die Gruppe versucht, alle Imposter zu finden.</li>
+        <li>Die Imposter versuchen, nicht erkannt zu werden und den Begriff zu erraten.</li>
+        <li>Bei gefundenen Impostern erhalten alle Personen mit Begriff 1 Punkt.</li>
+        <li>Wenn der Begriff erraten wurde, erhalten alle Imposter 2 Punkte.</li>
+      </ul>
+      <div style="height:14px"></div>
+      <button class="btn btn-primary" type="button" onclick="closeRules()">Schliessen</button>
+    </div>
+  </div>
+
+  <script>
+    "use strict";
+
+    // Genau diese 50 Begriffe werden im Spiel verwendet.
+    const WORDS = [
+      "Geld", "Preis", "Kosten", "Einnahmen", "Ausgaben", "Gewinn", "Verlust", "Budget", "Sparen", "Schulden",
+      "Rechnung", "Mahnung", "Lohn", "Taschengeld", "Nebenjob", "Arbeit", "Arbeitszeit", "Arbeitsvertrag", "Kündigung", "Bewerbung",
+      "Ausbildung", "Weiterbildung", "Kauf", "Verkauf", "Kaufvertrag", "Vertrag", "Unterschrift", "Kleingedrucktes", "Garantie", "Rückgabe",
+      "Onlinekauf", "Abo", "Handyabo", "Miete", "Mietvertrag", "Versicherung", "Risiko", "Steuer", "Krankenkasse", "Konsum",
+      "Bedürfnis", "Angebot", "Nachfrage", "Markt", "Werbung", "Rabatt", "Marke", "Qualität", "Konkurrenz", "Unternehmen"
+    ];
+
+    // Ein-Wort-Tipps für den zweiten Modus. Die Tipps nennen das Wort nicht direkt.
+    const WORD_TIPS = {
+      "Geld": "Zahlung",
+      "Preis": "Schild",
+      "Kosten": "Aufwand",
+      "Einnahmen": "Zufluss",
+      "Ausgaben": "Abfluss",
+      "Gewinn": "Plus",
+      "Verlust": "Minus",
+      "Budget": "Plan",
+      "Sparen": "Zurücklegen",
+      "Schulden": "Rückzahlung",
+      "Rechnung": "Betrag",
+      "Mahnung": "Erinnerung",
+      "Lohn": "Arbeit",
+      "Taschengeld": "Jugendliche",
+      "Nebenjob": "Zusatz",
+      "Arbeit": "Tätigkeit",
+      "Arbeitszeit": "Stunden",
+      "Arbeitsvertrag": "Anstellung",
+      "Kündigung": "Ende",
+      "Bewerbung": "Stelle",
+      "Ausbildung": "Beruf",
+      "Weiterbildung": "Kurs",
+      "Kauf": "Erwerb",
+      "Verkauf": "Anbieter",
+      "Kaufvertrag": "Einigung",
+      "Vertrag": "Abmachung",
+      "Unterschrift": "Bestätigung",
+      "Kleingedrucktes": "Details",
+      "Garantie": "Sicherheit",
+      "Rückgabe": "Zurück",
+      "Onlinekauf": "Internet",
+      "Abo": "Regelmässig",
+      "Handyabo": "Mobil",
+      "Miete": "Wohnung",
+      "Mietvertrag": "Wohnen",
+      "Versicherung": "Schutz",
+      "Risiko": "Gefahr",
+      "Steuer": "Staat",
+      "Krankenkasse": "Gesundheit",
+      "Konsum": "Verbrauch",
+      "Bedürfnis": "Wunsch",
+      "Angebot": "Verkäufer",
+      "Nachfrage": "Käufer",
+      "Markt": "Handel",
+      "Werbung": "Aufmerksamkeit",
+      "Rabatt": "Günstiger",
+      "Marke": "Logo",
+      "Qualität": "Güte",
+      "Konkurrenz": "Wettbewerb",
+      "Unternehmen": "Firma"
+    };
+
+    const state = {
+      screen: "start",
+      playerCount: 3,
+      players: [],
+      imposterCount: 1,
+      totalRounds: 5,
+      currentRound: 0,
+      usedWords: [],
+      currentWord: "",
+      imposters: [],
+      currentRoleIndex: 0,
+      rolesSeen: false,
+      hintOrder: [],
+      selectedSuspects: [],
+      groupFoundAllImposters: false,
+      imposterGuess: "",
+      imposterBonusGiven: false,
+      roundRevealed: false,
+      roundEndReason: "",
+      gameMode: "classic"
+    };
+
+    const app = document.getElementById("app");
+    const topStatus = document.getElementById("topStatus");
+
+    // Initialisiert das Spiel und zeigt die Startseite.
+    function initGame() {
+      state.screen = "start";
+      renderStartScreen();
+    }
+
+    // Kleine Hilfsfunktion für sicheres HTML.
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    // Mischt ein Array, ohne das Original zu verändern.
+    function shuffled(array) {
+      const copy = [...array];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function setTopStatus(text) {
+      topStatus.textContent = text;
+      updateEndGameButton();
+    }
+
+    function updateEndGameButton() {
+      const button = document.getElementById("endGameButton");
+      if (!button) return;
+      const setupScreens = ["start", "playerCount", "playerNames", "imposterCount", "roundCount", "gameMode"];
+      button.style.display = setupScreens.includes(state.screen) ? "none" : "inline-flex";
+    }
+
+    function endGameToStart() {
+      restartGame();
+    }
+
+    function renderStartScreen() {
+      setTopStatus("Start");
+      app.innerHTML = `
+        <section class="card hero-card">
+          <div class="hero-icon">💼</div>
+          <h1>Wirtschafts-Imposter</h1>
+          <p class="subtitle">Das schnelle Begriffsspiel für Wirtschaft und Recht</p>
+          <p class="lead">Geben Sie Hinweise, finden Sie die Imposter und verraten Sie den Begriff nicht.</p>
+          <button class="btn btn-primary" type="button" onclick="setupGameMode()">Spiel starten</button>
+        </section>
+      `;
+    }
+
+    // Auswahl des Spielmodus direkt zu Beginn.
+    function setupGameMode() {
+      state.screen = "gameMode";
+      setTopStatus("Modus");
+
+      app.innerHTML = `
+        <section class="card stack">
+          <div>
+            <h2>Spielmodus wählen</h2>
+            <p class="muted">Wählen Sie zuerst, ob die Imposter ohne Hilfe spielen oder einen kleinen Tipp zum Begriff erhalten.</p>
+          </div>
+          <button class="choice-btn ${state.gameMode === "classic" ? "selected" : ""}" type="button" onclick="setGameMode('classic')">
+            Klassisch
+          </button>
+          <button class="choice-btn ${state.gameMode === "hint" ? "selected" : ""}" type="button" onclick="setGameMode('hint')">
+            Mit Tipp
+          </button>
+          <button class="btn btn-primary" type="button" onclick="setupPlayerCount()">Weiter</button>
+          <button class="btn btn-secondary" type="button" onclick="renderStartScreen()">Zurück</button>
+        </section>
+      `;
+    }
+
+    function setGameMode(mode) {
+      state.gameMode = mode;
+      setupGameMode();
+    }
+
+    // Auswahl der Anzahl Spielerinnen und Spieler.
+    function setupPlayerCount() {
+      state.screen = "playerCount";
+      setTopStatus("Spielerzahl");
+      app.innerHTML = `
+        <section class="card stack">
+          <div>
+            <h2>Wie viele spielen mit?</h2>
+            <p class="muted">Wählen Sie zwischen 3 und 20 Spielerinnen und Spielern.</p>
+          </div>
+          <div class="counter-box">
+            <button class="btn btn-secondary" type="button" onclick="changePlayerCount(-1)" aria-label="Weniger">−</button>
+            <div class="counter-value" id="playerCountValue">${state.playerCount}</div>
+            <button class="btn btn-secondary" type="button" onclick="changePlayerCount(1)" aria-label="Mehr">+</button>
+          </div>
+          <button class="btn btn-primary" type="button" onclick="setupPlayerNames()">Weiter</button>
+        </section>
+      `;
+    }
+
+    function changePlayerCount(delta) {
+      state.playerCount = Math.max(3, Math.min(20, state.playerCount + delta));
+      document.getElementById("playerCountValue").textContent = state.playerCount;
+    }
+
+    // Eingabe der Namen. Leere Namen werden später automatisch ersetzt.
+    function setupPlayerNames() {
+      state.screen = "playerNames";
+      setTopStatus("Namen");
+
+      const oldNames = state.players.map(player => player.name);
+      let inputs = "";
+      for (let i = 0; i < state.playerCount; i++) {
+        const oldValue = oldNames[i] || "";
+        inputs += `
+          <div>
+            <label for="playerName${i}">Person ${i + 1}</label>
+            <input class="input" id="playerName${i}" type="text" maxlength="24" placeholder="Spieler ${i + 1}" value="${escapeHtml(oldValue)}" />
+          </div>
+        `;
+      }
+
+      app.innerHTML = `
+        <section class="card stack">
+          <div>
+            <h2>Namen eingeben</h2>
+          </div>
+          <div class="stack">${inputs}</div>
+          <button class="btn btn-primary" type="button" onclick="savePlayerNamesAndContinue()">Weiter</button>
+          <button class="btn btn-secondary" type="button" onclick="setupPlayerCount()">Zurück</button>
+        </section>
+      `;
+    }
+
+    function savePlayerNamesAndContinue() {
+      state.players = [];
+      for (let i = 0; i < state.playerCount; i++) {
+        const input = document.getElementById(`playerName${i}`);
+        const name = input.value.trim() || `Spieler ${i + 1}`;
+        state.players.push({ id: i, name, points: 0 });
+      }
+      setupImposterCount();
+    }
+
+    // Auswahl der Imposterzahl mit korrekter Begrenzung auf die Hälfte der Spielerzahl.
+    function setupImposterCount() {
+      state.screen = "imposterCount";
+      setTopStatus("Imposter");
+      const maxImposters = Math.floor(state.players.length / 2);
+      state.imposterCount = Math.max(1, Math.min(state.imposterCount, maxImposters));
+
+      let choices = "";
+      for (let i = 1; i <= maxImposters; i++) {
+        choices += `<button class="choice-btn ${i === state.imposterCount ? "selected" : ""}" type="button" onclick="setImposterCount(${i})">${i}</button>`;
+      }
+
+      app.innerHTML = `
+        <section class="card stack">
+          <div>
+            <h2>Wie viele Imposter?</h2>
+            <p class="muted">Bei ${state.players.length} Personen sind maximal ${maxImposters} Imposter erlaubt.</p>
+          </div>
+          <div class="choice-grid" id="imposterChoices">${choices}</div>
+          <button class="btn btn-primary" type="button" onclick="setupRoundCount()">Weiter</button>
+          <button class="btn btn-secondary" type="button" onclick="setupPlayerNames()">Zurück</button>
+        </section>
+      `;
+    }
+
+    function setImposterCount(count) {
+      state.imposterCount = count;
+      setupImposterCount();
+    }
+
+    // Auswahl der Rundenzahl.
+    function setupRoundCount() {
+      state.screen = "roundCount";
+      setTopStatus("Runden");
+      const options = [3, 5, 8, 10];
+      const choices = options.map(rounds => `
+        <button class="choice-btn ${rounds === state.totalRounds ? "selected" : ""}" type="button" onclick="setRoundCount(${rounds})">${rounds} Runden</button>
+      `).join("");
+
+      app.innerHTML = `
+        <section class="card stack">
+          <div>
+            <h2>Rundenzahl wählen</h2>
+            <p class="muted">Der Standardwert ist 5 Runden.</p>
+          </div>
+          <div class="choice-grid">${choices}</div>
+          <button class="btn btn-primary" type="button" onclick="startGame()">Spiel starten</button>
+          <button class="btn btn-secondary" type="button" onclick="setupImposterCount()">Zurück</button>
+        </section>
+      `;
+    }
+
+
+    function setRoundCount(rounds) {
+      state.totalRounds = rounds;
+      setupRoundCount();
+    }
+
+    // Startet das ganze Spiel und setzt Punkte sowie verwendete Begriffe zurück.
+    function startGame() {
+      state.players.forEach(player => player.points = 0);
+      state.currentRound = 0;
+      state.usedWords = [];
+      startRound();
+    }
+
+    // Startet eine neue Runde.
+    function startRound() {
+      state.screen = "round";
+      updateEndGameButton();
+      state.currentRound += 1;
+      state.currentWord = chooseSecretWord();
+      state.imposters = chooseImposters();
+      state.currentRoleIndex = 0;
+      state.rolesSeen = false;
+      state.hintOrder = [];
+      state.selectedSuspects = [];
+      state.groupFoundAllImposters = false;
+      state.imposterGuess = "";
+      state.imposterBonusGiven = false;
+      state.roundRevealed = false;
+      state.roundEndReason = "";
+      showPassPhoneScreen();
+    }
+
+    // Wählt einen Begriff, ohne innerhalb eines Spiels zu wiederholen.
+    function chooseSecretWord() {
+      let availableWords = WORDS.filter(word => !state.usedWords.includes(word));
+      if (availableWords.length === 0) {
+        state.usedWords = [];
+        availableWords = [...WORDS];
+      }
+      const word = availableWords[Math.floor(Math.random() * availableWords.length)];
+      state.usedWords.push(word);
+      return word;
+    }
+
+    // Wählt zufällig Imposter aus.
+    function chooseImposters() {
+      return shuffled(state.players.map(player => player.id)).slice(0, state.imposterCount);
+    }
+
+    // Neutraler Bildschirm vor jeder Rollenanzeige.
+    function showPassPhoneScreen() {
+      state.screen = "round";
+      setTopStatus(`Runde ${state.currentRound}/${state.totalRounds}`);
+      const currentPlayer = state.players[state.currentRoleIndex];
+      const isFirst = state.currentRoleIndex === 0;
+
+      app.innerHTML = `
+        <section class="card secret-card neutral-cover">
+          <div class="round-badge">Runde ${state.currentRound} von ${state.totalRounds}</div>
+          <div class="big-message">${escapeHtml(currentPlayer.name)}, schauen Sie jetzt auf das Handy.</div>
+          <p class="lead">Alle anderen schauen weg.</p>
+          <button class="btn btn-primary" type="button" onclick="showRoleToCurrentPlayer()">${isFirst ? "Meine Rolle anzeigen" : "Bereit"}</button>
+          <div class="mini-scoreboard">${updateScoreboard(false)}</div>
+        </section>
+      `;
+    }
+
+    // Zeigt nur der aktuellen Person ihre Rolle.
+    function showRoleToCurrentPlayer() {
+      state.screen = "round";
+      updateEndGameButton();
+      const currentPlayer = state.players[state.currentRoleIndex];
+      const isImposter = state.imposters.includes(currentPlayer.id);
+
+      app.innerHTML = `
+        <section class="card secret-card">
+          <div class="round-badge">Nur für ${escapeHtml(currentPlayer.name)}</div>
+          ${isImposter ? `
+            <div class="imposter-alert">Sie sind Imposter.</div>
+            ${state.gameMode === "hint" ? `<div class="status-box"><h3>Kleiner Tipp</h3><p class="lead" style="margin-bottom:0">${escapeHtml(WORD_TIPS[state.currentWord] || "Hören Sie genau auf die Hinweise.")}</p></div>` : ""}
+            <p class="lead">Hören Sie gut zu und versuchen Sie herauszufinden, welcher Begriff gesucht wird.</p>
+          ` : `
+            <p class="muted">Ihr Begriff ist:</p>
+            <span class="secret-word">${escapeHtml(state.currentWord)}</span>
+          `}
+          <p class="muted"><strong>Verraten Sie Ihre Rolle nicht.</strong></p>
+          <button class="btn btn-primary" type="button" onclick="hideRoleAndContinue()">Verbergen und Handy weitergeben</button>
+        </section>
+      `;
+    }
+
+    // Verdeckt die Rolle sicher und geht zur nächsten Person oder zur Hinweisphase.
+    function hideRoleAndContinue() {
+      state.screen = "round";
+      updateEndGameButton();
+      state.currentRoleIndex += 1;
+      if (state.currentRoleIndex >= state.players.length) {
+        state.rolesSeen = true;
+        startHintPhase();
+        return;
+      }
+
+      const nextPlayer = state.players[state.currentRoleIndex];
+      app.innerHTML = `
+        <section class="card secret-card neutral-cover">
+          <div class="big-message">Geben Sie das Handy an ${escapeHtml(nextPlayer.name)} weiter.</div>
+          <p class="lead">Die vorherige Rolle ist verborgen.</p>
+          <button class="btn btn-primary" type="button" onclick="showPassPhoneScreen()">Bereit</button>
+        </section>
+      `;
+    }
+
+    // Hinweisphase: Es wird nur angezeigt, wer beginnt. Danach geht es im Kreis weiter.
+    function startHintPhase() {
+      state.screen = "round";
+      setTopStatus("Hinweisrunde");
+      state.hintOrder = shuffled(state.players.map(player => player.id));
+      const firstPlayer = state.players.find(player => player.id === state.hintOrder[0]);
+
+      app.innerHTML = `
+        <section class="card stack">
+          <div>
+            <div class="round-badge">Runde ${state.currentRound} von ${state.totalRounds}</div>
+            <h2>Hinweisrunde</h2>
+            <p class="muted">Diese Person beginnt mit dem ersten Hinweis. Danach geht es einfach im Kreis weiter.</p>
+          </div>
+          <div class="starter-box">
+            <div class="starter-label">Erster Hinweis von</div>
+            <div class="starter-name">${escapeHtml(firstPlayer.name)}</div>
+          </div>
+          <div class="status-box">
+            <h3>Wichtig</h3>
+            <p class="muted" style="margin-bottom:0">Sagen Sie den Begriff nicht direkt und verwenden Sie keine Wortbestandteile des Begriffs. Gute Hinweise sind Beispiele, Umschreibungen oder typische Situationen.</p>
+          </div>
+          <button class="btn btn-primary" type="button" onclick="renderVotingScreen()">Runde starten</button>
+        </section>
+      `;
+    }
+
+    // Freie Abstimmungsphase. Die Gruppe diskutiert selbst und beendet die Runde per Button.
+    function renderVotingScreen() {
+      state.screen = "round";
+      setTopStatus("Freies Spiel");
+
+      app.innerHTML = `
+        <section class="card stack">
+          <div>
+            <div class="round-badge">Runde ${state.currentRound} von ${state.totalRounds}</div>
+            <h2>Runde läuft</h2>
+            <p class="muted">Geben Sie Hinweise, diskutieren Sie und stimmen Sie in der Gruppe ab. Beenden Sie die Runde, sobald die Imposter gefunden wurden oder sobald die Imposter den Begriff erraten haben.</p>
+          </div>
+          <div class="status-box">
+            <h3>Punkte</h3>
+            <p class="muted" style="margin-bottom:0">Wenn die Imposter gefunden wurden, erhalten alle Personen mit Begriff 1 Punkt. Wenn der Begriff erraten wurde, erhalten alle Imposter 2 Punkte.</p>
+          </div>
+          <button class="btn btn-success" type="button" onclick="showImposterGuessScreen('impostersFound')">Imposter wurden gefunden</button>
+          <button class="btn btn-danger" type="button" onclick="showImposterGuessScreen('wordGuessed')">Begriff wurde erraten</button>
+        </section>
+      `;
+    }
+
+    function selectSuspects(playerId) {
+      return;
+    }
+
+    // Der Button entscheidet automatisch, welche Seite Punkte erhält.
+    function showImposterGuessScreen(reason) {
+      state.roundEndReason = reason || "impostersFound";
+      state.groupFoundAllImposters = state.roundEndReason === "impostersFound";
+      revealRound(false);
+    }
+
+    function didGroupFindAllImposters() {
+      return state.roundEndReason === "impostersFound";
+    }
+
+    // Vollständige Auflösung der Runde.
+    function revealRound() {
+      state.screen = "round";
+      state.roundRevealed = true;
+      awardPoints();
+
+      setTopStatus("Auflösung");
+      const imposterNames = state.imposters.map(id => state.players.find(p => p.id === id).name);
+      const normalNames = state.players.filter(player => !state.imposters.includes(player.id)).map(player => player.name);
+      const statusClass = state.groupFoundAllImposters ? "status-success" : "status-fail";
+      const statusText = state.groupFoundAllImposters
+        ? "Die Imposter wurden gefunden. Alle Personen mit Begriff erhalten 1 Punkt."
+        : "Der Begriff wurde erraten. Alle Imposter erhalten 2 Punkte.";
+      const nextButton = state.currentRound >= state.totalRounds
+        ? `<button class="btn btn-primary" type="button" onclick="showFinalScreen()">Schlussrangliste anzeigen</button>`
+        : `<button class="btn btn-primary" type="button" onclick="nextRound()">Nächste Runde</button>`;
+
+      app.innerHTML = `
+        <section class="card stack">
+          <div>
+            <div class="round-badge">Auflösung Runde ${state.currentRound}</div>
+            <h2>Der Begriff war: ${escapeHtml(state.currentWord)}</h2>
+            <div class="status-box ${statusClass}"><strong>${statusText}</strong></div>
+          </div>
+          <div class="status-box">
+            <p><strong>Imposter:</strong><br>${escapeHtml(imposterNames.join(", "))}</p>
+            <p style="margin-bottom:0"><strong>Personen mit Begriff:</strong><br>${escapeHtml(normalNames.join(", "))}</p>
+          </div>
+          <div>
+            <h3>Rangliste</h3>
+            <div class="score-list">${updateScoreboard(true)}</div>
+          </div>
+          ${nextButton}
+        </section>
+      `;
+    }
+
+    // Vergibt Punkte automatisch nach dem gedrückten Runden-Ende-Button.
+    function awardPoints() {
+      if (state.groupFoundAllImposters) {
+        state.players.forEach(player => {
+          if (!state.imposters.includes(player.id)) player.points += 1;
+        });
+      } else {
+        state.players.forEach(player => {
+          if (state.imposters.includes(player.id)) player.points += 2;
+        });
+      }
+    }
+
+    // Erstellt die Rangliste als HTML. Rollen werden nur nach Auflösung sichtbar.
+    function updateScoreboard(showRoles) {
+      const sorted = [...state.players].sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, "de"));
+      return sorted.map((player, index) => {
+        const role = state.imposters.includes(player.id) ? "Imposter" : "Begriff erhalten";
+        return `
+          <div class="score-row">
+            <div class="score-place">${index + 1}</div>
+            <div>
+              <div class="score-name">${escapeHtml(player.name)}</div>
+              ${showRoles ? `<div class="score-role">${role}</div>` : `<div class="score-role">Rolle geheim</div>`}
+            </div>
+            <div class="score-points">${player.points} P.</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function nextRound() {
+      startRound();
+    }
+
+    // Endbildschirm mit Schlussrangliste und Reflexionsfragen.
+    function showFinalScreen() {
+      state.screen = "final";
+      setTopStatus("Spiel beendet");
+      const sorted = [...state.players].sort((a, b) => b.points - a.points || a.name.localeCompare(b.name, "de"));
+      const bestPoints = sorted[0].points;
+      const winners = sorted.filter(player => player.points === bestPoints).map(player => player.name);
+
+      app.innerHTML = `
+        <section class="card stack">
+          <div class="winner-box">
+            <div class="confetti">🏆</div>
+            <h2 style="margin-bottom:0">Spiel beendet</h2>
+            <p class="muted" style="margin:8px 0 0">Gewinnerin oder Gewinner</p>
+            <div class="winner-name">${escapeHtml(winners.join(", "))}</div>
+          </div>
+          <div>
+            <h3>Schlussrangliste</h3>
+            <div class="score-list">${updateScoreboard(false)}</div>
+          </div>
+          <div class="status-box">
+            <h3>Reflexionsfragen</h3>
+            <ul style="margin:0; padding-left:20px; color:var(--muted); line-height:1.45">
+              <li>Welche Hinweise waren besonders gut?</li>
+              <li>Welche Person war am schwierigsten zu durchschauen?</li>
+              <li>Welche Begriffe waren schwer zu umschreiben?</li>
+            </ul>
+          </div>
+          <button class="btn btn-primary" type="button" onclick="restartGame()">Neues Spiel</button>
+          <button class="btn btn-secondary" type="button" onclick="restartWithSamePlayers()">Nochmals mit gleichen Namen</button>
+        </section>
+      `;
+    }
+
+    // Komplett neu starten.
+    function restartGame() {
+      state.screen = "start";
+      state.playerCount = 3;
+      state.players = [];
+      state.imposterCount = 1;
+      state.totalRounds = 5;
+      state.gameMode = "classic";
+      state.currentRound = 0;
+      state.usedWords = [];
+      renderStartScreen();
+    }
+
+    // Mit gleichen Namen erneut spielen.
+    function restartWithSamePlayers() {
+      state.players.forEach(player => player.points = 0);
+      state.playerCount = state.players.length;
+      state.imposterCount = Math.min(state.imposterCount, Math.floor(state.playerCount / 2));
+      state.totalRounds = 5;
+      state.currentRound = 0;
+      state.usedWords = [];
+      setupGameMode();
+    }
+
+    function openRules() {
+      document.getElementById("rulesModal").classList.add("open");
+    }
+
+    function closeRules() {
+      document.getElementById("rulesModal").classList.remove("open");
+    }
+
+    function closeRulesOnBackdrop(event) {
+      if (event.target.id === "rulesModal") closeRules();
+    }
+
+    // Kleine Tastaturunterstützung für Laptop-Nutzung.
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") closeRules();
+    });
+
+    initGame();
+  </script>
+</body>
+</html>

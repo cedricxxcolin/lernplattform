@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mission Français, 5. Klasse</title>
+<style>
+:root{--ink:#172033;--muted:#667085;--line:#e5e7eb;--bg:#f5f7fb;--blue:#4f46e5;--green:#16a34a;--red:#dc2626}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+button,input{font:inherit}button{cursor:pointer}.wrap{width:min(1150px,calc(100% - 28px));margin:auto;padding:20px 0 40px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:16px}.brand{font-size:29px;font-weight:950}.profile{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 13px;font-weight:900}
+.panel{background:#fff;border:1px solid var(--line);border-radius:28px;min-height:680px;padding:clamp(20px,4vw,42px);box-shadow:0 18px 50px #17203312}.hidden{display:none!important}
+h1{font-size:clamp(40px,7vw,68px);margin:8px 0}h2{font-size:clamp(28px,5vw,43px);margin:0 0 10px}.muted{color:var(--muted)}.hero{text-align:center;max-width:760px;margin:auto;padding-top:48px}.heroIcon{font-size:88px}
+.name{width:min(430px,100%);padding:16px;border:2px solid var(--line);border-radius:16px;text-align:center;font-size:21px;font-weight:850;outline:0}.name:focus{border-color:var(--blue)}
+.btn{border:0;border-radius:15px;padding:13px 19px;font-weight:900;background:var(--blue);color:#fff}.btn.light{background:#fff;color:var(--ink);border:1px solid var(--line)}.btn.soft{background:#eef2ff;color:#3730a3}
+.emojiGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(70px,1fr));gap:10px;max-width:650px;margin:24px auto}.emoji{font-size:36px;background:#fff;border:2px solid var(--line);border-radius:17px;padding:12px}.emoji.sel{border-color:var(--blue);background:#eef2ff}
+.modes{display:grid;grid-template-columns:repeat(2,1fr);gap:17px;margin-top:25px}.mode{background:#fff;border:2px solid var(--line);border-radius:22px;padding:24px;text-align:left;min-height:185px}.mode:hover{border-color:var(--blue);transform:translateY(-2px)}.mode .icon{font-size:46px}.mode h3{font-size:25px;margin:8px 0}
+.hud{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:20px}.pill{background:#f3f4f6;border:1px solid var(--line);border-radius:999px;padding:10px 15px;font-weight:900}.feedback{text-align:center;font-size:20px;font-weight:900;min-height:32px;margin-top:12px}
+.memory{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:20px}.mem{min-height:105px;border:0;border-radius:17px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:19px;font-weight:900;padding:10px}.mem.open{background:#fff;color:var(--ink);border:2px solid var(--line)}.mem.done{background:#dcfce7;color:#166534;border:2px solid #86efac}
+.balloonGame{position:relative;height:500px;overflow:hidden;border-radius:24px;background:linear-gradient(#dbeafe,#eff6ff 65%,#dcfce7);border:1px solid #bfdbfe;margin-top:16px}.target{text-align:center;background:#fff;border:2px solid #bfdbfe;border-radius:18px;padding:12px 18px;font-size:24px;font-weight:950;position:relative;z-index:4;max-width:550px;margin:12px auto}.balloon{position:absolute;width:145px;height:170px;border:0;background:transparent;font-size:72px;display:flex;flex-direction:column;align-items:center;justify-content:center;filter:drop-shadow(0 6px 5px #0002);transition:transform .1s}.balloon span{font-size:15px;font-weight:950;color:#172033;background:#ffffffee;border-radius:10px;padding:5px 7px;max-width:135px}.balloon:hover{transform:scale(1.06)}.pop{animation:pop .22s forwards}@keyframes pop{to{transform:scale(1.6);opacity:0}}
+.calendarBoard{max-width:900px;margin:18px auto}.week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}.day{min-height:88px;border:2px solid var(--line);border-radius:15px;background:#f8fafc;display:grid;place-items:center;text-align:center;padding:8px;font-weight:900}.day.blank{border:2px dashed #94a3b8;background:#fff}.day.wrong{background:#fee2e2;border-color:#fca5a5}.day.good{background:#dcfce7;border-color:#86efac}.cards{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:18px}.dayCard{padding:13px 17px;border:2px solid #c7d2fe;background:#eef2ff;border-radius:14px;font-weight:900}.timerbar{height:12px;background:#e5e7eb;border-radius:99px;overflow:hidden;margin:15px auto;max-width:900px}.timerfill{height:100%;background:#4f46e5;width:100%;transition:width .2s linear}
+.workshop{position:relative;min-height:420px;border-radius:24px;border:1px solid #d1d5db;background:linear-gradient(#e0f2fe 0 70%,#d6b98c 70% 100%);overflow:hidden;margin-top:16px}.bench{position:absolute;left:8%;right:8%;bottom:40px;height:90px;background:#8b5e3c;border-radius:12px 12px 3px 3px;box-shadow:0 10px 0 #6b442b}.robot{position:absolute;left:50%;bottom:115px;transform:translateX(-50%);font-size:110px;transition:.35s}.robot.move{animation:moveRobot .8s ease}.robot.turn{animation:turnRobot .8s ease}.robot.fly{animation:flyRobot 2.6s ease-in-out}.robot.work{animation:workRobot .65s ease}
+@keyframes moveRobot{0%{left:50%}45%{left:28%}100%{left:50%}}@keyframes turnRobot{to{transform:translateX(-50%) rotate(360deg)}}@keyframes flyRobot{
+  0%{left:50%;bottom:115px;transform:translateX(-50%) rotate(0deg)}
+  12%{left:38%;bottom:220px;transform:translateX(-50%) rotate(-8deg)}
+  30%{left:68%;bottom:275px;transform:translateX(-50%) rotate(8deg)}
+  48%{left:28%;bottom:245px;transform:translateX(-50%) rotate(-10deg)}
+  66%{left:72%;bottom:285px;transform:translateX(-50%) rotate(10deg)}
+  84%{left:42%;bottom:225px;transform:translateX(-50%) rotate(-5deg)}
+  100%{left:50%;bottom:115px;transform:translateX(-50%) rotate(0deg)}
+}@keyframes workRobot{0%,100%{transform:translateX(-50%) rotate(0)}35%{transform:translateX(-50%) rotate(-10deg)}70%{transform:translateX(-50%) rotate(10deg)}}
+.creation{position:absolute;font-size:48px;opacity:0;transform:scale(.4);transition:.35s}.creation.show{opacity:1;transform:scale(1)}.c1{left:12%;top:18%}.c2{right:13%;top:20%}.c3{left:19%;bottom:125px}.c4{right:20%;bottom:125px}.c5{left:43%;top:15%}.c6{right:38%;bottom:130px}.c7{left:31%;bottom:125px}.c8{right:29%;top:16%}
+.robotReplay{display:flex;justify-content:center;margin:14px 0 4px}.robotAnswers{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;max-width:760px;margin:18px auto}.answer{padding:17px;border:2px solid var(--line);background:#fff;border-radius:16px;font-weight:900;font-size:19px}.answer:hover{border-color:var(--blue)}.answer.good{background:#dcfce7;border-color:#86efac}.answer.bad{background:#fee2e2;border-color:#fca5a5}
+.end{text-align:center;padding-top:70px}.endIcon{font-size:90px}.bigScore{font-size:54px;font-weight:950}
+
+.calendarScene{
+  position:relative;
+  max-width:930px;
+  margin:18px auto;
+  padding:22px;
+  border-radius:24px;
+  background:linear-gradient(135deg,#eff6ff,#f5f3ff);
+  border:1px solid #c7d2fe;
+  overflow:hidden;
+}
+.calendarScene:before{
+  content:"📌";
+  position:absolute;
+  right:18px;
+  top:12px;
+  font-size:35px;
+  transform:rotate(10deg);
+}
+.missionBox{
+  text-align:center;
+  font-size:22px;
+  font-weight:950;
+  margin-bottom:16px;
+}
+.weekStrip{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:8px;
+}
+.weekTile{
+  min-height:96px;
+  border:2px solid #dbe3f0;
+  border-radius:16px;
+  background:#fff;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:5px;
+  font-weight:900;
+  padding:7px;
+}
+.weekTile .num{font-size:13px;color:#64748b}
+.weekTile.blank{
+  border:3px dashed #818cf8;
+  background:#eef2ff;
+  font-size:27px;
+}
+.weekTile.selected{
+  outline:5px solid #818cf8;
+}
+.weekTile.good{background:#dcfce7;border-color:#4ade80}
+.weekTile.bad{background:#fee2e2;border-color:#f87171}
+.chaosTray{
+  display:flex;
+  gap:10px;
+  justify-content:center;
+  flex-wrap:wrap;
+  margin-top:18px;
+  min-height:60px;
+}
+.chaosCard{
+  border:2px solid #c7d2fe;
+  background:#fff;
+  border-radius:14px;
+  padding:12px 16px;
+  font-weight:950;
+  box-shadow:0 5px 12px #17203310;
+}
+.chaosCard.active{background:#e0e7ff;outline:4px solid #818cf8}.chaosCard.bad{background:#fee2e2;border-color:#f87171}
+.calendarStamp{
+  position:absolute;
+  font-size:48px;
+  opacity:.15;
+  pointer-events:none;
+}
+.robotThought{
+  position:absolute;
+  left:50%;
+  top:24px;
+  transform:translateX(-50%);
+  background:#fff;
+  border:2px solid #dbe3f0;
+  border-radius:18px;
+  padding:9px 14px;
+  font-weight:900;
+  z-index:4;
+}
+.robotThought:after{
+  content:"";
+  position:absolute;
+  left:50%;
+  bottom:-10px;
+  width:16px;
+  height:16px;
+  background:#fff;
+  border-right:2px solid #dbe3f0;
+  border-bottom:2px solid #dbe3f0;
+  transform:translateX(-50%) rotate(45deg);
+}
+.actionStage{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+.actionPaper{
+  position:absolute;
+  left:18%;
+  bottom:128px;
+  font-size:52px;
+}
+.actionGlue{
+  position:absolute;
+  right:18%;
+  bottom:128px;
+  font-size:48px;
+}
+
+
+.foldSheet{
+  position:absolute;
+  left:78%;
+  z-index:5;
+  bottom:132px;
+  width:100px;
+  height:76px;
+  transform:translateX(-50%);
+  background:#fff;
+  border:3px solid #94a3b8;
+  border-radius:5px;
+  box-shadow:0 5px 12px #17203322;
+  transform-origin:center bottom;
+  animation:foldPaper 1.05s ease-in-out forwards;
+}
+.foldSheet:after{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  top:50%;
+  border-top:2px dashed #94a3b8;
+}
+@keyframes foldPaper{
+  0%{transform:translateX(-50%) scaleY(1)}
+  45%{transform:translateX(-50%) scaleY(.18)}
+  70%{transform:translateX(-50%) scaleY(.48)}
+  100%{transform:translateX(-50%) scale(.72,.48)}
+}
+.gluePaper{
+  position:absolute;
+  left:78%;
+  z-index:5;
+  bottom:126px;
+  width:105px;
+  height:82px;
+  transform:translateX(-50%);
+  background:#fff;
+  border:3px solid #94a3b8;
+  border-radius:5px;
+  box-shadow:0 5px 12px #17203322;
+}
+.glueStar{
+  position:absolute;
+  left:18%;
+  bottom:235px;
+  font-size:58px;
+  z-index:8;
+  animation:stickStar 1.1s ease-in-out forwards;
+}
+@keyframes stickStar{
+  0%{left:92%;bottom:245px;transform:rotate(20deg) scale(1)}
+  65%{left:75%;bottom:150px;transform:rotate(-10deg) scale(.85)}
+  100%{left:75%;bottom:150px;transform:rotate(0deg) scale(.78)}
+}
+  65%{left:19%;bottom:150px;transform:rotate(10deg) scale(.85)}
+  100%{left:19%;bottom:150px;transform:rotate(0deg) scale(.78)}
+}
+
+
+.drawPaper{
+  position:absolute;
+  left:22%;
+  bottom:126px;
+  width:120px;
+  height:92px;
+  transform:translateX(-50%);
+  background:#fff;
+  border:3px solid #94a3b8;
+  border-radius:6px;
+  box-shadow:0 5px 12px #17203322;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+}
+.drawPencil{
+  position:absolute;
+  left:37%;
+  bottom:175px;
+  font-size:42px;
+  z-index:4;
+  animation:drawPencil 1.25s ease-in-out forwards;
+}
+.drawPicture{
+  font-size:52px;
+  opacity:0;
+  transform:scale(.4);
+  animation:revealPicture .45s ease forwards .8s;
+}
+@keyframes drawPencil{
+  0%{left:12%;bottom:205px;transform:rotate(-20deg)}
+  25%{left:23%;bottom:180px;transform:rotate(-5deg)}
+  50%{left:15%;bottom:158px;transform:rotate(-18deg)}
+  75%{left:25%;bottom:145px;transform:rotate(-8deg)}
+  100%{left:28%;bottom:132px;transform:rotate(5deg)}
+}
+@keyframes revealPicture{
+  to{opacity:1;transform:scale(1)}
+}
+
+@media(max-width:760px){.modes{grid-template-columns:1fr}.memory{grid-template-columns:repeat(3,1fr)}.week{grid-template-columns:repeat(4,1fr)}.robotAnswers{grid-template-columns:1fr}.panel{min-height:0}}
+@media(max-width:480px){.memory{grid-template-columns:repeat(2,1fr)}.week{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="top"><div class="brand">🇫🇷 Mission Français</div><div id="profile" class="profile hidden"><span id="pe">🐼</span><span id="pn"></span><span>⭐ <span id="gs">0</span></span></div></div>
+<main id="app" class="panel"></main>
+</div>
+<script>
+const vocab=[
+["lundi","Montag"],["mardi","Dienstag"],["mercredi","Mittwoch"],["jeudi","Donnerstag"],["vendredi","Freitag"],["samedi","Samstag"],["dimanche","Sonntag"],
+["dessiner","zeichnen"],["coller","kleben"],["plier","falten"],["voler","fliegen"],["bouger","sich bewegen"],["tourner","drehen"],["bricoler","basteln"],
+["une invention","eine Erfindung"],["un robot","ein Roboter"],["une idée","eine Idee"],["un papier","ein Papier"],["une image","ein Bild"],["un crayon","ein Bleistift"]
+];
+const days=[["lundi","Montag"],["mardi","Dienstag"],["mercredi","Mittwoch"],["jeudi","Donnerstag"],["vendredi","Freitag"],["samedi","Samstag"],["dimanche","Sonntag"]];
+const robotWords=[
+ {fr:"dessiner",de:"zeichnen",anim:"work",creation:"🖼️"},
+ {fr:"coller",de:"kleben",anim:"work",creation:"🧩"},
+ {fr:"plier",de:"falten",anim:"work",creation:"✉️"},
+ {fr:"voler",de:"fliegen",anim:"fly",creation:"✨"},
+ {fr:"bouger",de:"sich bewegen",anim:"move",creation:"👣"},
+ {fr:"tourner",de:"drehen",anim:"turn",creation:"🔄"},
+ {fr:"bricoler",de:"basteln",anim:"work",creation:"🛠️"}
+];
+const avatars=["🐼","🦊","🐯","🐸","🐵","🤖","👻","🐲","🦄","🐧","🐙","🐨"];
+const S={name:"",emoji:"🐼",score:0};const app=document.querySelector("#app");
+const shuffle=a=>[...a].sort(()=>Math.random()-.5);const sample=(a,n)=>shuffle(a).slice(0,n);
+function add(n){
+  S.score+=n;
+  const el=document.getElementById("gs");
+  if(el) el.textContent=S.score;
+}
+function nav(){return `<button class="btn light" onclick="menu()">← Spielmodi</button>`}
+function start(){document.getElementById("profile").classList.add("hidden");app.innerHTML=`<div class="hero"><div class="heroIcon">🎮🇫🇷</div><h1>Mission Français</h1><p class="muted">Trainiere deine Französischwörter mit vier Minigames.</p><input id="name" class="name" placeholder="Dein Name" maxlength="18"><p><button class="btn" onclick="nameNext()">Weiter</button></p></div>`}
+function nameNext(){
+ let input=document.getElementById("name");
+ let n=input.value.trim();
+ if(!n)return input.focus();
+ S.name=n;
+ app.innerHTML=`<div class="hero"><h2>Wähle deinen Charakter</h2><div class="emojiGrid">${avatars.map((x,i)=>`<button class="emoji ${i===0?"sel":""}" onclick="pick(this,'${x}')">${x}</button>`).join("")}</div><button class="btn" onclick="menu()">Los gehts</button></div>`}
+function pick(el,x){S.emoji=x;document.querySelectorAll(".emoji").forEach(e=>e.classList.remove("sel"));el.classList.add("sel")}
+function menu(){
+ const profileEl=document.getElementById("profile");
+ const peEl=document.getElementById("pe");
+ const pnEl=document.getElementById("pn");
+ const gsEl=document.getElementById("gs");
+ profileEl.classList.remove("hidden");
+ peEl.textContent=S.emoji;
+ pnEl.textContent=S.name;
+ gsEl.textContent=S.score;
+ app.innerHTML=`<h2>Wähle einen Spielmodus</h2><p class="muted">Jeder Modus kann beliebig oft gespielt werden. Die Aufgaben werden jedes Mal neu gemischt.</p><div class="modes">
+<button class="mode" onclick="balloons()"><div class="icon">🎈</div><h3>Ballonjäger</h3><p>Finde die richtige französische Übersetzung, bevor der Ballon davonfliegt.</p></button>
+<button class="mode" onclick="memory()"><div class="icon">🧩</div><h3>Paare finden</h3><p>Finde die passenden französischen und deutschen Wortpaare.</p></button>
+<button class="mode" onclick="calendarChaos()"><div class="icon">📅</div><h3>Kalender Chaos</h3><p>Rette den kaputten Kalender, finde fehlende Tage und bringe chaotische Wochen wieder in Ordnung.</p></button>
+<button class="mode" onclick="robotWorkshop()"><div class="icon">🤖</div><h3>Roboterwerkstatt</h3><p>Beobachte genau, was der Roboter macht, und wähle danach das passende französische Verb.</p></button></div>`}
+function finish(icon,title,pts,replay){app.innerHTML=`<div class="end"><div class="endIcon">${icon}</div><h2>${title}</h2><div class="bigScore">+${pts} ⭐</div><p class="muted">Noch eine Runde? Die Aufgaben werden neu gemischt.</p><p><button class="btn" onclick="${replay}">Nochmals spielen</button> <button class="btn soft" onclick="menu()">Spielmodi</button></p></div>`}
+
+/* MEMORY */
+function memory(){
+  const chosen=sample(vocab,6);
+  const deck=shuffle(chosen.flatMap((v,i)=>[
+    {id:i,t:v[0]},
+    {id:i,t:v[1]}
+  ]));
+  let open=[];
+  const done=new Set();
+  let moves=0;
+  let pts=0;
+
+  app.innerHTML=`
+    <div class="hud">
+      ${nav()}
+      <span class="pill">Züge <b id="moves">0</b></span>
+      <span class="pill">Paare <b id="pairs">0</b>/6</span>
+    </div>
+    <h2>🧩 Paare finden</h2>
+    <div class="memory">
+      ${deck.map((x,i)=>`<button class="mem" data-i="${i}">?</button>`).join("")}
+    </div>`;
+
+  const cards=[...document.querySelectorAll(".mem")];
+
+  cards.forEach(card=>{
+    card.onclick=()=>{
+      const i=Number(card.dataset.i);
+      if(open.length===2 || open.includes(i) || done.has(deck[i].id)) return;
+
+      card.classList.add("open");
+      card.textContent=deck[i].t;
+      open.push(i);
+
+      if(open.length!==2) return;
+
+      moves++;
+      document.getElementById("moves").textContent=moves;
+      const [a,b]=open;
+
+      if(deck[a].id===deck[b].id){
+        done.add(deck[a].id);
+        [a,b].forEach(k=>{
+          cards[k].classList.add("done");
+          cards[k].disabled=true;
+        });
+        pts+=100;
+        add(100);
+        document.getElementById("pairs").textContent=done.size;
+        open=[];
+
+        if(done.size===6){
+          setTimeout(()=>finish("🧩","Alle Paare gefunden!",pts,"memory()"),600);
+        }
+      }else{
+        setTimeout(()=>{
+          [a,b].forEach(k=>{
+            cards[k].classList.remove("open");
+            cards[k].textContent="?";
+          });
+          open=[];
+        },700);
+      }
+    };
+  });
+}
+
+/* BALLOONS */
+let balloonTimer=null;
+function balloons(){clearInterval(balloonTimer);let round=0,pts=0,lives=3;function next(){clearInterval(balloonTimer);if(round>=8||lives<=0)return finish("🎈",lives>0?"Ballonrunde geschafft!":"Die Ballons sind entwischt!",pts,"balloons()");round++;let correct=vocab[Math.floor(Math.random()*vocab.length)],options=shuffle([correct,...sample(vocab.filter(v=>v[0]!==correct[0]),3)]);
+app.innerHTML=`<div class="hud">${nav()}<span class="pill">Runde ${round}/8</span><span class="pill">❤️ ${lives}</span><span class="pill">Punkte ${pts}</span></div><h2>🎈 Ballonjäger</h2><div class="target">Finde: 🇩🇪 ${correct[1]}</div><div id="sky" class="balloonGame"></div><div id="bf" class="feedback"></div>`;
+let sky=document.querySelector("#sky"),H=sky.clientHeight,positions=[5,29,53,76],bs=[];options.forEach((o,i)=>{let b=document.createElement("button");b.className="balloon";b.style.left=positions[i]+"%";b.style.bottom="-160px";b.innerHTML=`🎈<span>${o[0]}</span>`;b.dataset.correct=o[0]===correct[0];sky.appendChild(b);bs.push({el:b,y:-160,speed:.66+Math.random()*.34});b.onclick=()=>{if(b.dataset.correct==="true"){b.classList.add("pop");pts+=120;add(120);document.getElementById("bf").textContent="💥 Richtig!";clearInterval(balloonTimer);setTimeout(next,420)}else{b.classList.add("pop");b.disabled=true;document.getElementById("bf").textContent="❌ Falscher Ballon!"}}});
+balloonTimer=setInterval(()=>{let escaped=false;bs.forEach(b=>{if(!b.el.isConnected)return;b.y+=b.speed*2.1;b.el.style.bottom=b.y+"px";if(b.y>H+20&&b.el.dataset.correct==="true")escaped=true});if(escaped){clearInterval(balloonTimer);lives--;document.getElementById("bf").textContent="😮 Der richtige Ballon ist entwischt!";setTimeout(next,600)}},20)}next()}
+
+/* CALENDAR CHAOS */
+function calendarChaos(){
+ let round=0,pts=0,lives=3;
+ const total=7;
+
+ function next(){
+  if(round>=total || lives<=0){
+    return finish("📅",lives>0?"Kalender gerettet!":"Das Kalender Chaos gewinnt diesmal!",pts,"calendarChaos()");
+  }
+  round++;
+
+  // Three progressively richer task types.
+  const type = round<=2 ? "missing" : round<=4 ? "swap" : "sequence";
+
+  if(type==="missing"){
+    const count=round===1?1:2;
+    const missing=sample([0,1,2,3,4,5,6],count);
+    const distractors=sample(days.filter((d,i)=>!missing.includes(i)),2);
+    const pool=shuffle([...missing.map(i=>days[i]),...distractors]);
+    let selected=null;
+
+    app.innerHTML=`
+      <div class="hud">${nav()}<span class="pill">Mission ${round}/${total}</span><span class="pill">❤️ ${lives}</span><span class="pill">Punkte ${pts}</span></div>
+      <h2>📅 Kalender Chaos</h2>
+      <div class="calendarScene">
+        <div class="missionBox">🚨 Im Kalender fehlen ${count===1?"ein Tag":"zwei Tage"}!</div>
+        <div class="weekStrip">
+          ${days.map((d,i)=>missing.includes(i)
+            ? `<button class="weekTile blank" data-slot="${i}">❓<span class="num">Tag ${i+1}</span></button>`
+            : `<div class="weekTile">${d[0]}<span class="num">${d[1]}</span></div>`).join("")}
+        </div>
+        <div class="chaosTray">
+          ${pool.map(d=>`<button class="chaosCard" data-fr="${d[0]}">${d[0]}</button>`).join("")}
+        </div>
+      </div>
+      <div id="cf" class="feedback">Wähle unten einen Tag und setze ihn in die richtige Lücke.</div>`;
+
+    document.querySelectorAll(".chaosCard").forEach(card=>{
+      card.onclick=()=>{
+        document.querySelectorAll(".chaosCard").forEach(x=>x.classList.remove("active"));
+        selected=card;
+        card.classList.add("active");
+      };
+    });
+
+    document.querySelectorAll(".weekTile.blank").forEach(slot=>{
+      slot.onclick=()=>{
+        const cf=document.getElementById("cf");
+        if(!selected){cf.textContent="👆 Wähle zuerst eine Karte.";return}
+        const idx=Number(slot.dataset.slot);
+        if(selected.dataset.fr===days[idx][0]){
+          slot.innerHTML=`${days[idx][0]}<span class="num">${days[idx][1]}</span>`;
+          slot.classList.remove("blank");
+          slot.classList.add("good");
+          slot.disabled=true;
+          selected.disabled=true;
+          selected.style.opacity=".3";
+          selected=null;
+          pts+=100; add(100);
+          cf.textContent="✅ Genau!";
+          if([...document.querySelectorAll(".weekTile.blank")].every(x=>x.disabled)){
+            setTimeout(next,650);
+          }
+        }else{
+          slot.classList.add("bad");
+          lives--;
+          cf.textContent="❌ Dieser Tag passt hier nicht.";
+          setTimeout(()=>slot.classList.remove("bad"),500);
+          if(lives<=0)setTimeout(next,650);
+        }
+      };
+    });
+    return;
+  }
+
+  if(type==="swap"){
+    let order=[0,1,2,3,4,5,6];
+    const a=Math.floor(Math.random()*6);
+    const b=a+1;
+    [order[a],order[b]]=[order[b],order[a]];
+    let first=null;
+
+    app.innerHTML=`
+      <div class="hud">${nav()}<span class="pill">Mission ${round}/${total}</span><span class="pill">❤️ ${lives}</span><span class="pill">Punkte ${pts}</span></div>
+      <h2>📅 Kalender Chaos</h2>
+      <div class="calendarScene">
+        <div class="missionBox">😵 Zwei Wochentage wurden vertauscht. Finde sie!</div>
+        <div class="weekStrip">
+          ${order.map((idx,pos)=>`<button class="weekTile" data-pos="${pos}" data-day="${idx}">${days[idx][0]}</button>`).join("")}
+        </div>
+      </div>
+      <div id="cf" class="feedback">Klicke die zwei vertauschten Tage nacheinander an.</div>`;
+
+    document.querySelectorAll(".weekTile").forEach(tile=>{
+      tile.onclick=()=>{
+        if(first===null){
+          first=tile;
+          tile.classList.add("selected");
+          return;
+        }
+        const second=tile;
+        if(second===first)return;
+        const p1=Number(first.dataset.pos),p2=Number(second.dataset.pos);
+        const d1=Number(first.dataset.day),d2=Number(second.dataset.day);
+        const isPair=(p1===a&&p2===b)||(p1===b&&p2===a);
+        if(isPair){
+          first.classList.add("good"); second.classList.add("good");
+          pts+=180;add(180);
+          document.getElementById("cf").textContent="✅ Gefunden! Die Woche ist wieder richtig.";
+          setTimeout(next,750);
+        }else{
+          first.classList.remove("selected");
+          first.classList.add("bad");second.classList.add("bad");
+          lives--;
+          document.getElementById("cf").textContent="❌ Diese beiden sind nicht das vertauschte Paar.";
+          setTimeout(()=>{first.classList.remove("bad");second.classList.remove("bad");first=null},600);
+          if(lives<=0)setTimeout(next,700);
+        }
+      };
+    });
+    return;
+  }
+
+  // Sequence puzzle: rebuild a short consecutive calendar strip.
+  const len=round===5?3:round===6?4:5;
+  const startIdx=Math.floor(Math.random()*(8-len));
+  const correct=days.slice(startIdx,startIdx+len);
+  const shuffled=shuffle(correct);
+  let placed=[];
+
+  app.innerHTML=`
+    <div class="hud">${nav()}<span class="pill">Mission ${round}/${total}</span><span class="pill">❤️ ${lives}</span><span class="pill">Punkte ${pts}</span></div>
+    <h2>📅 Kalender Chaos</h2>
+    <div class="calendarScene">
+      <div class="missionBox">🧩 Baue diesen Teil der Woche wieder richtig zusammen.</div>
+      <div id="sequence" class="weekStrip" style="grid-template-columns:repeat(${len},1fr)">
+        ${correct.map((_,i)=>`<div class="weekTile blank" data-seq="${i}">❓<span class="num">Platz ${i+1}</span></div>`).join("")}
+      </div>
+      <div class="chaosTray">
+        ${shuffled.map((d,i)=>`<button class="chaosCard" data-fr="${d[0]}">${d[0]}</button>`).join("")}
+      </div>
+    </div>
+    <div id="cf" class="feedback">Setze die Karten von links nach rechts ein.</div>`;
+
+  document.querySelectorAll(".chaosCard").forEach(card=>{
+    card.onclick=()=>{
+      const pos=placed.length;
+      const cf=document.getElementById("cf");
+      if(card.dataset.fr===correct[pos][0]){
+        const slot=document.querySelector(`[data-seq="${pos}"]`);
+        slot.innerHTML=`${correct[pos][0]}<span class="num">${correct[pos][1]}</span>`;
+        slot.classList.remove("blank");slot.classList.add("good");
+        card.disabled=true;card.style.opacity=".3";
+        placed.push(card.dataset.fr);
+        pts+=110;add(110);
+        cf.textContent="✅ Richtig weiter!";
+        if(placed.length===len)setTimeout(next,700);
+      }else{
+        card.classList.add("bad");
+        lives--;
+        cf.textContent="❌ Dieser Tag kommt noch nicht.";
+        setTimeout(()=>card.classList.remove("bad"),500);
+        if(lives<=0)setTimeout(next,700);
+      }
+    };
+  });
+ }
+ next();
+}
+
+/* ROBOT WORKSHOP */
+function robotWorkshop(){
+ let round=0,pts=0,lives=3;
+ const actionOrder=shuffle([...robotWords]);
+ const total=actionOrder.length;
+
+ function next(){
+  if(round>=total || lives<=0){
+    return finish("🤖",lives>0?"Die Werkstatt ist fertig!":"Der Roboter braucht eine Pause!",pts,"robotWorkshop()");
+  }
+  round++;
+
+  // Each verb appears exactly once per playthrough, in random order.
+  const correct=actionOrder[round-1];
+  const wrong=sample(robotWords.filter(x=>x.fr!==correct.fr),3);
+  const opts=shuffle([correct,...wrong]);
+
+  app.innerHTML=`
+    <div class="hud">${nav()}<span class="pill">Aktion ${round}/${total}</span><span class="pill">❤️ ${lives}</span><span class="pill">Punkte ${pts}</span></div>
+    <h2>🤖 Roboterwerkstatt</h2>
+    <p class="muted">Beobachte den Roboter. Welches französische Verb passt zu seiner Aktion?</p>
+    <div class="workshop">
+      <div class="robotThought">👀 Genau hinschauen!</div>
+      <div class="bench"></div>
+      <div id="actionStage" class="actionStage"></div>
+      <div id="robot" class="robot">🤖</div>
+    </div>
+    <div class="robotReplay">
+      <button id="replayAction" class="btn soft hidden">↻ Aktion nochmals ansehen</button>
+    </div>
+    <div id="answers" class="robotAnswers hidden">
+      ${opts.map(x=>`<button class="answer" data-fr="${x.fr}">${x.fr}</button>`).join("")}
+    </div>
+    <div id="rf" class="feedback">🎬 Aktion startet...</div>`;
+
+  const robot=document.getElementById("robot");
+  const stage=document.getElementById("actionStage");
+  const replay=document.getElementById("replayAction");
+  let playing=false;
+
+  function clearAction(){
+    stage.innerHTML="";
+    robot.classList.remove("move","turn","fly","work");
+  }
+
+  function playAction(firstTime=false){
+    if(playing)return;
+    playing=true;
+    clearAction();
+    replay.disabled=true;
+
+    const rf=document.getElementById("rf");
+    rf.textContent=firstTime?"🎬 Aktion startet...":"🎬 Noch einmal genau hinschauen...";
+
+    if(correct.fr==="dessiner"){
+      stage.innerHTML=`
+        <div class="drawPaper"><div class="drawPicture">🖼️</div></div>
+        <div class="drawPencil">✏️</div>`;
+    }else if(correct.fr==="coller"){
+      // A star visibly moves onto a sheet and stays attached.
+      stage.innerHTML=`<div class="gluePaper"></div><div class="glueStar">⭐</div>`;
+    }else if(correct.fr==="plier"){
+      // A large sheet visibly folds in half.
+      stage.innerHTML=`<div class="foldSheet"></div>`;
+    }else if(correct.fr==="bricoler"){
+      stage.innerHTML=`<div class="actionPaper">🔧</div><div class="actionGlue">⚙️</div>`;
+    }else if(correct.fr==="voler"){
+      stage.innerHTML=`
+        <div style="position:absolute;left:12%;top:22%;font-size:46px">☁️</div>
+        <div style="position:absolute;right:12%;top:35%;font-size:54px">☁️</div>
+        <div style="position:absolute;left:44%;top:12%;font-size:38px">☁️</div>
+        <div style="position:absolute;left:47%;bottom:105px;font-size:34px">💨</div>`;
+    }else if(correct.fr==="bouger"){
+      stage.innerHTML=`<div class="actionPaper">👣</div>`;
+    }else if(correct.fr==="tourner"){
+      stage.innerHTML=`<div class="actionPaper">↻</div>`;
+    }
+
+    void robot.offsetWidth;
+    robot.classList.add(correct.anim);
+
+    const actionDuration=correct.fr==="voler"?2800:(correct.fr==="dessiner"?1550:(correct.fr==="plier"||correct.fr==="coller"?1450:1100));
+    setTimeout(()=>{
+      clearAction();
+      playing=false;
+      replay.disabled=false;
+      replay.classList.remove("hidden");
+      document.getElementById("answers").classList.remove("hidden");
+      rf.textContent="🤔 Welche Aktion war das?";
+    },actionDuration);
+  }
+
+  replay.onclick=()=>playAction(false);
+
+  document.querySelectorAll(".answer").forEach(btn=>{
+    btn.onclick=()=>{
+      if(playing)return;
+      const rf=document.getElementById("rf");
+
+      if(btn.dataset.fr===correct.fr){
+        // Correct answer: immediately clear everything from this task.
+        document.querySelectorAll(".answer").forEach(x=>x.disabled=true);
+        replay.disabled=true;
+        btn.classList.add("good");
+        pts+=140;
+        add(140);
+        clearAction();
+        document.getElementById("answers").classList.add("hidden");
+        replay.classList.add("hidden");
+        rf.textContent="✅ Richtig!";
+
+        // No result emoji or extra animation. Move directly to the next task.
+        setTimeout(next,500);
+      }else{
+        btn.classList.add("bad");
+        btn.disabled=true;
+        lives--;
+        rf.textContent="❌ Das passt nicht zur Aktion. Du kannst sie nochmals ansehen.";
+        if(lives<=0){
+          document.querySelectorAll(".answer").forEach(x=>x.disabled=true);
+          replay.disabled=true;
+          setTimeout(next,750);
+        }
+      }
+    };
+  });
+
+  setTimeout(()=>playAction(true),450);
+ }
+ next();
+}
+
+start();
+</script>
+</body>
+</html>

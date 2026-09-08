@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marktstadt 3D – Das Spiel der Preisbildung</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="startScreen" class="overlay visible">
+    <div class="panel">
+      <h1>Marktstadt 3D – Das Spiel der Preisbildung</h1>
+      <p class="subtitle">Wirtschaft &amp; Recht (Sek II)</p>
+      <p>Erkunde die Marktstadt, handle Waren und erlebe, wie Angebot und Nachfrage die Preise verändern.</p>
+      <ul>
+        <li><strong>WASD</strong>: Bewegen</li>
+        <li><strong>Maus</strong>: Umschauen</li>
+        <li><strong>E</strong>: Interagieren</li>
+      </ul>
+      <button id="startButton">Spiel starten</button>
+      <p class="hint">Hinweis: Klicke im Spiel, um die Maussteuerung zu aktivieren (Pointer Lock).</p>
+    </div>
+  </div>
+
+  <div id="hud" class="hidden">
+    <div class="hud-left card">
+      <h2>Status</h2>
+      <p>Level: <span id="levelValue">1</span></p>
+      <p>Geld: <span id="moneyValue">100</span> CHF</p>
+      <p>Punkte: <span id="pointsValue">0</span></p>
+      <p>Aktiver Auftrag: <span id="questValue">-</span></p>
+      <p>Inventar: <span id="inventoryValue">leer</span></p>
+      <p id="interactionHint" class="interaction">Bewege dich zu einem Bereich und drücke E.</p>
+    </div>
+
+    <div class="hud-right card">
+      <h2>Preistafel</h2>
+      <div id="priceBoard"></div>
+    </div>
+
+    <div id="eventTicker" class="card ticker">Willkommen in Marktstadt!</div>
+  </div>
+
+  <div id="interactionPanel" class="overlay hidden">
+    <div class="panel" id="interactionContent"></div>
+  </div>
+
+  <div id="quizPanel" class="overlay hidden">
+    <div class="panel quiz">
+      <h2>Wirtschafts-Quiz</h2>
+      <p id="quizQuestion">Frage</p>
+      <div id="quizOptions"></div>
+      <div id="quizFeedback"></div>
+      <button id="nextQuizButton">Nächste Frage</button>
+      <button id="closeQuizButton">Quiz schließen</button>
+    </div>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+
+  <script src="three.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

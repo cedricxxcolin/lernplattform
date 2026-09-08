@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rechen Snake 🐍</title>
+    <style>
+        /* =========================================
+           CSS STYLING - Kindgerecht & Responsive
+           ========================================= */
+        :root {
+            --primary: #4CAF50;
+            --secondary: #FF9800;
+            --bg-color: #E8F5E9;
+            --text-dark: #333;
+            --text-light: #FFF;
+            --color-red: #FF5252;
+            --color-blue: #448AFF;
+            --color-green: #69F0AE;
+            --color-yellow: #FFD740;
+            --font-main: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* Verhindert ungewolltes Markieren von Text beim Spielen */
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden; /* Verhindert Scrollen auf mobilen Geräten */
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 20px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            max-height: 95vh;
+            overflow-y: auto;
+        }
+
+        h1 {
+            color: var(--primary);
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 0px #C8E6C9;
+        }
+
+        /* Verstecken von Screens */
+        .hidden {
+            display: none !important;
+        }
+
+        /* --- Startmenü --- */
+        .start-section {
+            margin-bottom: 25px;
+            background: #F1F8E9;
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        .start-section h2 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        input[type="text"] {
+            font-size: 1.5rem;
+            padding: 10px 20px;
+            border: 3px solid #ccc;
+            border-radius: 10px;
+            font-family: var(--font-main);
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary);
+            outline: none;
+        }
+
+        .error-msg {
+            color: var(--color-red);
+            font-size: 0.9rem;
+            display: none;
+            margin-top: 5px;
+        }
+
+        /* Emojis & Level Buttons */
+        .grid-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .emoji-btn, .level-btn {
+            background: white;
+            border: 3px solid #ddd;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .emoji-btn {
+            font-size: 2.5rem;
+            width: 70px;
+            height: 70px;
+        }
+
+        .level-btn {
+            padding: 15px;
+            width: 140px;
+        }
+
+        .level-btn .icon {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .level-btn .desc {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .emoji-btn:hover, .level-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .selected {
+            border-color: var(--primary);
+            background-color: #E8F5E9;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.3);
+            transform: scale(1.05);
+        }
+
+        .start-btn {
+            font-size: 1.8rem;
+            background-color: #ccc;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            cursor: not-allowed;
+            font-family: var(--font-main);
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-top: 10px;
+        }
+
+        .start-btn.active {
+            background-color: var(--secondary);
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 152, 0, 0.4);
+        }
+
+        .start-btn.active:hover {
+            transform: translateY(-3px);
+            background-color: #F57C00;
+        }
+
+        /* --- Spielbildschirm --- */
+        #game-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        .hud {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .task-container {
+            background: #FFF3E0;
+            border: 4px solid var(--secondary);
+            border-radius: 15px;
+            padding: 15px 30px;
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #E65100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .canvas-container {
+            position: relative;
+            background: #FAFAFA;
+            border: 4px solid #333;
+            border-radius: 10px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.05);
+        }
+
+        canvas {
+            display: block;
+            border-radius: 5px;
+            background-size: 40px 40px;
+            background-image:
+                linear-gradient(to right, #eee 1px, transparent 1px),
+                linear-gradient(to bottom, #eee 1px, transparent 1px);
+        }
+
+        /* Touch-Steuerung (Steuerkreuz) */
+        .controls {
+            display: none;
+            grid-template-columns: 60px 60px 60px;
+            grid-template-rows: 60px 60px 60px;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .controls button {
+            background: #E0E0E0;
+            border: none;
+            border-radius: 15px;
+            font-size: 2rem;
+            color: #333;
+            cursor: pointer;
+            box-shadow: 0 4px #BDBDBD;
+        }
+
+        .controls button:active {
+            box-shadow: 0 0 #BDBDBD;
+            transform: translateY(4px);
+        }
+
+        .btn-up { grid-column: 2; grid-row: 1; }
+        .btn-left { grid-column: 1; grid-row: 2; }
+        .btn-down { grid-column: 2; grid-row: 3; }
+        .btn-right { grid-column: 3; grid-row: 2; }
+
+        /* --- Game Over Bildschirm --- */
+        #game-over-screen {
+            padding: 40px 20px;
+        }
+
+        .game-over-title {
+            font-size: 3rem;
+            color: var(--color-red);
+            margin-bottom: 20px;
+        }
+
+        .stats-box {
+            background: #F1F8E9;
+            padding: 30px;
+            border-radius: 20px;
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+
+        .rating {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-top: 15px;
+            color: var(--secondary);
+        }
+
+        .restart-btn {
+            background-color: var(--primary);
+            color: white;
+            font-size: 1.5rem;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: var(--font-main);
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+            transition: all 0.2s;
+        }
+
+        .restart-btn:hover {
+            background-color: #388E3C;
+            transform: translateY(-3px);
+        }
+
+        /* Responsive Anpassungen */
+        @media (max-width: 600px) {
+            h1 { font-size: 2rem; }
+            .hud { font-size: 1rem; padding: 10px; justify-content: center; }
+            .task-container { font-size: 1.8rem; padding: 10px 20px; }
+            canvas { max-width: 100%; height: auto; }
+            /* Zeige Touch-Buttons auf kleinen Geräten */
+            .controls { display: grid; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- ================= STARTMENÜ ================= -->
+        <div id="start-screen">
+            <h1>Rechen Snake 🐍</h1>
+            
+            <div class="start-section">
+                <h2>1. Wie heißt du?</h2>
+                <input type="text" id="player-name" placeholder="Dein Name" maxlength="15">
+                <div class="error-msg" id="name-error">Bitte gib deinen Namen ein!</div>
+            </div>
+
+            <div class="start-section">
+                <h2>2. Wähle deinen Charakter</h2>
+                <div class="grid-options" id="emoji-grid">
+                    <button class="emoji-btn">🐍</button>
+                    <button class="emoji-btn">🐸</button>
+                    <button class="emoji-btn">🐼</button>
+                    <button class="emoji-btn">🐯</button>
+                    <button class="emoji-btn">🦊</button>
+                    <button class="emoji-btn">🐵</button>
+                    <button class="emoji-btn">🐰</button>
+                    <button class="emoji-btn">🐶</button>
+                </div>
+            </div>
+
+            <div class="start-section">
+                <h2>3. Wähle dein Level</h2>
+                <div class="grid-options" id="level-grid">
+                    <button class="level-btn" data-level="plus">
+                        <span class="icon">➕ Plus</span>
+                        <span class="desc">Addieren bis 100</span>
+                    </button>
+                    <button class="level-btn" data-level="minus">
+                        <span class="icon">➖ Minus</span>
+                        <span class="desc">Subtrahieren bis 100</span>
+                    </button>
+                    <button class="level-btn" data-level="mal">
+                        <span class="icon">✖️ Mal</span>
+                        <span class="desc">Einmaleins</span>
+                    </button>
+                    <button class="level-btn" data-level="geteilt">
+                        <span class="icon">➗ Geteilt</span>
+                        <span class="desc">Division ohne Rest</span>
+                    </button>
+                </div>
+            </div>
+
+            <button id="start-btn" class="start-btn">Spiel Starten</button>
+        </div>
+
+        <!-- ================= SPIEL ================= -->
+        <div id="game-screen" class="hidden">
+            <div class="hud">
+                <span id="hud-player">Name 🐍</span>
+                <span id="hud-level">Level: Plus</span>
+                <span id="hud-score">Punkte: 0</span>
+                <span id="hud-length">Länge: 3</span>
+            </div>
+
+            <div class="task-container" id="task-display">
+                Aufgabe wird geladen...
+            </div>
+
+            <div class="canvas-container">
+                <!-- Die Canvas-Größe wird intern auf 400x400 festgelegt, was einem 20x20 Grid mit 20px Zellen entspricht. 
+                     Per CSS wird sie hochskaliert -->
+                <canvas id="game-canvas" width="400" height="400"></canvas>
+            </div>
+
+            <!-- Touch-Steuerung für Tablets/Smartphones -->
+            <div class="controls">
+                <button class="btn-up" id="btn-up">⬆️</button>
+                <button class="btn-left" id="btn-left">⬅️</button>
+                <button class="btn-down" id="btn-down">⬇️</button>
+                <button class="btn-right" id="btn-right">➡️</button>
+            </div>
+        </div>
+
+        <!-- ================= GAME OVER ================= -->
+        <div id="game-over-screen" class="hidden">
+            <h1 class="game-over-title">Game Over!</h1>
+            
+            <div class="stats-box">
+                <p id="end-player">Name 🐍</p>
+                <p>Punkte: <strong id="end-score" style="color: var(--secondary)">0</strong></p>
+                <div class="rating" id="end-rating">Bewertung</div>
+            </div>
+
+            <button class="restart-btn" id="restart-btn">Nochmal spielen</button>
+            <br><br>
+            <button class="restart-btn" id="menu-btn" style="background: #757575; font-size: 1rem; padding: 10px 20px;">Zum Hauptmenü</button>
+        </div>
+
+    </div>
+
+    <!-- ================= JAVASCRIPT LOGIK ================= -->
+    <script>
+        // --- Globale Variablen & State ---
+        let state = {
+            name: "",
+            emoji: "",
+            level: "",
+            levelName: "",
+            score: 0,
+            length: 3,
+            snake: [],
+            direction: { x: 1, y: 0 },
+            nextDirection: { x: 1, y: 0 },
+            answers: [], // Array mit 4 Objekten: {x, y, value, color, isCorrect}
+            currentTask: { text: "", correctAnswer: 0 },
+            gameInterval: null,
+            gridSize: 20,
+            tileCount: 20, // 400px / 20 = 20 tiles (0 bis 19)
+            speed: 180, // Millisekunden pro Frame
+            feedback: { message: "", color: "", timer: 0 }
+        };
+
+        const colors = ['#FF5252', '#448AFF', '#69F0AE', '#FFD740']; // Rot, Blau, Grün, Gelb
+
+        // --- Audio System (Web Audio API) ---
+        let audioCtx;
+
+        function initAudio() {
+            // AudioContext erst beim ersten Klick initialisieren (Browser-Richtlinien)
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            if (type === 'correct') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime); // Hoher, freundlicher Ton
+                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.1); 
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, audioCtx.currentTime); // Tieferer, warnender Ton
+                osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'gameover') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(200, audioCtx.currentTime); // Dumpfer Ton fürs Ende
+                osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.5);
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.5);
+            }
+        }
+
+        // --- DOM Elemente holen ---
+        const screens = {
+            start: document.getElementById('start-screen'),
+            game: document.getElementById('game-screen'),
+            gameOver: document.getElementById('game-over-screen')
+        };
+
+        const inputs = {
+            name: document.getElementById('player-name'),
+            emojis: document.querySelectorAll('.emoji-btn'),
+            levels: document.querySelectorAll('.level-btn'),
+            startBtn: document.getElementById('start-btn'),
+            nameError: document.getElementById('name-error')
+        };
+
+        const hud = {
+            player: document.getElementById('hud-player'),
+            level: document.getElementById('hud-level'),
+            score: document.getElementById('hud-score'),
+            length: document.getElementById('hud-length'),
+            task: document.getElementById('task-display')
+        };
+
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- Event Listeners Menü ---
+        
+        // Name Eingabe Check
+        inputs.name.addEventListener('input', checkStartConditions);
+
+        // Emoji Auswahl
+        inputs.emojis.forEach(btn => {
+            btn.addEventListener('click', () => {
+                inputs.emojis.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                state.emoji = btn.innerText;
+                checkStartConditions();
+            });
+        });
+
+        // Level Auswahl
+        inputs.levels.forEach(btn => {
+            btn.addEventListener('click', () => {
+                inputs.levels.forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                state.level = btn.dataset.level;
+                state.levelName = btn.querySelector('.icon').innerText;
+                checkStartConditions();
+            });
+        });
+
+        function checkStartConditions() {
+            state.name = inputs.name.value.trim();
+            if (state.name.length > 0 && state.emoji !== "" && state.level !== "") {
+                inputs.startBtn.classList.add('active');
+                inputs.nameError.style.display = 'none';
+            } else {
+                inputs.startBtn.classList.remove('active');
+            }
+        }
+
+        inputs.startBtn.addEventListener('click', () => {
+            if (inputs.startBtn.classList.contains('active')) {
+                startGame();
+            } else {
+                if (state.name.length === 0) {
+                    inputs.nameError.style.display = 'block';
+                }
+            }
+        });
+
+        document.getElementById('restart-btn').addEventListener('click', startGame);
+        document.getElementById('menu-btn').addEventListener('click', () => {
+            showScreen('start');
+            resetSelection();
+        });
+
+        // --- Bildschirm-Navigation ---
+        function showScreen(screenName) {
+            screens.start.classList.add('hidden');
+            screens.game.classList.add('hidden');
+            screens.gameOver.classList.add('hidden');
+            screens[screenName].classList.remove('hidden');
+        }
+
+        function resetSelection() {
+            state.name = "";
+            state.emoji = "";
+            state.level = "";
+            inputs.name.value = "";
+            inputs.emojis.forEach(b => b.classList.remove('selected'));
+            inputs.levels.forEach(b => b.classList.remove('selected'));
+            inputs.startBtn.classList.remove('active');
+        }
+
+        // --- Spiel Initialisierung ---
+        function startGame() {
+            initAudio(); // Sound für den Browser freischalten
+            
+            // Reset Spiel-Zustand
+            state.score = 0;
+            state.length = 3;
+            state.direction = { x: 1, y: 0 };
+            state.nextDirection = { x: 1, y: 0 };
+            
+            // Schlange mittig positionieren
+            let startX = 10;
+            let startY = 10;
+            state.snake = [
+                {x: startX, y: startY},
+                {x: startX - 1, y: startY},
+                {x: startX - 2, y: startY}
+            ];
+
+            state.feedback = { message: "", color: "", timer: 0 };
+
+            updateHUD();
+            generateNewTask();
+            showScreen('game');
+
+            // Alten Intervall löschen falls vorhanden
+            if (state.gameInterval) clearInterval(state.gameInterval);
+            
+            // Spielschleife starten
+            state.gameInterval = setInterval(gameLoop, state.speed);
+        }
+
+        // --- Aufgabengenerator ---
+        function generateNewTask() {
+            let num1, num2, correct;
+            let symbol = "";
+
+            // Aufgabe basierend auf dem gewählten Level generieren
+            switch (state.level) {
+                case 'plus':
+                    num1 = Math.floor(Math.random() * 80) + 1; // 1 bis 80
+                    num2 = Math.floor(Math.random() * (100 - num1)) + 1; // sum max 100
+                    correct = num1 + num2;
+                    symbol = "+";
+                    break;
+                case 'minus':
+                    num1 = Math.floor(Math.random() * 90) + 10; // 10 bis 100
+                    num2 = Math.floor(Math.random() * (num1 - 1)) + 1; // ergebnis > 0
+                    correct = num1 - num2;
+                    symbol = "-";
+                    break;
+                case 'mal':
+                    num1 = Math.floor(Math.random() * 10) + 1; // 1 bis 10
+                    num2 = Math.floor(Math.random() * 10) + 1; // 1 bis 10
+                    correct = num1 * num2;
+                    symbol = "×";
+                    break;
+                case 'geteilt':
+                    num2 = Math.floor(Math.random() * 10) + 1; // Divisor 1 bis 10
+                    correct = Math.floor(Math.random() * 10) + 1; // Ergebnis 1 bis 10
+                    num1 = num2 * correct; // Dividend
+                    symbol = "÷";
+                    break;
+            }
+
+            state.currentTask.text = `${num1} ${symbol} ${num2} = ?`;
+            state.currentTask.correctAnswer = correct;
+            hud.task.innerText = state.currentTask.text;
+
+            generateAnswersOnGrid(correct);
+        }
+
+        // --- Antworten generieren und platzieren ---
+        function generateAnswersOnGrid(correct) {
+            let answerValues = [correct];
+            
+            // Generiere 3 einzigartige falsche Antworten (Distraktoren)
+            while (answerValues.length < 4) {
+                // Abweichung berechnen (abhängig von der Größe der richtigen Antwort)
+                let range = correct < 20 ? 3 : (correct < 50 ? 5 : 10);
+                let diff = Math.floor(Math.random() * range) + 1;
+                let sign = Math.random() > 0.5 ? 1 : -1;
+                
+                let wrongAnswer = correct + (diff * sign);
+                
+                // Stelle sicher, dass die Antwort positiv ist und noch nicht existiert
+                if (wrongAnswer >= 0 && !answerValues.includes(wrongAnswer)) {
+                    answerValues.push(wrongAnswer);
+                }
+            }
+
+            // Antworten mischen
+            answerValues = answerValues.sort(() => Math.random() - 0.5);
+
+            // Farben mischen
+            let shuffledColors = [...colors].sort(() => Math.random() - 0.5);
+
+            state.answers = [];
+
+            // Auf dem Grid platzieren (ohne Überlappung)
+            for (let i = 0; i < 4; i++) {
+                let position;
+                let isOccupied = true;
+
+                while (isOccupied) {
+                    position = {
+                        x: Math.floor(Math.random() * state.tileCount),
+                        y: Math.floor(Math.random() * state.tileCount)
+                    };
+
+                    // Prüfen ob Position von Schlange belegt
+                    isOccupied = state.snake.some(segment => segment.x === position.x && segment.y === position.y);
+                    
+                    // Prüfen ob Position schon von einer anderen Antwort belegt
+                    if (!isOccupied) {
+                        isOccupied = state.answers.some(ans => ans.x === position.x && ans.y === position.y);
+                    }
+                }
+
+                state.answers.push({
+                    x: position.x,
+                    y: position.y,
+                    value: answerValues[i],
+                    color: shuffledColors[i],
+                    isCorrect: (answerValues[i] === correct)
+                });
+            }
+        }
+
+        // --- Spiellogik & Updates ---
+        function gameLoop() {
+            update();
+            draw();
+        }
+
+        function update() {
+            // Richtung aktualisieren
+            state.direction = state.nextDirection;
+
+            // Neuen Kopf berechnen
+            let head = {
+                x: state.snake[0].x + state.direction.x,
+                y: state.snake[0].y + state.direction.y
+            };
+
+            // Kollision mit Wänden -> Game Over
+            if (head.x < 0 || head.x >= state.tileCount || head.y < 0 || head.y >= state.tileCount) {
+                return triggerGameOver("Wand berührt!");
+            }
+
+            // Kollision mit sich selbst -> Game Over
+            if (state.snake.some(segment => segment.x === head.x && segment.y === head.y)) {
+                return triggerGameOver("Dich selbst gebissen!");
+            }
+
+            // Neue Kopfposition in Array einfügen
+            state.snake.unshift(head);
+
+            // Kollision mit Antworten prüfen
+            let eatenAnswerIndex = state.answers.findIndex(ans => ans.x === head.x && ans.y === head.y);
+
+            if (eatenAnswerIndex !== -1) {
+                let eatenAnswer = state.answers[eatenAnswerIndex];
+                
+                if (eatenAnswer.isCorrect) {
+                    // Richtig!
+                    playSound('correct');
+                    state.score += 10;
+                    state.length += 1;
+                    showFeedback("Super! Richtig", "var(--primary)");
+                    generateNewTask();
+                } else {
+                    // Falsch!
+                    playSound('wrong');
+                    state.score = Math.max(0, state.score - 5); // Keine Minus-Punkte
+                    state.length -= 2; // Strafe: Schlange wird kürzer
+                    showFeedback(`Falsch! Es war ${state.currentTask.correctAnswer}`, "var(--color-red)");
+                    
+                    // Schwanz abschneiden (den hinzugefügten und 2 extra für Strafe)
+                    state.snake.pop(); // Standard pop
+                    if(state.snake.length > 0) state.snake.pop(); 
+                    if(state.snake.length > 0) state.snake.pop();
+
+                    if (state.snake.length <= 1) {
+                        return triggerGameOver("Schlange zu kurz!");
+                    } else {
+                        generateNewTask();
+                    }
+                }
+            } else {
+                // Wenn nichts gegessen wurde, das letzte Glied entfernen (normale Bewegung)
+                while (state.snake.length > state.length) {
+                    state.snake.pop();
+                }
+            }
+
+            updateHUD();
+
+            // Feedback Timer reduzieren
+            if (state.feedback.timer > 0) {
+                state.feedback.timer--;
+            }
+        }
+
+        function showFeedback(msg, color) {
+            state.feedback.message = msg;
+            state.feedback.color = color;
+            state.feedback.timer = 10; // Frames (ca. 1.5 Sekunden bei 150ms pro Frame)
+        }
+
+        function updateHUD() {
+            hud.player.innerText = `${state.name} ${state.emoji}`;
+            hud.level.innerText = `Level: ${state.levelName}`;
+            hud.score.innerText = `Punkte: ${state.score}`;
+            hud.length.innerText = `Länge: ${state.length}`;
+        }
+
+        // --- Zeichnen (Rendering) auf Canvas ---
+        function draw() {
+            // Canvas leeren (Hintergrund ist per CSS gesetzt, aber sicherheitshalber leeren)
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Gitterlinien optional nachzeichnen
+            ctx.strokeStyle = '#eee';
+            ctx.lineWidth = 1;
+            for(let i=0; i<=state.tileCount; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * state.gridSize, 0);
+                ctx.lineTo(i * state.gridSize, canvas.height);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(0, i * state.gridSize);
+                ctx.lineTo(canvas.width, i * state.gridSize);
+                ctx.stroke();
+            }
+
+            // Antworten (Äpfel) zeichnen
+            state.answers.forEach(ans => {
+                let x = ans.x * state.gridSize;
+                let y = ans.y * state.gridSize;
+                
+                // Farbiger Hintergrund (leichter 3D Effekt)
+                ctx.fillStyle = ans.color;
+                ctx.beginPath();
+                ctx.roundRect(x + 1, y + 1, state.gridSize - 2, state.gridSize - 2, 5);
+                ctx.fill();
+
+                // Zahl hineinschreiben
+                ctx.fillStyle = "white";
+                ctx.font = "bold 12px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(ans.value, x + state.gridSize / 2, y + state.gridSize / 2);
+            });
+
+            // Schlange zeichnen
+            for (let i = 0; i < state.snake.length; i++) {
+                let segment = state.snake[i];
+                let x = segment.x * state.gridSize;
+                let y = segment.y * state.gridSize;
+
+                if (i === 0) {
+                    // Kopf -> Zeichne das Emoji
+                    ctx.font = "16px Arial";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText(state.emoji, x + state.gridSize / 2, y + state.gridSize / 2 + 2);
+                } else {
+                    // Körper -> Zeichne grüne Segmente
+                    ctx.fillStyle = (i % 2 === 0) ? '#4CAF50' : '#81C784'; // Alternierendes Grün
+                    ctx.beginPath();
+                    ctx.roundRect(x + 2, y + 2, state.gridSize - 4, state.gridSize - 4, 3);
+                    ctx.fill();
+                }
+            }
+
+            // Feedback Overlay zeichnen
+            if (state.feedback.timer > 0) {
+                ctx.fillStyle = "rgba(255, 255, 255, 0.85)";
+                ctx.fillRect(0, canvas.height/2 - 30, canvas.width, 60);
+                
+                ctx.fillStyle = state.feedback.color;
+                ctx.font = "bold 24px " + getComputedStyle(document.body).fontFamily;
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(state.feedback.message, canvas.width/2, canvas.height/2);
+            }
+        }
+
+        // --- Game Over Behandlung ---
+        function triggerGameOver(reason) {
+            clearInterval(state.gameInterval);
+            playSound('gameover');
+            
+            // Fülle den Endbildschirm
+            document.getElementById('end-player').innerText = `${state.name} ${state.emoji}`;
+            document.getElementById('end-score').innerText = state.score;
+
+            let ratingElement = document.getElementById('end-rating');
+            if (state.score >= 100) {
+                ratingElement.innerText = "🌟 Sehr gut! Du bist ein Mathe-Profi! 🌟";
+                ratingElement.style.color = "#4CAF50";
+            } else if (state.score >= 50) {
+                ratingElement.innerText = "👍 Gut gemacht! Weiter so!";
+                ratingElement.style.color = "#FF9800";
+            } else {
+                ratingElement.innerText = "💪 Weiter üben, du schaffst das!";
+                ratingElement.style.color = "#FF5252";
+            }
+
+            showScreen('gameOver');
+        }
+
+        // --- Steuerung (Keyboard) ---
+        document.addEventListener('keydown', (e) => {
+            if (screens.game.classList.contains('hidden')) return;
+
+            const key = e.key;
+            if ((key === 'ArrowUp' || key === 'w' || key === 'W') && state.direction.y === 0) {
+                state.nextDirection = { x: 0, y: -1 };
+                e.preventDefault();
+            } else if ((key === 'ArrowDown' || key === 's' || key === 'S') && state.direction.y === 0) {
+                state.nextDirection = { x: 0, y: 1 };
+                e.preventDefault();
+            } else if ((key === 'ArrowLeft' || key === 'a' || key === 'A') && state.direction.x === 0) {
+                state.nextDirection = { x: -1, y: 0 };
+                e.preventDefault();
+            } else if ((key === 'ArrowRight' || key === 'd' || key === 'D') && state.direction.x === 0) {
+                state.nextDirection = { x: 1, y: 0 };
+                e.preventDefault();
+            }
+        });
+
+        // --- Steuerung (Touch / Buttons für Tablet) ---
+        const handleTouchControl = (dx, dy) => {
+            if (dx !== 0 && state.direction.x === 0) {
+                state.nextDirection = { x: dx, y: 0 };
+            } else if (dy !== 0 && state.direction.y === 0) {
+                state.nextDirection = { x: 0, y: dy };
+            }
+        };
+
+        // Verhindert Textauswahl und Zoom bei schnellem Klicken auf Touch-Geräten
+        const preventTouchDefault = (e) => e.preventDefault();
+
+        document.getElementById('btn-up').addEventListener('touchstart', (e) => { preventTouchDefault(e); handleTouchControl(0, -1); });
+        document.getElementById('btn-up').addEventListener('mousedown', () => handleTouchControl(0, -1));
+
+        document.getElementById('btn-down').addEventListener('touchstart', (e) => { preventTouchDefault(e); handleTouchControl(0, 1); });
+        document.getElementById('btn-down').addEventListener('mousedown', () => handleTouchControl(0, 1));
+
+        document.getElementById('btn-left').addEventListener('touchstart', (e) => { preventTouchDefault(e); handleTouchControl(-1, 0); });
+        document.getElementById('btn-left').addEventListener('mousedown', () => handleTouchControl(-1, 0));
+
+        document.getElementById('btn-right').addEventListener('touchstart', (e) => { preventTouchDefault(e); handleTouchControl(1, 0); });
+        document.getElementById('btn-right').addEventListener('mousedown', () => handleTouchControl(1, 0));
+
+    </script>
+</body>
+</html>

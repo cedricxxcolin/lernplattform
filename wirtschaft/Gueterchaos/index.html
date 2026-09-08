@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Güter-Chaos</title>
+<style>
+  :root{
+    --bg:#f5f7fb;
+    --panel:#ffffff;
+    --text:#1f2937;
+    --muted:#6b7280;
+    --line:#dbe2ea;
+    --accent:#2563eb;
+    --accent-soft:#eaf1ff;
+    --danger:#b42318;
+    --success:#067647;
+    --success-soft:#ecfdf3;
+    --warning:#9a3412;
+    --warning-soft:#fff7ed;
+    --shadow:0 8px 24px rgba(15,23,42,.08);
+  }
+
+  *{box-sizing:border-box}
+  body{
+    margin:0;
+    font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    background:var(--bg);
+    color:var(--text);
+  }
+  .wrap{width:min(1180px,94vw);margin:28px auto 60px}
+  h1{margin:0 0 8px;font-size:clamp(28px,4vw,42px)}
+  h2{margin:0 0 8px}
+  h3{margin:0}
+  p{line-height:1.5}
+  button{
+    border:1px solid var(--line);
+    background:white;
+    color:var(--text);
+    border-radius:10px;
+    padding:10px 13px;
+    font-weight:650;
+    cursor:pointer;
+  }
+  button:hover{filter:brightness(.98)}
+  button:disabled{opacity:.55;cursor:not-allowed}
+  .primary{background:var(--accent);color:white;border-color:var(--accent)}
+  .danger{color:var(--danger)}
+  .success{background:var(--success);color:white;border-color:var(--success)}
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    box-shadow:var(--shadow);
+    border-radius:16px;
+    padding:18px;
+    margin-bottom:18px;
+  }
+  .muted{color:var(--muted)}
+  .small{font-size:13px;color:var(--muted)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .space{justify-content:space-between}
+  .hidden{display:none!important}
+
+  /* Startseite */
+  .intro{
+    background:var(--accent-soft);
+    border:1px solid #cfe0ff;
+    border-radius:14px;
+    padding:14px 16px;
+    margin-bottom:18px;
+  }
+  .home-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+    gap:14px;
+  }
+  .slot{
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:15px;
+    background:#fff;
+  }
+  .slot.special{
+    border:2px solid #bfd4ff;
+    background:#f7faff;
+  }
+  .slot.solution{
+    border:2px solid #a7f3d0;
+    background:#f0fdf4;
+  }
+  .slot-title{
+    font-weight:800;
+    font-size:18px;
+    margin-bottom:5px;
+  }
+  .slot-meta{font-size:13px;color:var(--muted);min-height:40px}
+  .slot-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+  /* Sortieransicht */
+  #sortView header{
+    display:flex;
+    gap:16px;
+    justify-content:space-between;
+    align-items:flex-start;
+    margin-bottom:16px;
+  }
+  .instructions{
+    background:var(--accent-soft);
+    border:1px solid #cfe0ff;
+    border-radius:14px;
+    padding:14px 16px;
+    margin-bottom:18px;
+    line-height:1.5;
+  }
+  .panel-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:12px;
+  }
+  #pool, .dropzone{
+    min-height:100px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-content:flex-start;
+  }
+  #pool{
+    padding:10px;
+    border:2px dashed #cbd5e1;
+    border-radius:14px;
+    background:#fafcff;
+  }
+  .card{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    min-width:148px;
+    padding:10px 42px 10px 12px;
+    border:1px solid var(--line);
+    background:white;
+    border-radius:12px;
+    box-shadow:0 2px 8px rgba(15,23,42,.05);
+    cursor:grab;
+    user-select:none;
+  }
+  .card:active{cursor:grabbing}
+  .card.dragging{opacity:.45}
+  .emoji{font-size:24px}
+  .label{font-weight:650}
+  .card-actions{
+    position:absolute;
+    right:6px;
+    top:50%;
+    transform:translateY(-50%);
+    display:flex;
+    gap:4px;
+  }
+  .icon-btn{
+    width:28px;height:28px;padding:0;border-radius:8px;font-size:17px;line-height:1
+  }
+  .copy-badge{
+    position:absolute;left:7px;top:-7px;font-size:10px;padding:2px 6px;border-radius:999px;
+    background:#eef2ff;color:#4338ca;border:1px solid #c7d2fe;
+  }
+  .categories{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:14px;
+  }
+  .category{
+    border:1px solid var(--line);
+    border-radius:14px;
+    overflow:hidden;
+    background:#fff;
+  }
+  .category-head{
+    display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid var(--line);background:#f8fafc;
+  }
+  .category-name{
+    flex:1;border:1px solid transparent;background:transparent;font-weight:750;font-size:16px;padding:7px 8px;border-radius:8px
+  }
+  .category-name:focus{outline:none;border-color:#b8c8e8;background:white}
+  .dropzone{padding:12px;min-height:150px}
+  .dropzone.over, #pool.over{outline:3px solid rgba(37,99,235,.18);background:#f3f7ff}
+  .empty-hint{color:#9ca3af;font-size:13px;padding:8px;pointer-events:none}
+  .name-box{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .name-box input{
+    min-width:280px;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit
+  }
+
+  /* Input */
+  .theory-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:14px;
+    margin-top:18px;
+  }
+  .theory-card{
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:15px;
+    background:#fff;
+  }
+  .theory-card strong{display:block;margin-bottom:6px}
+  .example{
+    margin-top:8px;
+    padding:8px 10px;
+    background:#f8fafc;
+    border-radius:9px;
+    font-size:14px;
+  }
+  .notice{
+    background:var(--warning-soft);
+    border:1px solid #fed7aa;
+    border-radius:12px;
+    padding:12px 14px;
+    margin-top:14px;
+  }
+
+  /* Lösung */
+  .solution-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:14px;
+    margin-top:18px;
+  }
+  .solution-card{
+    background:white;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:14px;
+  }
+  .solution-card h3{margin-bottom:8px}
+  .solution-item{
+    padding:7px 0;
+    border-bottom:1px solid #eef2f7;
+    line-height:1.35;
+  }
+  .solution-item:last-child{border-bottom:none}
+  .context{
+    background:var(--warning-soft);
+    border:1px solid #fed7aa;
+    border-radius:12px;
+    padding:12px 14px;
+    margin-top:16px;
+  }
+
+  /* Ergebnisansicht */
+  body.result-mode .instructions,
+  body.result-mode #poolPanel,
+  body.result-mode .category-delete,
+  body.result-mode .card-actions,
+  body.result-mode .copy-badge,
+  body.result-mode #addCategoryBtn,
+  body.result-mode #resetBtn{
+    display:none!important;
+  }
+  body.result-mode .category-name{
+    pointer-events:none;
+    border:none;
+  }
+  .result-banner{
+    display:none;
+    background:var(--success-soft);
+    border:1px solid #abefc6;
+    color:var(--success);
+    border-radius:14px;
+    padding:12px 14px;
+    margin-bottom:16px;
+    font-weight:650;
+  }
+  body.result-mode .result-banner{display:block}
+
+  /* Modal */
+  .modal{
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,.48);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+    z-index:100;
+  }
+  .modal-box{
+    width:min(420px,96vw);
+    background:#fff;
+    border-radius:16px;
+    padding:20px;
+    box-shadow:0 24px 60px rgba(15,23,42,.25);
+  }
+  .modal-box input{
+    width:100%;
+    margin:12px 0 8px;
+    padding:11px 12px;
+    border:1px solid var(--line);
+    border-radius:10px;
+    font:inherit;
+  }
+  .error{color:var(--danger);font-size:13px;min-height:18px}
+
+  @media(max-width:700px){
+    #sortView header{flex-direction:column}
+    .card{min-width:132px}
+    .name-box input{min-width:200px;width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- STARTSEITE -->
+  <section id="homeView">
+    <h1>🧩 Güter-Chaos</h1>
+    <div class="intro">
+      <strong>Güter ordnen, vergleichen und fachlich einteilen.</strong><br>
+      Verwenden Sie für jede Runde einen eigenen Slot. Ihre Sortierungen werden auf diesem Gerät automatisch gespeichert.
+    </div>
+
+    <div class="home-grid">
+      <div class="slot">
+        <div class="slot-title">🗂️ Sortierung 1</div>
+        <div class="slot-meta" id="meta1">Noch nicht begonnen.</div>
+        <div class="slot-actions">
+          <button class="primary" onclick="openSort(1)">Öffnen</button>
+          <button class="danger" onclick="clearSlot(1)">Löschen</button>
+        </div>
+      </div>
+
+      <div class="slot special">
+        <div class="slot-title">🔒 Kurzinput Güterarten</div>
+        <div class="slot-meta">Passwortgeschützter Theorieinput.</div>
+        <div class="slot-actions">
+          <button onclick="requestPassword('input')">Input öffnen</button>
+        </div>
+      </div>
+
+      <div class="slot">
+        <div class="slot-title">🗂️ Sortierung 2</div>
+        <div class="slot-meta" id="meta2">Noch nicht begonnen.</div>
+        <div class="slot-actions">
+          <button class="primary" onclick="openSort(2)">Öffnen</button>
+          <button class="danger" onclick="clearSlot(2)">Löschen</button>
+        </div>
+      </div>
+
+      <div class="slot">
+        <div class="slot-title">🗂️ Sortierung 3</div>
+        <div class="slot-meta" id="meta3">Zusätzlicher Slot für eine weitere Runde oder Wiederholung.</div>
+        <div class="slot-actions">
+          <button class="primary" onclick="openSort(3)">Öffnen</button>
+          <button class="danger" onclick="clearSlot(3)">Löschen</button>
+        </div>
+      </div>
+
+      <div class="slot solution">
+        <div class="slot-title">🔐 Lösung</div>
+        <div class="slot-meta">Musterlösung mit Hinweisen zu Grenzfällen.</div>
+        <div class="slot-actions">
+          <button class="success" onclick="requestPassword('solution')">Lösung öffnen</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SORTIERANSICHT -->
+  <section id="sortView" class="hidden">
+    <header>
+      <div>
+        <h1 id="sortTitle">🗂️ Sortierung</h1>
+        <p class="muted">Erstellen Sie eigene Kategorien und ordnen Sie die Güter ein. Ein Gut darf bei Bedarf mehrfach verwendet werden.</p>
+      </div>
+      <div class="row">
+        <button onclick="showHome()">← Startseite</button>
+        <button id="resultBtn" class="primary" onclick="toggleResult(true)">📸 Ergebnisansicht</button>
+        <button id="editBtn" class="hidden" onclick="toggleResult(false)">← Bearbeiten</button>
+      </div>
+    </header>
+
+    <div class="result-banner">
+      Ergebnisansicht, jetzt können Sie einen Screenshot für den Platz zur Zusammenarbeit erstellen.
+    </div>
+
+    <div class="instructions">
+      <strong>Auftrag:</strong> Erstellen Sie passende Kategorien, benennen Sie diese und ordnen Sie alle Güter zu.
+      Mit <strong>+</strong> können Sie eine Karte duplizieren, wenn sie in mehreren Kategorien vorkommen soll.
+    </div>
+
+    <section class="panel" id="poolPanel">
+      <div class="panel-head">
+        <div>
+          <h2>Unsortierte Güter</h2>
+          <div class="small">Ziehen Sie die Karten in Ihre Kategorien.</div>
+        </div>
+        <div class="small"><span id="poolCount">0</span> Karten im Pool</div>
+      </div>
+      <div id="pool" class="dropzone"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Ihre Kategorien</h2>
+          <div class="small">Kategorien können frei benannt und ergänzt werden.</div>
+        </div>
+        <button id="addCategoryBtn" onclick="addCategory()">＋ Kategorie</button>
+      </div>
+
+      <div id="categories" class="categories"></div>
+
+      <div class="row space" style="margin-top:16px">
+        <button id="resetBtn" class="danger" onclick="resetCurrentSlot()">↺ Zurücksetzen</button>
+        <div class="name-box">
+          <label for="groupNames"><strong>Gruppe:</strong></label>
+          <input id="groupNames" type="text" placeholder="Namen der Gruppenmitglieder">
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <!-- INPUT -->
+  <section id="inputView" class="hidden">
+    <div class="row space">
+      <div>
+        <h1>📘 Kurzinput: Güterarten</h1>
+        <p class="muted">Güter können nach verschiedenen Kriterien eingeteilt werden. Ein Gut kann deshalb gleichzeitig mehreren Güterarten angehören.</p>
+      </div>
+      <button onclick="showHome()">← Startseite</button>
+    </div>
+
+    <div class="theory-grid">
+      <div class="theory-card">
+        <h3>1. Freie und wirtschaftliche Güter</h3>
+        <p><strong>Freie Güter</strong> stehen in der Natur grundsätzlich in ausreichender Menge zur Verfügung. Für ihre Bereitstellung müssen normalerweise keine knappen Mittel eingesetzt werden.</p>
+        <p><strong>Wirtschaftliche Güter</strong> sind dagegen knapp. Ihre Herstellung oder Bereitstellung benötigt beispielsweise Arbeit, Rohstoffe, Kapital oder Zeit. Deshalb haben sie einen wirtschaftlichen Wert.</p>
+        <div class="example">☀️ Sonnenlicht = freies Gut<br>🍞 Brot = wirtschaftliches Gut<br><span class="small">Wichtig: Kostenlos bedeutet nicht automatisch «freies Gut».</span></div>
+      </div>
+
+      <div class="theory-card">
+        <h3>2. Sachgüter und Dienstleistungen</h3>
+        <p><strong>Sachgüter</strong> sind körperliche bzw. materielle Güter. Man kann sie anfassen, lagern und meist transportieren.</p>
+        <p><strong>Dienstleistungen</strong> sind immaterielle Leistungen. Dabei steht eine Tätigkeit für eine andere Person oder ein Unternehmen im Mittelpunkt.</p>
+        <div class="example">📱 Smartphone = Sachgut<br>✂️ Haarschnitt = Dienstleistung<br>🚆 Zugfahrt = Dienstleistung</div>
+      </div>
+
+      <div class="theory-card">
+        <h3>3. Konsum- und Investitionsgüter</h3>
+        <p><strong>Konsumgüter</strong> werden von privaten Haushalten genutzt und dienen unmittelbar der Befriedigung ihrer Bedürfnisse.</p>
+        <p><strong>Investitionsgüter</strong> werden von Unternehmen eingesetzt, um andere Güter herzustellen oder Dienstleistungen anzubieten.</p>
+        <p>Entscheidend ist deshalb häufig nicht das Gut selbst, sondern <strong>wer es wofür verwendet.</strong></p>
+        <div class="example">💻 privater Laptop = Konsumgut<br>💻 Firmenlaptop = Investitionsgut<br>🚗 privates Auto / Taxi = je nach Verwendung unterschiedlich</div>
+      </div>
+
+      <div class="theory-card">
+        <h3>4. Gebrauchs- und Verbrauchsgüter</h3>
+        <p><strong>Gebrauchsgüter</strong> können mehrfach und meist über einen längeren Zeitraum genutzt werden. Sie werden durch eine einzelne Nutzung nicht aufgebraucht.</p>
+        <p><strong>Verbrauchsgüter</strong> werden bei ihrer Verwendung ganz oder nach und nach aufgebraucht und müssen deshalb ersetzt werden.</p>
+        <div class="example">🪥 Zahnbürste = Gebrauchsgut<br>🦷 Zahnpasta = Verbrauchsgut<br>🚗 Auto = Gebrauchsgut, ⛽ Benzin = Verbrauchsgut</div>
+      </div>
+    </div>
+
+    <div class="notice">
+      <strong>Wichtig:</strong> Die Einordnung kann vom Verwendungszweck oder von der Situation abhängen. Ein Auto kann beispielsweise Konsumgut oder Investitionsgut sein.
+    </div>
+
+    <div class="row" style="margin-top:18px">
+      <button class="primary" onclick="openSort(2)">Weiter zu Sortierung 2 →</button>
+      <button onclick="showHome()">Zur Startseite</button>
+    </div>
+  </section>
+
+  <!-- LÖSUNG -->
+  <section id="solutionView" class="hidden">
+    <div class="row space">
+      <div>
+        <h1>✅ Musterlösung</h1>
+        <p class="muted">Eine mögliche fachliche Einteilung. Bei einzelnen Gütern hängt die Einordnung vom Kontext ab.</p>
+      </div>
+      <button onclick="showHome()">← Startseite</button>
+    </div>
+
+    <div class="solution-grid">
+      <div class="solution-card">
+        <h3>🌿 Freie Güter</h3>
+        <div class="solution-item">☀️ Sonnenlicht</div>
+        <div class="solution-item">🌬️ Luft</div>
+        <div class="solution-item">🌧️ Regenwasser in der Natur</div>
+      </div>
+
+      <div class="solution-card">
+        <h3>💰 Wirtschaftliche Güter</h3>
+        <div class="solution-item">Alle übrigen Karten grundsätzlich dann, wenn ihre Bereitstellung knapp ist bzw. Aufwand verursacht.</div>
+        <div class="solution-item">💧 Wasser kann je nach Situation frei oder wirtschaftlich sein.</div>
+      </div>
+
+      <div class="solution-card">
+        <h3>📦 Sachgüter</h3>
+        <div class="solution-item">📱 Smartphone</div>
+        <div class="solution-item">🍞 Brot</div>
+        <div class="solution-item">🚗 Auto</div>
+        <div class="solution-item">💧 Wasser</div>
+        <div class="solution-item">💻 Laptop</div>
+        <div class="solution-item">🔧 Bohrmaschine</div>
+        <div class="solution-item">☕ Kaffee</div>
+        <div class="solution-item">🏭 Industriemaschine</div>
+        <div class="solution-item">⛽ Benzin</div>
+        <div class="solution-item">👕 T-Shirt</div>
+        <div class="solution-item">🪵 Holz</div>
+        <div class="solution-item">📚 Schulbuch</div>
+        <div class="solution-item">🍫 Schokolade</div>
+        <div class="solution-item">🪥 Zahnbürste</div>
+        <div class="solution-item">🦷 Zahnpasta</div>
+      </div>
+
+      <div class="solution-card">
+        <h3>🤝 Dienstleistungen</h3>
+        <div class="solution-item">✂️ Haarschnitt</div>
+        <div class="solution-item">🚆 Zugfahrt</div>
+        <div class="solution-item">🏨 Hotelübernachtung</div>
+        <div class="solution-item">🎬 Streaming-Abo</div>
+        <div class="solution-item">🩺 Arztbesuch</div>
+      </div>
+
+      <div class="solution-card">
+        <h3>🛍️ Konsumgüter</h3>
+        <div class="solution-item">🍞 Brot</div>
+        <div class="solution-item">☕ Kaffee</div>
+        <div class="solution-item">👕 T-Shirt</div>
+        <div class="solution-item">📚 Schulbuch bei privater Nutzung</div>
+        <div class="solution-item">🍫 Schokolade</div>
+        <div class="solution-item">🪥 Zahnbürste</div>
+        <div class="solution-item">🦷 Zahnpasta</div>
+        <div class="solution-item">📱 Smartphone, 🚗 Auto, 💻 Laptop, 🔧 Bohrmaschine bei privater Nutzung</div>
+      </div>
+
+      <div class="solution-card">
+        <h3>🏭 Investitionsgüter</h3>
+        <div class="solution-item">🏭 Industriemaschine</div>
+        <div class="solution-item">📱 Smartphone eines Unternehmens</div>
+        <div class="solution-item">🚗 Firmenfahrzeug bzw. Taxi</div>
+        <div class="solution-item">💻 Firmenlaptop</div>
+        <div class="solution-item">🔧 Bohrmaschine eines Handwerksbetriebs</div>
+      </div>
+
+      <div class="solution-card">
+        <h3>🔁 Gebrauchsgüter</h3>
+        <div class="solution-item">📱 Smartphone</div>
+        <div class="solution-item">🚗 Auto</div>
+        <div class="solution-item">💻 Laptop</div>
+        <div class="solution-item">🔧 Bohrmaschine</div>
+        <div class="solution-item">🏭 Industriemaschine</div>
+        <div class="solution-item">👕 T-Shirt</div>
+        <div class="solution-item">📚 Schulbuch</div>
+        <div class="solution-item">🪥 Zahnbürste</div>
+      </div>
+
+      <div class="solution-card">
+        <h3>🔥 Verbrauchsgüter</h3>
+        <div class="solution-item">🍞 Brot</div>
+        <div class="solution-item">💧 Wasser</div>
+        <div class="solution-item">☕ Kaffee</div>
+        <div class="solution-item">⛽ Benzin</div>
+        <div class="solution-item">🍫 Schokolade</div>
+        <div class="solution-item">🦷 Zahnpasta</div>
+        <div class="solution-item">🪵 Holz, wenn es beispielsweise als Brennholz verwendet wird</div>
+      </div>
+    </div>
+
+    <div class="context">
+      <strong>Grenzfälle:</strong> Wasser kann je nach Situation frei oder wirtschaftlich sein. Smartphone, Auto, Laptop und Bohrmaschine können je nach Verwendung Konsum- oder Investitionsgut sein. Holz kann je nach Verwendungszweck Gebrauchs- oder Verbrauchsgut sein. Dienstleistungen werden nicht sinnvoll als Gebrauchs- oder Verbrauchsgüter eingeordnet.
+    </div>
+  </section>
+
+</div>
+
+<!-- PASSWORTMODAL -->
+<div id="passwordModal" class="modal hidden">
+  <div class="modal-box">
+    <h2 id="passwordTitle">Passwort eingeben</h2>
+    <p class="muted" id="passwordText"></p>
+    <input id="passwordInput" type="password" inputmode="numeric" autocomplete="off" placeholder="Passwort">
+    <div id="passwordError" class="error"></div>
+    <div class="row" style="justify-content:flex-end;margin-top:8px">
+      <button onclick="closePassword()">Abbrechen</button>
+      <button class="primary" onclick="checkPassword()">Öffnen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const goods = [
+  ["📱","Smartphone"],["🍞","Brot"],["🚗","Auto"],["💧","Wasser"],["☀️","Sonnenlicht"],
+  ["🌬️","Luft"],["🌧️","Regenwasser"],["💻","Laptop"],["🔧","Bohrmaschine"],["☕","Kaffee"],
+  ["✂️","Haarschnitt"],["🚆","Zugfahrt"],["🏨","Hotelübernachtung"],["🎬","Streaming-Abo"],
+  ["🏭","Industriemaschine"],["⛽","Benzin"],["👕","T-Shirt"],["🪵","Holz"],["🩺","Arztbesuch"],
+  ["📚","Schulbuch"],["🍫","Schokolade"],["🪥","Zahnbürste"],["🦷","Zahnpasta"]
+];
+
+let currentSlot = 1;
+let categoryCounter = 0;
+let requestedProtectedView = null;
+
+const homeView = document.getElementById("homeView");
+const sortView = document.getElementById("sortView");
+const inputView = document.getElementById("inputView");
+const solutionView = document.getElementById("solutionView");
+const pool = document.getElementById("pool");
+const categoriesEl = document.getElementById("categories");
+const groupNames = document.getElementById("groupNames");
+const poolCount = document.getElementById("poolCount");
+
+function hideAllViews(){
+  [homeView,sortView,inputView,solutionView].forEach(v=>v.classList.add("hidden"));
+  document.body.classList.remove("result-mode");
+}
+function showHome(){
+  saveCurrentState();
+  hideAllViews();
+  homeView.classList.remove("hidden");
+  updateHomeMeta();
+}
+function uid(prefix){
+  return prefix+"_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7);
+}
+function cardToData(card){
+  return {emoji:card.dataset.emoji,label:card.dataset.label,isCopy:!!card.querySelector(".copy-badge")};
+}
+function makeCard(emoji,label,isCopy=false){
+  const card=document.createElement("div");
+  card.className="card";
+  card.draggable=true;
+  card.dataset.emoji=emoji;
+  card.dataset.label=label;
+
+  if(isCopy){
+    const badge=document.createElement("span");
+    badge.className="copy-badge";
+    badge.textContent="Kopie";
+    card.appendChild(badge);
+  }
+
+  const em=document.createElement("span");
+  em.className="emoji";
+  em.textContent=emoji;
+
+  const lab=document.createElement("span");
+  lab.className="label";
+  lab.textContent=label;
+
+  const actions=document.createElement("div");
+  actions.className="card-actions";
+
+  const dup=document.createElement("button");
+  dup.className="icon-btn";
+  dup.type="button";
+  dup.title="Karte duplizieren";
+  dup.textContent="+";
+  dup.onclick=(e)=>{
+    e.stopPropagation();
+    const clone=makeCard(emoji,label,true);
+    card.parentElement.insertBefore(clone,card.nextSibling);
+    saveCurrentState();
+    updateCounts();
+  };
+  actions.appendChild(dup);
+
+  if(isCopy){
+    const del=document.createElement("button");
+    del.className="icon-btn";
+    del.type="button";
+    del.title="Kopie löschen";
+    del.textContent="×";
+    del.onclick=(e)=>{
+      e.stopPropagation();
+      card.remove();
+      saveCurrentState();
+      updateCounts();
+      updateEmptyHints();
+    };
+    actions.appendChild(del);
+  }
+
+  card.appendChild(em);
+  card.appendChild(lab);
+  card.appendChild(actions);
+
+  card.addEventListener("dragstart",()=>{
+    card.classList.add("dragging");
+    window.__draggedCard=card;
+  });
+  card.addEventListener("dragend",()=>{
+    card.classList.remove("dragging");
+    window.__draggedCard=null;
+    saveCurrentState();
+    updateCounts();
+  });
+  return card;
+}
+
+function wireDropzone(zone){
+  zone.addEventListener("dragover",(e)=>{e.preventDefault();zone.classList.add("over")});
+  zone.addEventListener("dragleave",()=>zone.classList.remove("over"));
+  zone.addEventListener("drop",(e)=>{
+    e.preventDefault();
+    zone.classList.remove("over");
+    const card=window.__draggedCard;
+    if(card){
+      zone.appendChild(card);
+      saveCurrentState();
+      updateCounts();
+      updateEmptyHints();
+    }
+  });
+}
+wireDropzone(pool);
+
+function addCategory(name){
+  categoryCounter++;
+  const category=document.createElement("div");
+  category.className="category";
+
+  const head=document.createElement("div");
+  head.className="category-head";
+
+  const input=document.createElement("input");
+  input.className="category-name";
+  input.value=name || `Kategorie ${categoryCounter}`;
+  input.addEventListener("input",saveCurrentState);
+
+  const del=document.createElement("button");
+  del.className="icon-btn category-delete";
+  del.type="button";
+  del.textContent="×";
+  del.title="Kategorie löschen";
+  del.onclick=()=>{
+    const zone=category.querySelector(".dropzone");
+    [...zone.querySelectorAll(".card")].forEach(card=>pool.appendChild(card));
+    category.remove();
+    saveCurrentState();
+    updateCounts();
+    updateEmptyHints();
+  };
+
+  head.appendChild(input);
+  head.appendChild(del);
+
+  const zone=document.createElement("div");
+  zone.className="dropzone";
+  wireDropzone(zone);
+
+  category.appendChild(head);
+  category.appendChild(zone);
+  categoriesEl.appendChild(category);
+
+  updateEmptyHints();
+  saveCurrentState();
+  return category;
+}
+
+function updateEmptyHints(){
+  document.querySelectorAll(".category .dropzone").forEach(zone=>{
+    let hint=zone.querySelector(".empty-hint");
+    const hasCards=zone.querySelector(".card");
+    if(!hasCards && !hint){
+      hint=document.createElement("div");
+      hint.className="empty-hint";
+      hint.textContent="Karten hierhin ziehen";
+      zone.appendChild(hint);
+    }
+    if(hasCards && hint) hint.remove();
+  });
+}
+function updateCounts(){
+  poolCount.textContent=pool.querySelectorAll(".card").length;
+}
+function clearWorkspace(){
+  pool.innerHTML="";
+  categoriesEl.innerHTML="";
+  categoryCounter=0;
+}
+function buildInitial(){
+  clearWorkspace();
+  goods.forEach(([e,l])=>pool.appendChild(makeCard(e,l,false)));
+  addCategory("Kategorie 1");
+  addCategory("Kategorie 2");
+  addCategory("Kategorie 3");
+  groupNames.value="";
+  updateCounts();
+  updateEmptyHints();
+}
+function stateKey(slot){return "gueterChaosSlot_"+slot}
+function saveCurrentState(){
+  if(sortView.classList.contains("hidden")) return;
+  const state={
+    groupNames:groupNames.value,
+    pool:[...pool.querySelectorAll(".card")].map(cardToData),
+    categories:[...categoriesEl.querySelectorAll(".category")].map(cat=>({
+      name:cat.querySelector(".category-name").value,
+      cards:[...cat.querySelectorAll(".dropzone .card")].map(cardToData)
+    })),
+    savedAt:new Date().toISOString()
+  };
+  localStorage.setItem(stateKey(currentSlot),JSON.stringify(state));
+}
+function loadSlot(slot){
+  const raw=localStorage.getItem(stateKey(slot));
+  if(!raw){buildInitial();saveCurrentState();return;}
+  try{
+    const state=JSON.parse(raw);
+    clearWorkspace();
+    (state.pool||[]).forEach(c=>pool.appendChild(makeCard(c.emoji,c.label,c.isCopy)));
+    (state.categories||[]).forEach(c=>{
+      const cat=addCategory(c.name);
+      const zone=cat.querySelector(".dropzone");
+      zone.innerHTML="";
+      (c.cards||[]).forEach(card=>zone.appendChild(makeCard(card.emoji,card.label,card.isCopy)));
+    });
+    groupNames.value=state.groupNames||"";
+    updateCounts();
+    updateEmptyHints();
+  }catch(e){
+    buildInitial();
+  }
+}
+function openSort(slot){
+  saveCurrentState();
+  currentSlot=slot;
+  hideAllViews();
+  sortView.classList.remove("hidden");
+  document.getElementById("sortTitle").textContent=`🗂️ Sortierung ${slot}`;
+  loadSlot(slot);
+}
+function clearSlot(slot){
+  if(confirm(`Sortierung ${slot} wirklich löschen?`)){
+    localStorage.removeItem(stateKey(slot));
+    updateHomeMeta();
+  }
+}
+function resetCurrentSlot(){
+  if(confirm("Diese Sortierung wirklich vollständig zurücksetzen?")){
+    localStorage.removeItem(stateKey(currentSlot));
+    buildInitial();
+    saveCurrentState();
+  }
+}
+groupNames.addEventListener("input",saveCurrentState);
+
+function updateHomeMeta(){
+  [1,2,3].forEach(slot=>{
+    const el=document.getElementById("meta"+slot);
+    const raw=localStorage.getItem(stateKey(slot));
+    if(!raw){
+      el.textContent=slot===3 ? "Zusätzlicher Slot für eine weitere Runde oder Wiederholung." : "Noch nicht begonnen.";
+      return;
+    }
+    try{
+      const state=JSON.parse(raw);
+      const totalCats=(state.categories||[]).length;
+      const sorted=(state.categories||[]).reduce((n,c)=>n+(c.cards||[]).length,0);
+      const names=state.groupNames ? `Gruppe: ${state.groupNames}. ` : "";
+      el.textContent=`${names}${totalCats} Kategorien, ${sorted} zugeordnete Karten.`;
+    }catch(e){
+      el.textContent="Gespeicherte Sortierung vorhanden.";
+    }
+  });
+}
+function toggleResult(on){
+  if(on){
+    document.body.classList.add("result-mode");
+    document.getElementById("resultBtn").classList.add("hidden");
+    document.getElementById("editBtn").classList.remove("hidden");
+  }else{
+    document.body.classList.remove("result-mode");
+    document.getElementById("resultBtn").classList.remove("hidden");
+    document.getElementById("editBtn").classList.add("hidden");
+  }
+}
+
+function requestPassword(view){
+  requestedProtectedView=view;
+  const title=document.getElementById("passwordTitle");
+  const text=document.getElementById("passwordText");
+  const input=document.getElementById("passwordInput");
+  document.getElementById("passwordError").textContent="";
+  if(view==="input"){
+    title.textContent="Kurzinput öffnen";
+    text.textContent="Geben Sie das Passwort für den Theorieinput ein.";
+  }else{
+    title.textContent="Lösung öffnen";
+    text.textContent="Geben Sie das Passwort für die Musterlösung ein.";
+  }
+  input.value="";
+  document.getElementById("passwordModal").classList.remove("hidden");
+  setTimeout(()=>input.focus(),50);
+}
+function closePassword(){
+  document.getElementById("passwordModal").classList.add("hidden");
+  requestedProtectedView=null;
+}
+function checkPassword(){
+  const entered=document.getElementById("passwordInput").value;
+  const correct=requestedProtectedView==="input" ? "1234" : "4321";
+  if(entered!==correct){
+    document.getElementById("passwordError").textContent="Passwort nicht korrekt.";
+    return;
+  }
+  const target=requestedProtectedView;
+  closePassword();
+  saveCurrentState();
+  hideAllViews();
+  if(target==="input") inputView.classList.remove("hidden");
+  if(target==="solution") solutionView.classList.remove("hidden");
+}
+document.getElementById("passwordInput").addEventListener("keydown",(e)=>{
+  if(e.key==="Enter") checkPassword();
+});
+
+updateHomeMeta();
+</script>
+</body>
+</html>
